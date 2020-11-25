@@ -1,0 +1,16 @@
+import math
+import console
+
+function near(this, thing)
+  dx = math.abs(this.x - thing.x)
+  dz = math.abs(this.z - thing.z)
+  if dx > dz
+    return dx + dz - dz * 0.5
+  end
+  return dx + dz - dx * 0.5
+end
+
+a = {x:0.0, y:0.0}
+b = {x:1.0, y:0.0}
+
+console.log(a.near(b))

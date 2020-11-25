@@ -1,0 +1,7 @@
+sprite: particles
+animation: [blood-0, blood-1, blood-2]
+function: particle-with-decal-on-collision
+box: 0.2
+height: 0.2
+gravity: 0.01
+wind: 0.95

@@ -1,0 +1,22 @@
+import os as io
+import console
+
+async function read(path)
+  file = try io.open(path) catch
+    goto handle
+  end
+  contents = file.read()
+  return contents
+  label handle
+  return none 
+end
+
+foo = read("/home/foo.txt")
+bar = read("/home/bar.txt")
+console.log(await foo)
+console.log(await bar)
+
+t = {}
+t._add = (x)
+  return this.value + x
+end

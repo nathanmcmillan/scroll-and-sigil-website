@@ -1,0 +1,99 @@
+vectors 44
+0 0
+0 127
+127 127
+127 0
+10 10
+10 30
+16 30
+16 29
+11 29
+11 11
+29 11
+29 29
+24 29
+24 30
+30 30
+30 10
+16 30
+24 30
+24 29
+29 29
+29 11
+11 11
+11 29
+16 29
+40 60
+40 80
+46 80
+46 79
+41 79
+41 61
+59 61
+59 79
+54 79
+54 80
+60 80
+60 60
+46 80
+54 80
+54 79
+59 79
+59 61
+41 61
+41 79
+46 79
+lines 30
+0 3 none none none
+3 2 none none none
+2 1 none none none
+1 0 none none none
+15 4 none stone none
+4 5 none stone none
+5 6 none stone none
+6 7 none stone none
+7 8 none stone none
+8 9 none stone none
+9 10 none stone none
+10 11 none stone none
+11 12 none stone none
+12 13 none stone none
+13 14 none stone none
+14 15 none stone none
+16 17 plank none plank
+35 24 none stone none
+24 25 none stone none
+25 26 none stone none
+26 27 none stone none
+27 28 none stone none
+28 29 none stone none
+29 30 none stone none
+30 31 none stone none
+31 32 none stone none
+32 33 none stone none
+33 34 none stone none
+34 35 none stone none
+36 37 plank none none
+sectors 5
+0 0 10 0 grass none 4 0 1 2 3 4 0 1 2 3
+0 0 6 0 none none 12 4 5 6 7 8 9 10 11 12 13 14 15 12 4 5 6 7 8 9 10 11 12 13 14 15
+0 0.5 5 6 plank-floor stone-floor 8 16 17 18 19 20 21 22 23 1 16
+0 0 6 0 none none 12 24 25 26 27 28 29 30 31 32 33 34 35 12 17 18 19 20 21 22 23 24 25 26 27 28
+0 0 5 6 plank-floor stone-floor 8 36 37 38 39 40 41 42 43 1 29
+things 8
+50 70 baron
+20 50 zombie
+14 42 tree
+18 42 medkit
+10 40 hero
+30 40 merchant
+60 42 armor
+80 42 peasant
+triggers 2
+line 26 begin-cinema
+line 16 goto-map
+info 4
+music vampire-killer
+background night-sky
+new-game 10 40
+entrance-x 100 60

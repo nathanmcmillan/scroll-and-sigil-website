@@ -1,0 +1,39 @@
+music [
+  vampire-killer.wav
+  depp.zzfxm
+  sanxion.zzfxm
+]
+entities [
+  hero
+  baron
+  merchant
+  peasant
+  tree
+  plasma
+  blood
+  plasma-explosion
+  medkit
+  armor
+  zombie
+]
+tiles [
+  grass
+  plank-floor
+  plank
+  stone-floor
+  stone
+]
+sounds [
+  baron-scream
+  baron-melee
+  baron-missile
+  baron-pain
+  baron-death
+  plasma-impact
+  pickup-item
+]
+textures [
+  {name:font, wrap:clamp}
+  {name:cursor, wrap:clamp}
+  {name:sky-box-up, wrap:clamp}
+]

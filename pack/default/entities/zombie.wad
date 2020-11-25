@@ -1,0 +1,31 @@
+class: monster
+sprite: baron
+box: 0.6
+height: 4.0
+name: Zombie
+group: (monster)(zombie)
+health: 1
+speed: 0.08
+sight: 6.0
+sound-pain: baron-pain
+sound-death: baron-death
+sound-wake: baron-scream
+animations {
+  idle [walk-1]
+  move [walk-2, walk-3, walk-0, walk-1]
+  melee [melee-0, melee-1]
+  missile [missile-0, missile-1]
+  death [death-0, death-1]
+}
+attack [
+  {
+    range: 0.8
+    animation: melee
+    damage [1, 10]
+    reaction [40, 220]
+    type: instant
+    damage-on-frame: 1
+    sound: baron-melee
+    sound-on-frame: 0
+  }
+]

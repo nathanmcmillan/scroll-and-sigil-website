@@ -1,0 +1,13 @@
+width: 320
+height: 200
+pixel-scale: 2
+screen: fit
+screen: center
+screen: stretch
+width: unlimited
+height: unlimited
+package: default
+open: game
+open: editor
+open: painter
+map: test

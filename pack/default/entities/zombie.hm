@@ -1,0 +1,46 @@
+
+-- for game interop we don't need to modify js variables directly
+-- we just need to add function pointers to the the global hymn lookup table
+-- javascript objects are just tables so it's possible to do self['var-name']
+
+function zombie_look(self)
+  if self.reaction > 0
+    self.reaction -= 1
+  else
+    let things = self.world.things
+    let i = self.world.thingCount
+    while i > 0
+      i -= 1
+      let thing = things[i]
+      if self is thing then continue
+      if thing.group is 'human' and thing.health > 0 and thingCheckSight(self, thing)
+        if math.random() < 0.9 then playSound(self.soundOnWake)
+        self.target = thing
+        self.status = STATUS_CHASE
+        self.animationFrame = 0
+        self.animation = self.animations.get('move')
+        thingUpdateSprite(self)
+        return
+      end
+    end
+    self.reaction = 10 + randomInt(20)
+  end
+  if thingUpdateAnimation(self) is ANIMATION_DONE then self.animationFrame = 0
+  thingUpdateSprite(self)
+end
+
+function zombie_on_damage(self, source, health)
+  if self.status is STATUS_DEAD or self.status is STATUS_FINAL
+    return
+  end
+  self.health_add(-health)
+  if self.health() <= 0
+    play_sound('monster-death')
+    self.set_status_dead()
+    thing_update_sprite(self)
+    red_blood_explode(self)
+  else
+    play_sound('monster-pain')
+    red_blood_towards(self, source)
+  end
+end

@@ -1,0 +1,23 @@
+class: npc
+sprite: baron
+box: 0.6
+height: 4.0
+health: 1
+name: 'Traveling Merchant'
+group: (human)(merchant)
+think: baron-update
+animations {
+  idle [walk-1]
+  move [walk-2, walk-3, walk-0, walk-1]
+  melee [melee-0, melee-1]
+  missile [missile-0, missile-1]
+  death [death-0, death-1]
+}
+interaction {
+  type: merchant
+  title: 'Purchase equipment'
+  inventory [
+    ['medkit', 1]
+    ['armor', 1]
+  ]
+}

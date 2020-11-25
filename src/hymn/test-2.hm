@@ -1,0 +1,42 @@
+import console
+
+global = 123
+
+interface goo
+  x y z
+  get() set()
+end
+
+class zoo implements goo
+  constructor(x, flag=2)
+    this.x = x
+    this.y = "${x}"
+  end
+end
+
+function zoo.string()
+  return "(" + this.y + ")"
+end
+
+function foo(x, y)
+  list = []
+  table = {}
+  if x != 0
+    print(x)
+  else
+    y += 1
+  end
+  list.push(4)
+  table['key'] = list
+  return y
+end
+
+function bar()
+  for i = 0, i < 10, i += 1
+    if i < 0 continue end
+    z = zoo.new(i)
+    console.log(z)
+  end
+end
+
+foo(2, 3)
