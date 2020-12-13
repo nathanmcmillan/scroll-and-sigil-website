@@ -1,10 +1,8 @@
-import {TwoWayMap} from '/src/util/collections.js'
 import {Game} from '/src/game/game.js'
 import {drawDecal} from '/src/client/render-sector.js'
 import {drawRectangle, drawSprite, drawText, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply, rotateX, rotateY, translate, multiplyVector3} from '/src/math/matrix.js'
 import {textureByName, textureByIndex} from '/src/assets/assets.js'
-import * as In from '/src/game/input.js'
 
 function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
   drawText(b, x + scale, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
@@ -14,41 +12,11 @@ function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
 export class GameState {
   constructor(client) {
     this.client = client
+    this.keys = client.keys
+
     this.game = new Game(this)
     this.events = []
     this.loading = true
-
-    let keys = new TwoWayMap()
-    keys.set('Enter', In.BUTTON_START)
-    keys.set('Backslash', In.BUTTON_SELECT)
-    keys.set('KeyW', In.LEFT_STICK_UP)
-    keys.set('KeyS', In.LEFT_STICK_DOWN)
-    keys.set('KeyA', In.LEFT_STICK_LEFT)
-    keys.set('KeyD', In.LEFT_STICK_RIGHT)
-    keys.set('KeyI', In.RIGHT_STICK_UP)
-    keys.set('KeyK', In.RIGHT_STICK_DOWN)
-    keys.set('KeyJ', In.RIGHT_STICK_LEFT)
-    keys.set('KeyL', In.RIGHT_STICK_RIGHT)
-    keys.set('ArrowUp', In.RIGHT_STICK_UP)
-    keys.set('ArrowDown', In.RIGHT_STICK_DOWN)
-    keys.set('ArrowLeft', In.RIGHT_STICK_LEFT)
-    keys.set('ArrowRight', In.RIGHT_STICK_RIGHT)
-    keys.set('Key0', In.DPAD_UP)
-    keys.set('Key1', In.DPAD_DOWN)
-    keys.set('Key2', In.DPAD_LEFT)
-    keys.set('Key3', In.DPAD_RIGHT)
-    keys.set('KeyH', In.BUTTON_A)
-    keys.set('KeyU', In.BUTTON_B)
-    keys.set('KeyO', In.BUTTON_X)
-    keys.set('KeyP', In.BUTTON_Y)
-    keys.set('KeyQ', In.LEFT_STICK_CLICK)
-    keys.set('KeyE', In.RIGHT_STICK_CLICK)
-    keys.set('KeyZ', In.LEFT_TRIGGER)
-    keys.set('KeyM', In.RIGHT_TRIGGER)
-    keys.set('KeyX', In.LEFT_BUMPER)
-    keys.set('KeyN', In.RIGHT_BUMPER)
-
-    this.keys = keys
 
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
@@ -61,6 +29,10 @@ export class GameState {
       this.game.input.set(this.keys.get(code), down)
     }
   }
+
+  mouseEvent() {}
+
+  mouseMove() {}
 
   async initialize(file) {
     await this.load(file)
@@ -122,7 +94,7 @@ export class GameState {
     let text = 'Loading. Please wait...'
     drawText(client.bufferGUI, 12.0, 8.0, text, 2.0, 0.0, 0.0, 0.0, 1.0)
     drawText(client.bufferGUI, 10.0, 10.0, text, 2.0, 1.0, 0.0, 0.0, 1.0)
-    rendering.bindTexture(gl.TEXTURE0, textureByName('font').texture)
+    rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
     rendering.updateAndDraw(client.bufferGUI)
   }
 
@@ -311,7 +283,7 @@ export class GameState {
           else drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, 1.0, 0.0, 0.0, 1.0)
           index++
         }
-        rendering.bindTexture(gl.TEXTURE0, textureByName('font').texture)
+        rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
         rendering.updateAndDraw(client.bufferGUI)
       }
     } else {
@@ -352,7 +324,7 @@ export class GameState {
         }
       }
       if (client.bufferGUI.indexPosition > 0) {
-        rendering.bindTexture(gl.TEXTURE0, textureByName('font').texture)
+        rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
         rendering.updateAndDraw(client.bufferGUI)
       }
     }

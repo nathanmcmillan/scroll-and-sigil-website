@@ -34,6 +34,7 @@ sounds [
 ]
 textures [
   {name:font, wrap:clamp}
+  {name:tic-80-wide-font.txt, wrap:clamp}
   {name:cursor, wrap:clamp}
   {name:sky-box-up, wrap:clamp}
 ]

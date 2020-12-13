@@ -119,6 +119,6 @@ export function renderMapEditViewMode(state) {
   let text = 'Paint Mode'
   drawText(client.bufferGUI, 12.0, 8.0, text, 2.0, 0.0, 0.0, 0.0, 1.0)
   drawText(client.bufferGUI, 10.0, 10.0, text, 2.0, 1.0, 0.0, 0.0, 1.0)
-  rendering.bindTexture(gl.TEXTURE0, textureByName('font').texture)
+  rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
   rendering.updateAndDraw(client.bufferGUI)
 }

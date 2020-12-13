@@ -6,8 +6,13 @@ screen: center
 screen: stretch
 width: unlimited
 height: unlimited
-package: default
-open: game
-open: editor
-open: painter
 map: test
+x-image: test
+package: default
+open: sfx
+open: music
+open: maps
+open: paint
+open: dashboard
+open: game
+open: home

@@ -5,7 +5,6 @@ import {WORLD_CELL_SHIFT, ANIMATION_ALMOST_DONE, ANIMATION_DONE} from '/src/worl
 import {newPlasma} from '/src/missile/plasma.js'
 import {randomInt} from '/src/math/random.js'
 import {redBloodTowards, redBloodExplode} from '/src/thing/thing-util.js'
-import * as In from '/src/game/input.js'
 
 // TODO
 // If thing interacting with dies / is busy then nullify hero interaction
@@ -70,14 +69,14 @@ function heroUpdate() {
 function heroDistanceToLine(self, box, line) {
   let vx = line.b.x - line.a.x
   let vz = line.b.y - line.a.y
-  let wx = this.x - line.a.x
-  let wz = this.z - line.a.y
+  let wx = self.x - line.a.x
+  let wz = self.z - line.a.y
   if (vx * wz - vz * wx < 0.0) return null
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   if (t < 0.0) t = 0.0
   else if (t > 1.0) t = 1.0
-  let px = line.a.x + vx * t - this.x
-  let pz = line.a.y + vz * t - this.z
+  let px = line.a.x + vx * t - self.x
+  let pz = line.a.y + vz * t - self.z
   let distance = px * px + pz * pz
   if (distance > box * box) return null
   return Math.sqrt(distance)
@@ -176,8 +175,7 @@ function heroInteract(self) {
 
 function heroDead(self) {
   if (self.animationFrame === self.animation.length - 1) {
-    if (self.input.a()) {
-      self.input.off(In.BUTTON_A)
+    if (self.input.pressA()) {
       self.world.notify('death-menu')
     }
     return
@@ -193,8 +191,7 @@ function heroOpenMenu(self) {
 }
 
 function heroBusy(self) {
-  if (self.input.rightTrigger()) {
-    self.input.off(In.RIGHT_TRIGGER)
+  if (self.input.pressRightTrigger()) {
     self.status = STATUS_IDLE
     if (self.menu) self.menu = null
     if (self.interaction) {
@@ -310,17 +307,14 @@ function heroMove(self) {
     self.combat = COMBAT_TIMER
     self.stamina -= MELEE_COST
     return
-  } else if (self.input.rightTrigger()) {
-    self.input.off(In.RIGHT_TRIGGER)
+  } else if (self.input.pressRightTrigger()) {
     if (heroInteract(self)) return
   }
-  if (self.input.rightBumper()) {
-    self.input.off(In.RIGHT_BUMPER)
+  if (self.input.pressRightBumper()) {
     heroOpenMenu(self)
   }
   if (self.ground) {
-    if (self.input.rightClick()) {
-      self.input.off(In.RIGHT_STICK_CLICK)
+    if (self.input.pressRightClick()) {
       self.ground = false
       self.deltaY += 0.4
     } else {

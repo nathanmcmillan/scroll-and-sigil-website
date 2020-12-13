@@ -1,0 +1,7 @@
+(function render () (
+  (= x 0)
+  (= col (color 1))
+  (txt 10 10 (+ '#' (pad 4 x)) col)
+  (= col (color 2))
+  (rect 10 10 32 32 col)
+)

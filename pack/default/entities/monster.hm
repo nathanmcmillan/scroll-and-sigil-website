@@ -1,0 +1,18 @@
+(function monster-on-damage () (
+  (if (or (eq (status self) STATUS_DEAD) (eq (status self) STATUS_FINAL))
+    return
+  )
+  (health-minus self damage)
+  (if (le health 0)
+    (
+      (play-sound 'monster-death')
+      (set-status self dead)
+      (update-sprite self)
+      (red-blood-explode self)
+    )
+    (
+      (play-sound 'monster-pain')
+      (red-blood-towards self source)
+    )
+  )
+))

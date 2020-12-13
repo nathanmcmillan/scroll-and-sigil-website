@@ -18,6 +18,18 @@ export function createTexture(gl, image, filter, wrap) {
   return new Texture(image.width, image.height, texture)
 }
 
+export function createPixelsToTexture(gl, width, height, pixels, format, filter, wrap) {
+  let texture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+  gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, gl.UNSIGNED_BYTE, pixels, 0)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
+  gl.bindTexture(gl.TEXTURE_2D, null)
+  return new Texture(width, height, texture)
+}
+
 function compileShader(gl, code, type) {
   let shader = gl.createShader(type)
   gl.shaderSource(shader, code)

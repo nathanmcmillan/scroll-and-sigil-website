@@ -1,7 +1,7 @@
 export const FONT_WIDTH = 6
-export const FONT_HEIGHT = 8
+export const FONT_HEIGHT = 6
 
-const FONT = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:()'
+const FONT = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""\'\'"\'?!@_*#$%&()+-/:;<=>[]\\^`{}|~'
 const FONT_GRID = Math.floor(128.0 / FONT_WIDTH)
 const FONT_COLUMN = FONT_WIDTH / 128.0
 const FONT_ROW = FONT_HEIGHT / 128.0
@@ -160,13 +160,10 @@ export function drawRectangle(b, x, y, width, height, red, green, blue, alpha) {
 }
 
 export function drawHollowRectangle(b, x, y, width, height, thickness, red, green, blue, alpha) {
-  drawLine(b, x, y, x + width, y, thickness, red, green, blue, alpha)
-  drawLine(b, x + width, y, x + width, y + height, thickness, red, green, blue, alpha)
-  drawLine(b, x, y + height, x + width, y + height, thickness, red, green, blue, alpha)
-  drawLine(b, x, y, x, y + height, thickness, red, green, blue, alpha)
-
-  // drawRectangle(b, x, y, width, thickness, red, green, blue, alpha)
-  // drawRectangle(b, x, y, thickness, height, red, green, blue, alpha)
+  drawRectangle(b, x, y, width, thickness, red, green, blue, alpha)
+  drawRectangle(b, x, y, thickness, height, red, green, blue, alpha)
+  drawRectangle(b, x + width - thickness, y, thickness, height, red, green, blue, alpha)
+  drawRectangle(b, x, y + height - thickness, width, thickness, red, green, blue, alpha)
 }
 
 export function drawImage(b, x, y, width, height, red, green, blue, alpha, left, top, right, bottom) {
@@ -283,6 +280,11 @@ export function drawText(b, x, y, text, scale, red, green, blue, alpha) {
     drawImage(b, currentX, currentY, fontWidth, fontHeight, red, green, blue, alpha, left, top, right, bottom)
     currentX += fontWidth
   }
+}
+
+export function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
+  drawText(b, x, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
+  drawText(b, x, y, text, scale, red, green, blue, 1.0)
 }
 
 export function drawCubeSide(b, side, x, y, z, size) {

@@ -1,17 +1,23 @@
 import {fetchText, fetchImage} from '/src/client/net.js'
 import {Buffer} from '/src/webgl/buffer.js'
-import {createTexture, compileProgram} from '/src/webgl/webgl.js'
+import {createTexture, createPixelsToTexture, compileProgram} from '/src/webgl/webgl.js'
 import {Renderer} from '/src/webgl/renderer.js'
 import {drawSkyBox} from '/src/render/render.js'
 import {drawWall, drawFloorCeil} from '/src/client/render-sector.js'
 import {orthographic, perspective} from '/src/math/matrix.js'
 import {saveSound, saveMusic, pauseMusic, resumeMusic} from '/src/assets/sounds.js'
+import {newPalette} from '/src/editor/palette.js'
 import {saveEntity, saveTile, saveTexture, waitForResources, createNewTexturesAndSpriteSheets} from '/src/assets/assets.js'
-import {EditorState} from '/src/client/editor-state.js'
-import {PainterState} from '/src/client/painter-state.js'
+import {PaintState} from '/src/client/paint-state.js'
+import {SfxState} from '/src/client/sfx-state.js'
+import {MusicState} from '/src/client/music-state.js'
+import {MapState} from '/src/client/map-state.js'
+import {DashboardState} from '/src/client/dashboard-state.js'
 import {GameState} from '/src/client/game-state.js'
-import {MainMenuState} from '/src/client/main-menu-state.js'
+import {HomeState} from '/src/client/home-state.js'
+import {TwoWayMap} from '/src/util/collections.js'
 import * as Wad from '/src/wad/wad.js'
+import * as In from '/src/input/input.js'
 
 export class Client {
   constructor(canvas, gl) {
@@ -24,6 +30,7 @@ export class Client {
     this.mouseRight = false
     this.mouseX = 0
     this.mouseY = 0
+    this.scale = 1
     this.orthographic = new Float32Array(16)
     this.perspective = new Float32Array(16)
     this.rendering = null
@@ -34,6 +41,8 @@ export class Client {
     this.spriteBuffers = new Map()
     this.music = null
     this.state = null
+    this.keys = null
+    this.input = null
   }
 
   keyEvent(code, down) {
@@ -49,25 +58,24 @@ export class Client {
     this.keyEvent(event.code, true)
   }
 
+  mouseEvent(button, down) {
+    if (button === 0) this.mouseLeft = down
+    else if (button === 2) this.mouseRight = down
+    this.state.mouseEvent(button === 0, down)
+  }
+
   mouseUp(event) {
-    if (event.button === 0) {
-      this.mouseLeft = false
-    } else if (event.button === 2) {
-      this.mouseRight = false
-    }
+    this.mouseEvent(event.button, false)
   }
 
   mouseDown(event) {
-    if (event.button === 0) {
-      this.mouseLeft = true
-    } else if (event.button === 2) {
-      this.mouseRight = true
-    }
+    this.mouseEvent(event.button, true)
   }
 
   mouseMove(event) {
     this.mouseX = event.clientX
     this.mouseY = event.clientY
+    this.state.mouseMove(this.mouseX, this.mouseY)
   }
 
   pause() {
@@ -89,7 +97,12 @@ export class Client {
     let near = 0.01
     let far = 200.0
     perspective(this.perspective, fov, near, far, ratio)
-    this.state.resize(width, height)
+
+    let x = Math.ceil(width / 800)
+    let y = Math.ceil(height / 600)
+    this.scale = Math.min(x, y)
+
+    this.state.resize(width, height, this.scale)
   }
 
   getSectorBuffer(texture) {
@@ -144,6 +157,8 @@ export class Client {
     let directory = '/pack/' + pack
     let contents = Wad.parse(await fetchText(directory + '/' + pack + '.wad'))
 
+    this.ini = main
+
     for (const entity of contents.get('entities')) {
       saveEntity(entity, directory, '/entities/' + entity + '.wad')
     }
@@ -165,6 +180,7 @@ export class Client {
     let color2d = fetchText('/shaders/color2d.glsl')
     let texture2d = fetchText('/shaders/texture2d.glsl')
     let texture3d = fetchText('/shaders/texture3d.glsl')
+    let texture2drgb = fetchText('/shaders/texture2d-rgb.glsl')
 
     let tiles = []
     let textures = []
@@ -180,11 +196,45 @@ export class Client {
     for (const texture of contents.get('textures')) {
       let name = texture.get('name')
       let wrap = texture.get('wrap')
-      textures.push(
-        fetchImage(directory + '/textures/' + name + '.png').then((image) => {
-          return {name: name, wrap: wrap, image: image}
-        })
-      )
+      if (name.endsWith('.txt')) {
+        textures.push(
+          fetchText(directory + '/textures/' + name).then((text) => {
+            name = name.substring(0, name.length - 4)
+
+            let image = text.split('\n')
+            let index = 0
+
+            let dimensions = image[index].split(' ')
+            let width = parseInt(dimensions[0])
+            let height = parseInt(dimensions[1])
+            index++
+
+            let palette = newPalette()
+            let pixels = new Uint8Array(width * height * 3)
+
+            for (let h = 0; h < height; h++) {
+              let row = image[index].split(' ')
+              for (let c = 0; c < width; c++) {
+                let i = (c + h * width) * 3
+                let p = parseInt(row[c]) * 3
+
+                pixels[i] = palette[p]
+                pixels[i + 1] = palette[p + 1]
+                pixels[i + 2] = palette[p + 2]
+              }
+              index++
+            }
+
+            return {name: name, wrap: wrap, width: width, height: height, pixels: pixels}
+          })
+        )
+      } else {
+        textures.push(
+          fetchImage(directory + '/textures/' + name + '.png').then((image) => {
+            return {name: name, wrap: wrap, image: image}
+          })
+        )
+      }
     }
 
     await waitForResources()
@@ -201,7 +251,8 @@ export class Client {
     for (let texture of textures) {
       texture = await texture
       let wrap = texture.wrap === 'repeat' ? gl.REPEAT : gl.CLAMP_TO_EDGE
-      saveTexture(texture.name, createTexture(gl, texture.image, gl.NEAREST, wrap))
+      if (texture.pixels) saveTexture(texture.name, createPixelsToTexture(gl, texture.width, texture.height, texture.pixels, gl.RGB, gl.NEAREST, wrap))
+      else saveTexture(texture.name, createTexture(gl, texture.image, gl.NEAREST, wrap))
     }
 
     this.rendering = new Renderer(gl)
@@ -216,10 +267,12 @@ export class Client {
     color2d = await color2d
     texture2d = await texture2d
     texture3d = await texture3d
+    texture2drgb = await texture2drgb
 
     rendering.insertProgram(0, compileProgram(gl, color2d))
     rendering.insertProgram(1, compileProgram(gl, texture2d))
     rendering.insertProgram(2, compileProgram(gl, texture3d))
+    rendering.insertProgram(3, compileProgram(gl, texture2drgb))
 
     rendering.makeVAO(this.bufferGUI)
     rendering.makeVAO(this.bufferColor)
@@ -227,28 +280,86 @@ export class Client {
 
     rendering.updateVAO(this.bufferSky, gl.STATIC_DRAW)
 
-    switch (main.get('open')) {
+    let keys = new TwoWayMap()
+
+    keys.set('Enter', In.BUTTON_START)
+
+    keys.set('Escape', In.BUTTON_SELECT)
+    keys.set('Backspace', In.BUTTON_SELECT)
+
+    keys.set('KeyW', In.LEFT_STICK_UP)
+    keys.set('KeyA', In.LEFT_STICK_LEFT)
+    keys.set('KeyS', In.LEFT_STICK_DOWN)
+    keys.set('KeyD', In.LEFT_STICK_RIGHT)
+
+    keys.set('ArrowUp', In.RIGHT_STICK_UP)
+    keys.set('ArrowDown', In.RIGHT_STICK_DOWN)
+    keys.set('ArrowLeft', In.RIGHT_STICK_LEFT)
+    keys.set('ArrowRight', In.RIGHT_STICK_RIGHT)
+
+    keys.set('KeyI', In.RIGHT_STICK_UP)
+    keys.set('KeyK', In.RIGHT_STICK_DOWN)
+    keys.set('KeyJ', In.RIGHT_STICK_LEFT)
+    keys.set('KeyL', In.RIGHT_STICK_RIGHT)
+
+    keys.set('KeyT', In.DPAD_UP)
+    keys.set('KeyF', In.DPAD_DOWN)
+    keys.set('KeyG', In.DPAD_LEFT)
+    keys.set('KeyH', In.DPAD_RIGHT)
+
+    keys.set('KeyZ', In.BUTTON_A)
+    keys.set('KeyX', In.BUTTON_B)
+    keys.set('KeyC', In.BUTTON_X)
+    keys.set('KeyV', In.BUTTON_Y)
+
+    keys.set('KeyQ', In.LEFT_STICK_CLICK)
+    keys.set('KeyE', In.RIGHT_STICK_CLICK)
+
+    keys.set('KeyO', In.LEFT_TRIGGER)
+    keys.set('KeyP', In.RIGHT_TRIGGER)
+
+    keys.set('ShiftLeft', In.LEFT_BUMPER)
+    keys.set('ShiftRight', In.RIGHT_BUMPER)
+
+    this.keys = keys
+    this.input = new In.Input()
+
+    await this.openState(main.get('open'))
+  }
+
+  async openState(open) {
+    let ini = this.ini
+    let file = null
+    switch (open) {
+      case 'paint':
+        this.state = new PaintState(this)
+        if (ini.has('image')) file = '/pack/default/textures/' + ini.get('image') + '.image'
+        break
+      case 'sfx':
+        this.state = new SfxState(this)
+        break
+      case 'music':
+        this.state = new MusicState(this)
+        break
+      case 'maps':
+        this.state = new MapState(this)
+        if (ini.has('map')) file = '/maps/' + ini.get('map') + '.map'
+        break
+      case 'dashboard':
+        this.state = new DashboardState(this)
+        break
       case 'game':
         this.state = new GameState(this)
-        break
-      case 'editor':
-        this.state = new EditorState(this)
-        break
-      case 'painter':
-        this.state = new PainterState(this)
+        if (ini.has('map')) file = '/maps/' + ini.get('map') + '.map'
         break
       default:
-        this.state = new MainMenuState(this)
+        this.state = new HomeState(this)
     }
-
-    let file = null
-    if (main.has('map')) file = '/maps/' + main.get('map') + '.map'
-
     await this.state.initialize(file)
   }
 
-  update() {
-    this.state.update()
+  update(timestamp) {
+    this.state.update(timestamp)
   }
 
   render() {
