@@ -15,6 +15,10 @@ class FlexBox {
     this.x = 0
     this.y = 0
   }
+
+  inside(x, y) {
+    return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+  }
 }
 
 class FlexText extends FlexBox {

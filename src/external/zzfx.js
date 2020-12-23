@@ -5,10 +5,6 @@ export const zzfxr = 44100
 
 const context = new AudioContext()
 
-export function zzfx(...t) {
-  return zzfxp(zzfxg(...t))
-}
-
 export function zzfxt() {
   return context.currentTime
 }
@@ -76,4 +72,8 @@ export function zzfxg(q = 1, k = 0.05, c = 220, e = 0, t = 0, u = 0.1, r = 0, F 
       n && ++n > A && ((c += w), (D += w), (n = 0)),
       !l || ++J % l || ((c = D), (v = H), (n = n || 1))
   return Z
+}
+
+export function zzfx(...t) {
+  return zzfxp(zzfxg(...t))
 }

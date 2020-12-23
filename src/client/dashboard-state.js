@@ -1,7 +1,7 @@
 import {textureByName} from '/src/assets/assets.js'
 import {drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply} from '/src/math/matrix.js'
-import {darkbluef, whitef} from '/src/editor/palette.js'
+import {darkgreyf, whitef} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {Dashboard} from '/src/menu/dashboard.js'
 
@@ -38,11 +38,11 @@ export class DashboardState {
       if (dashboard.column === 0) {
         client.openState('paint')
       } else if (dashboard.column === 1) {
-        client.openState('paint')
+        client.openState('maps')
       } else if (dashboard.column === 2) {
-        client.openState('paint')
+        client.openState('music')
       } else if (dashboard.column === 3) {
-        client.openState('paint')
+        client.openState('sfx')
       }
     }
   }
@@ -62,11 +62,7 @@ export class DashboardState {
     const fontWidth = scale * FONT_WIDTH
     const fontHeight = scale * FONT_HEIGHT
 
-    let darkblue0 = darkbluef(0)
-    let darkblue1 = darkbluef(1)
-    let darkblue2 = darkbluef(2)
-
-    gl.clearColor(darkblue0, darkblue1, darkblue2, 1.0)
+    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
 
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.clear(gl.DEPTH_BUFFER_BIT)
@@ -83,7 +79,8 @@ export class DashboardState {
     let white1 = whitef(1)
     let white2 = whitef(2)
 
-    rendering.setProgram(1)
+    // text
+    rendering.setProgram(4)
     rendering.setView(0, 0, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 

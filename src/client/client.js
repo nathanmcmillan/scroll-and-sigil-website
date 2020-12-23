@@ -25,11 +25,6 @@ export class Client {
     this.height = canvas.height
     this.canvas = canvas
     this.gl = gl
-    this.keyboard = new Map()
-    this.mouseLeft = false
-    this.mouseRight = false
-    this.mouseX = 0
-    this.mouseY = 0
     this.scale = 1
     this.orthographic = new Float32Array(16)
     this.perspective = new Float32Array(16)
@@ -46,7 +41,6 @@ export class Client {
   }
 
   keyEvent(code, down) {
-    this.keyboard.set(code, down)
     this.state.keyEvent(code, down)
   }
 
@@ -59,8 +53,6 @@ export class Client {
   }
 
   mouseEvent(button, down) {
-    if (button === 0) this.mouseLeft = down
-    else if (button === 2) this.mouseRight = down
     this.state.mouseEvent(button === 0, down)
   }
 
@@ -73,9 +65,7 @@ export class Client {
   }
 
   mouseMove(event) {
-    this.mouseX = event.clientX
-    this.mouseY = event.clientY
-    this.state.mouseMove(this.mouseX, this.mouseY)
+    this.state.mouseMove(event.clientX, this.height - event.clientY)
   }
 
   pause() {
@@ -181,6 +171,7 @@ export class Client {
     let texture2d = fetchText('/shaders/texture2d.glsl')
     let texture3d = fetchText('/shaders/texture3d.glsl')
     let texture2drgb = fetchText('/shaders/texture2d-rgb.glsl')
+    let texture2dignore = fetchText('/shaders/texture2d-ignore.glsl')
 
     let tiles = []
     let textures = []
@@ -268,11 +259,13 @@ export class Client {
     texture2d = await texture2d
     texture3d = await texture3d
     texture2drgb = await texture2drgb
+    texture2dignore = await texture2dignore
 
     rendering.insertProgram(0, compileProgram(gl, color2d))
     rendering.insertProgram(1, compileProgram(gl, texture2d))
     rendering.insertProgram(2, compileProgram(gl, texture3d))
     rendering.insertProgram(3, compileProgram(gl, texture2drgb))
+    rendering.insertProgram(4, compileProgram(gl, texture2dignore))
 
     rendering.makeVAO(this.bufferGUI)
     rendering.makeVAO(this.bufferColor)

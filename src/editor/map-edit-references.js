@@ -191,7 +191,7 @@ export class WallReference {
     this.t = t
     this.a = a
     this.b = b
-    this.normal = this.a.normal(this.b)
+    this.normal = a.normal(b)
   }
 
   static transfer(src, dest) {

@@ -23,7 +23,7 @@ export function darkpurple(i) {
 }
 
 export function darkpurplef(i) {
-  return darkpurplef(i) / 255.0
+  return darkpurple(i) / 255.0
 }
 
 export function darkgreen(i) {

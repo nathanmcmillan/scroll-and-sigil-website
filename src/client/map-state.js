@@ -26,8 +26,9 @@ export class MapState {
   keyEvent(code, down) {
     if (this.keys.has(code)) {
       this.editor.input.set(this.keys.get(code), down)
-    }
-    if (down && code === 'Digit0') {
+    } else if (down && code === 'Digit1') {
+      this.client.openState('dashboard')
+    } else if (down && code === 'Digit0') {
       console.log(this.editor.export())
     }
   }

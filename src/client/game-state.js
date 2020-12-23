@@ -1,5 +1,6 @@
 import {Game} from '/src/game/game.js'
 import {drawDecal} from '/src/client/render-sector.js'
+import {renderLoadInProgress} from '/src/client/render-loading.js'
 import {drawRectangle, drawSprite, drawText, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply, rotateX, rotateY, translate, multiplyVector3} from '/src/math/matrix.js'
 import {textureByName, textureByIndex} from '/src/assets/assets.js'
@@ -70,48 +71,21 @@ export class GameState {
     this.events.length = 0
   }
 
-  renderLoadInProgress() {
+  render() {
     const client = this.client
     const gl = client.gl
     const rendering = client.rendering
     const view = this.view
     const projection = this.projection
 
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.clear(gl.DEPTH_BUFFER_BIT)
-
-    rendering.setProgram(1)
-    rendering.setView(0, 0, client.width, client.height)
-
-    gl.disable(gl.CULL_FACE)
-    gl.disable(gl.DEPTH_TEST)
-
-    identity(view)
-    multiply(projection, client.orthographic, view)
-    rendering.updateUniformMatrix('u_mvp', projection)
-
-    client.bufferGUI.zero()
-    let text = 'Loading. Please wait...'
-    drawText(client.bufferGUI, 12.0, 8.0, text, 2.0, 0.0, 0.0, 0.0, 1.0)
-    drawText(client.bufferGUI, 10.0, 10.0, text, 2.0, 1.0, 0.0, 0.0, 1.0)
-    rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
-    rendering.updateAndDraw(client.bufferGUI)
-  }
-
-  render() {
     if (this.loading) {
-      this.renderLoadInProgress()
+      renderLoadInProgress(client, gl, rendering, view, projection)
       return
     }
 
     const game = this.game
     const world = game.world
-    const client = this.client
-    const gl = client.gl
-    const rendering = client.rendering
     const camera = game.camera
-    const view = this.view
-    const projection = this.projection
 
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.clear(gl.DEPTH_BUFFER_BIT)
@@ -129,7 +103,7 @@ export class GameState {
     multiply(projection, client.perspective, view)
     rendering.updateUniformMatrix('u_mvp', projection)
 
-    let sky = textureByName('sky-box-up')
+    let sky = textureByName('sky-box-1')
     rendering.bindTexture(gl.TEXTURE0, sky.texture)
     rendering.bindAndDraw(client.bufferSky)
 

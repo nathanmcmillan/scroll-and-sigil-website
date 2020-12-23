@@ -1,7 +1,9 @@
-import {textureByName} from '/src/assets/assets.js'
-import {drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {identity, multiply} from '/src/math/matrix.js'
-import {darkbluef, whitef} from '/src/editor/palette.js'
+import {Game} from '/src/game/game.js'
+import {renderLoadInProgress} from '/src/client/render-loading.js'
+import {textureByName, textureByIndex} from '/src/assets/assets.js'
+import {drawSprite, drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
+import {identity, multiply, rotateX, rotateY, translate} from '/src/math/matrix.js'
+import {whitef} from '/src/editor/palette.js'
 import {flexText, flexSolve} from '/src/flex/flex.js'
 import {Home} from '/src/menu/home.js'
 
@@ -9,6 +11,9 @@ export class HomeState {
   constructor(client) {
     this.client = client
     this.keys = client.keys
+
+    this.game = new Game(this)
+    this.loading = true
 
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
@@ -28,9 +33,29 @@ export class HomeState {
 
   mouseMove() {}
 
-  async initialize() {}
+  async initialize() {
+    await this.load('/maps/home.map')
+  }
+
+  async load(file) {
+    await this.game.load(file)
+
+    const world = this.game.world
+    const client = this.client
+    const gl = client.gl
+
+    for (const buffer of client.sectorBuffers.values()) buffer.zero()
+    for (const sector of world.sectors) client.sectorRender(sector)
+    for (const buffer of client.sectorBuffers.values()) client.rendering.updateVAO(buffer, gl.STATIC_DRAW)
+
+    this.loading = false
+
+    this.game.update()
+  }
 
   update(timestamp) {
+    if (this.loading) return
+
     let home = this.home
     home.update(timestamp)
     if (home.yes) {
@@ -50,28 +75,92 @@ export class HomeState {
   }
 
   render() {
-    const home = this.home
-    if (!home.doPaint) return
-
     const client = this.client
     const gl = client.gl
     const rendering = client.rendering
     const view = this.view
     const projection = this.projection
+
+    if (this.loading) {
+      renderLoadInProgress(client, gl, rendering, view, projection)
+      return
+    }
+
+    const home = this.home
+    if (!home.doPaint) return
+
     const scale = home.scale
     const width = client.width
     const height = client.height
-    const fontWidth = scale * FONT_WIDTH
-    const fontHeight = scale * FONT_HEIGHT
 
-    let darkblue0 = darkbluef(0)
-    let darkblue1 = darkbluef(1)
-    let darkblue2 = darkbluef(2)
-
-    gl.clearColor(darkblue0, darkblue1, darkblue2, 1.0)
+    const fontScale = Math.floor(1.5 * scale)
+    const fontWidth = fontScale * FONT_WIDTH
+    const fontHeight = fontScale * FONT_HEIGHT
 
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.clear(gl.DEPTH_BUFFER_BIT)
+
+    // render world
+
+    const game = this.game
+    const world = game.world
+    const camera = game.camera
+
+    rendering.setProgram(2)
+    rendering.setView(0, 0, client.width, client.height)
+
+    gl.disable(gl.CULL_FACE)
+    gl.disable(gl.DEPTH_TEST)
+
+    identity(view)
+    rotateX(view, Math.sin(camera.rx), Math.cos(camera.rx))
+    rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
+    translate(view, 0.0, 0.0, 0.0)
+    multiply(projection, client.perspective, view)
+    rendering.updateUniformMatrix('u_mvp', projection)
+
+    let sky = textureByName('sky-box-1')
+    rendering.bindTexture(gl.TEXTURE0, sky.texture)
+    rendering.bindAndDraw(client.bufferSky)
+
+    gl.enable(gl.CULL_FACE)
+    gl.enable(gl.DEPTH_TEST)
+
+    identity(view)
+    rotateX(view, Math.sin(camera.rx), Math.cos(camera.rx))
+    rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
+    translate(view, -camera.x, -camera.y, -camera.z)
+    multiply(projection, client.perspective, view)
+    rendering.updateUniformMatrix('u_mvp', projection)
+
+    for (const [index, buffer] of client.sectorBuffers) {
+      rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
+      rendering.bindAndDraw(buffer)
+    }
+
+    let buffers = client.spriteBuffers
+    for (const buffer of buffers.values()) {
+      buffer.zero()
+    }
+
+    let sine = Math.sin(-camera.ry)
+    let cosine = Math.cos(-camera.ry)
+
+    let things = world.things
+    let t = world.thingCount
+    while (t--) {
+      let thing = things[t]
+      let buffer = client.getSpriteBuffer(thing.texture)
+      drawSprite(buffer, thing.x, thing.y, thing.z, thing.sprite, sine, cosine)
+    }
+
+    for (const [index, buffer] of buffers) {
+      if (buffer.indexPosition === 0) continue
+      rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
+      rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
+    }
+
+    // end render world
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
@@ -85,27 +174,28 @@ export class HomeState {
     let white1 = whitef(1)
     let white2 = whitef(2)
 
-    rendering.setProgram(1)
+    // text
+    rendering.setProgram(4)
     rendering.setView(0, 0, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     let titleBox = home.titleBox
-    drawTextSpecial(client.bufferGUI, titleBox.x, titleBox.y, titleBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, titleBox.x, titleBox.y, titleBox.text, 2 * scale, white0, white1, white2)
 
     let continueGameBox = home.continueGameBox
-    drawTextSpecial(client.bufferGUI, continueGameBox.x, continueGameBox.y, continueGameBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, continueGameBox.x, continueGameBox.y, continueGameBox.text, fontScale, white0, white1, white2)
 
     let newGameBox = home.newGameBox
-    drawTextSpecial(client.bufferGUI, newGameBox.x, newGameBox.y, newGameBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, newGameBox.x, newGameBox.y, newGameBox.text, fontScale, white0, white1, white2)
 
     let editorBox = home.editorBox
-    drawTextSpecial(client.bufferGUI, editorBox.x, editorBox.y, editorBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, editorBox.x, editorBox.y, editorBox.text, fontScale, white0, white1, white2)
 
     let optionsBox = home.optionsBox
-    drawTextSpecial(client.bufferGUI, optionsBox.x, optionsBox.y, optionsBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, optionsBox.x, optionsBox.y, optionsBox.text, fontScale, white0, white1, white2)
 
     let creditsBox = home.creditsBox
-    drawTextSpecial(client.bufferGUI, creditsBox.x, creditsBox.y, creditsBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, creditsBox.x, creditsBox.y, creditsBox.text, fontScale, white0, white1, white2)
 
     let text = ')'
     let indicatorBox = flexText(text, fontWidth * text.length, fontHeight)
@@ -129,7 +219,7 @@ export class HomeState {
     }
     flexSolve(width, height, indicatorBox)
 
-    drawTextSpecial(client.bufferGUI, indicatorBox.x, indicatorBox.y, indicatorBox.text, scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, indicatorBox.x, indicatorBox.y, indicatorBox.text, fontScale, white0, white1, white2)
 
     rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
     rendering.updateAndDraw(client.bufferGUI)

@@ -64,7 +64,7 @@ export function renderMapEditViewMode(state) {
   multiply(projection, client.perspective, view)
   rendering.updateUniformMatrix('u_mvp', projection)
 
-  let sky = textureByName('sky-box-up')
+  let sky = textureByName('sky-box-1')
   rendering.bindTexture(gl.TEXTURE0, sky.texture)
   rendering.bindAndDraw(client.bufferSky)
 
@@ -105,7 +105,8 @@ export function renderMapEditViewMode(state) {
     rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
   }
 
-  rendering.setProgram(1)
+  // text
+  rendering.setProgram(4)
   rendering.setView(0, 0, client.width, client.height)
 
   gl.disable(gl.CULL_FACE)

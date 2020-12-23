@@ -1,6 +1,5 @@
 import {fetchText} from '/src/client/net.js'
-import {MusicNode} from '/src/audio/music.js'
-import * as Music from '/src/audio/music.js'
+import {parse, MusicNode} from '/src/sound/audio.js'
 
 const SOUNDS = new Map()
 const MUSIC_TABLE = new Map()
@@ -27,7 +26,7 @@ export async function saveMusic(name, path) {
   if (dot === -1) throw 'Extension missing: ' + path
   let extension = path.substring(dot + 1)
   if (extension === 'zzfxm') {
-    let contents = Music.parse(await fetchText(path))
+    let contents = parse(await fetchText(path))
     MUSIC_TABLE.set(name, new MusicNode(contents))
   } else {
     MUSIC_TABLE.set(name, new Audio(path))

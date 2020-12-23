@@ -13,3 +13,8 @@ export async function fetchImage(path) {
     return image
   })
 }
+
+export async function fetchModule(path) {
+  let module = await import(path)
+  console.log(module)
+}

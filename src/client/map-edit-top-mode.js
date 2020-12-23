@@ -2,6 +2,7 @@ import {drawText, drawImage, drawRectangle, drawLine, drawTriangle, FONT_WIDTH, 
 import {identity, multiply} from '/src/math/matrix.js'
 import {textureByName} from '/src/assets/assets.js'
 import {vectorSize, thingSize, DESCRIBE_MENU, DESCRIBE_TOOL, DESCRIBE_ACTION, DESCRIBE_OPTIONS, OPTION_END_LINE, OPTION_END_LINE_NEW_VECTOR} from '/src/editor/maps.js'
+import {blackf, yellowf, whitef, greenf, redf} from '/src/editor/palette.js'
 
 function mapX(x, zoom, camera) {
   return zoom * (x - camera.x)
@@ -60,8 +61,8 @@ function mapRender(b, editor) {
       let y1 = mapZ(line.a.y, zoom, camera)
       let x2 = mapX(line.b.x, zoom, camera)
       let y2 = mapZ(line.b.y, zoom, camera)
-      if (line == editor.selectedLine) drawLineWithNormal(b, x1, y1, x2, y2, thickness, 0.0, 1.0, 0.0, alpha, zoom, normal)
-      else drawLineWithNormal(b, x1, y1, x2, y2, thickness, 1.0, 1.0, 1.0, alpha, zoom, normal)
+      if (line == editor.selectedLine) drawLineWithNormal(b, x1, y1, x2, y2, thickness, greenf(0), greenf(1), greenf(2), alpha, zoom, normal)
+      else drawLineWithNormal(b, x1, y1, x2, y2, thickness, whitef(0), whitef(1), whitef(2), alpha, zoom, normal)
     }
   }
   if (editor.viewVecs) {
@@ -69,8 +70,8 @@ function mapRender(b, editor) {
     for (const vec of editor.vecs) {
       let x = Math.floor(mapX(vec.x, zoom, camera))
       let y = Math.floor(mapZ(vec.y, zoom, camera))
-      if (vec === editor.selectedVec || vec === editor.selectedSecondVec) drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, 0.0, 1.0, 0.0, alpha)
-      else drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, 1.0, 0.0, 0.0, alpha)
+      if (vec === editor.selectedVec || vec === editor.selectedSecondVec) drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, greenf(0), greenf(1), greenf(2), alpha)
+      else drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, redf(0), redf(1), redf(2), alpha)
     }
   }
   if (editor.viewThings) {
@@ -78,8 +79,8 @@ function mapRender(b, editor) {
       let x = Math.floor(mapX(thing.x, zoom, camera))
       let y = Math.floor(mapZ(thing.z, zoom, camera))
       let size = thingSize(thing, zoom)
-      if (thing == editor.selectedThing) drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, 1.0, 1.0, 0.0, alpha)
-      else drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, 0.0, 1.0, 0.0, alpha)
+      if (thing == editor.selectedThing) drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, yellowf(0), yellowf(1), yellowf(2), alpha)
+      else drawRectangle(b, x - size, y - size, 2.0 * size, 2.0 * size, greenf(0), greenf(1), greenf(2), alpha)
     }
   }
 }
@@ -98,6 +99,8 @@ export function renderMapEditTopMode(state) {
   const rendering = client.rendering
   const view = state.view
   const projection = state.projection
+
+  gl.clearColor(blackf(0), blackf(1), blackf(2), 1.0)
 
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.clear(gl.DEPTH_BUFFER_BIT)
@@ -118,13 +121,12 @@ export function renderMapEditTopMode(state) {
 
   if (editor.action == OPTION_END_LINE || editor.action == OPTION_END_LINE_NEW_VECTOR) {
     const thickness = 1.0
-    const alpha = 1.0
     const zoom = editor.zoom
     const camera = editor.camera
     const vec = editor.selectedVec
     let x = zoom * (vec.x - camera.x)
     let y = zoom * (vec.y - camera.z)
-    drawLineWithNormal(client.bufferColor, x, y, editor.cursor.x, editor.cursor.y, thickness, 1.0, 1.0, 0.0, alpha, zoom, editor.viewLineNormals)
+    drawLineWithNormal(client.bufferColor, x, y, editor.cursor.x, editor.cursor.y, thickness, yellowf(0), yellowf(1), yellowf(2), 1.0, zoom, editor.viewLineNormals)
   }
 
   rendering.updateAndDraw(client.bufferColor)
@@ -146,8 +148,8 @@ export function renderMapEditTopMode(state) {
     let y = client.height - 10.0 - 2.0 * FONT_HEIGHT
     for (let i = 0; i < DESCRIBE_TOOL.length; i++) {
       const option = DESCRIBE_TOOL[i]
-      if (i == editor.tool) drawTextSpecial(client.bufferGUI, x, y, option, 2.0, 1.0, 1.0, 0.0)
-      else drawTextSpecial(client.bufferGUI, x, y, option, 2.0, 1.0, 0.0, 0.0)
+      if (i == editor.tool) drawTextSpecial(client.bufferGUI, x, y, option, 2.0, yellowf(0), yellowf(1), yellowf(2))
+      else drawTextSpecial(client.bufferGUI, x, y, option, 2.0, redf(0), redf(1), redf(2))
       y -= 2.5 * FONT_HEIGHT
     }
   }
@@ -156,7 +158,7 @@ export function renderMapEditTopMode(state) {
     let x = 10.0
     let y = client.height - 10.0 - 2.0 * FONT_HEIGHT
     for (const option of DESCRIBE_MENU) {
-      drawTextSpecial(client.bufferGUI, x, y, option, 2.0, 1.0, 1.0, 1.0)
+      drawTextSpecial(client.bufferGUI, x, y, option, 2.0, whitef(0), whitef(1), whitef(2))
       y -= 2.5 * FONT_HEIGHT
     }
   }
@@ -167,7 +169,7 @@ export function renderMapEditTopMode(state) {
     let key = state.keys.reversed(button)
     if (key.startsWith('Key')) key = key.substring(3)
     let text = '(' + key + ') ' + DESCRIBE_ACTION[option]
-    drawTextSpecial(client.bufferGUI, x, 10.0, text, 2.0, 1.0, 0.0, 0.0)
+    drawTextSpecial(client.bufferGUI, x, 10.0, text, 2.0, redf(0), redf(1), redf(2))
     x += 2.0 * FONT_WIDTH * (text.length + 1)
   }
 
@@ -175,7 +177,7 @@ export function renderMapEditTopMode(state) {
     let x = 10.0
     let y = editor.height - 2.0 * FONT_HEIGHT - 10.0
     let text = 'X:' + editor.selectedVec.x + ' Y:' + editor.selectedVec.y
-    drawTextSpecial(client.bufferGUI, x, y, text, 2.0, 1.0, 0.0, 0.0)
+    drawTextSpecial(client.bufferGUI, x, y, text, 2.0, redf(0), redf(1), redf(2))
   }
 
   rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)

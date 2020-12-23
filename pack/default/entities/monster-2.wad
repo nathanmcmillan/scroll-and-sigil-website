@@ -1,0 +1,83 @@
+class: monster
+sprite: baron
+box: 0.6
+height: 4.0
+name: Zombie
+group: (monster)(zombie)
+health: 4
+speed: 0.05
+sight: 5.0
+sound-pain: baron-pain
+sound-death: baron-death
+sound-wake: baron-scream
+animations {
+  idle [walk-1]
+  move [walk-2, walk-3, walk-0, walk-1]
+  melee [melee-0, melee-1]
+  missile [missile-0, missile-1]
+  death [death-0, death-1]
+}
+attack {
+  melee {
+    range: 0.8
+    animation: melee
+    sound: baron-melee
+    damage [1, 10]
+    type: instant
+    sound-on-frame: 2
+    damage-on-frame: 2
+  }
+  missile {
+    range: 5.0
+    animation: missile
+    sound: baron-missile
+    damage [2, 6]
+    type: projectile
+    projectile: plasma
+    sound-on-frame: 2
+    missile-on-frame: 2
+  }
+  scan {
+    if [
+      [ge, health, 0]
+      [le, dist, 5.0]
+      [eq, reaction, 0]
+    ]
+    then [{
+      range: 5.0
+      animation: missile
+      sound: baron-missile
+      damage [2, 6]
+      type: scan
+      sound-on-frame: 2
+      scan-on-frame: 2
+    }, {
+      range: 5.0
+      animation: missile
+      sound: baron-missile
+      damage [2, 6]
+      type: scan
+      sound-on-frame: 2
+      scan-on-frame: 2
+    }]
+  }
+}
+init [
+  [let, foobar, table]
+  [set, foobar, 'extra-var', 0.0]
+  [fn, name, [a, b], [
+    [print, 'monster init', a, b]
+  ]]
+  [name, 1, 2]
+  [export, foobar]
+]
+states {
+  look [
+    [if [ne, find-target, nil], [goto-state, chase], pass]
+  ]
+  wander []
+  chase []
+  melee []
+  missile []
+  death []
+}

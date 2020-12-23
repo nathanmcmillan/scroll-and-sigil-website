@@ -39,16 +39,17 @@ export class Home {
   plan() {
     const width = this.width
     const height = this.height
-    const fontWidth = this.scale * FONT_WIDTH
-    const fontHeight = this.scale * FONT_HEIGHT
+
+    const fontScale = Math.floor(1.5 * this.scale)
+    const fontWidth = fontScale * FONT_WIDTH
+    const fontHeight = fontScale * FONT_HEIGHT
 
     let text = 'Scroll and Sigil'
-    let titleBox = flexText(text, fontWidth * text.length, fontHeight)
+    let titleBox = flexText(text, 2 * fontWidth * text.length, 2 * fontHeight)
     titleBox.funX = '%'
     titleBox.argX = 15
     titleBox.funY = '%'
     titleBox.argY = 90
-    flexSolve(width, height, titleBox)
     this.titleBox = titleBox
 
     text = 'continue'
@@ -58,7 +59,6 @@ export class Home {
     continueGameBox.argX = 15
     continueGameBox.funY = '%'
     continueGameBox.argY = 25
-    flexSolve(width, height, continueGameBox)
     this.continueGameBox = continueGameBox
 
     text = 'new game'
@@ -68,7 +68,6 @@ export class Home {
     newGameBox.fromX = continueGameBox
     newGameBox.funY = 'below'
     newGameBox.fromY = continueGameBox
-    flexSolve(width, height, newGameBox)
     this.newGameBox = newGameBox
 
     text = 'editor'
@@ -78,7 +77,6 @@ export class Home {
     editorBox.fromX = newGameBox
     editorBox.funY = 'below'
     editorBox.fromY = newGameBox
-    flexSolve(width, height, editorBox)
     this.editorBox = editorBox
 
     text = 'options'
@@ -88,7 +86,6 @@ export class Home {
     optionsBox.fromX = editorBox
     optionsBox.funY = 'below'
     optionsBox.fromY = editorBox
-    flexSolve(width, height, optionsBox)
     this.optionsBox = optionsBox
 
     text = 'credits'
@@ -98,8 +95,9 @@ export class Home {
     creditsBox.fromX = optionsBox
     creditsBox.funY = 'below'
     creditsBox.fromY = optionsBox
-    flexSolve(width, height, creditsBox)
     this.creditsBox = creditsBox
+
+    flexSolve(width, height, titleBox, continueGameBox, newGameBox, editorBox, optionsBox, creditsBox)
   }
 
   update(timestamp) {

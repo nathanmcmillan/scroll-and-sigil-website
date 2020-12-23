@@ -10,17 +10,6 @@ const DROPLET = 2
 const INPUT_RATE = 128
 const HISTORY_LIMIT = 50
 
-// TODO
-// TOP BAR
-// - FILE
-// --- IMPORT
-// --- SAVE
-// --- EXPORT
-// - EDIT
-// --- UNDO
-// --- REDO
-// - HELP
-
 export class PaintEdit {
   constructor(width, height, scale, input) {
     this.width = width
@@ -95,17 +84,16 @@ export class PaintEdit {
     const paletteRows = this.paletteRows
     const paletteColumns = this.paletteColumns
     const toolColumns = this.toolColumns
-    const fontWidth = this.scale * FONT_WIDTH
-    const fontHeight = this.scale * FONT_HEIGHT
+    const fontScale = Math.floor(1.5 * scale)
+    const fontWidth = fontScale * FONT_WIDTH
+    const fontHeight = fontScale * FONT_HEIGHT
 
     let magnify = 2 * scale
     let sheetBox = flexBox(magnify * sheetColumns, magnify * sheetRows)
     sheetBox.topSpace = Math.ceil(0.5 * fontHeight)
     sheetBox.bottomSpace = Math.ceil(0.5 * fontHeight)
-    sheetBox.rightSpace = 4 * fontWidth
-    sheetBox.funX = '%'
-    sheetBox.argX = 5
-    // sheetBox.argX = Math.floor(0.5 * width - 0.5 * (magnify * sheetColumns + canvasZoom * magnify))
+    sheetBox.rightSpace = 2 * fontWidth
+    sheetBox.argX = 0
     sheetBox.funY = 'center'
     this.sheetBox = sheetBox
 
@@ -123,7 +111,8 @@ export class PaintEdit {
     viewBox.fromY = sheetBox
     this.viewBox = viewBox
 
-    let toolBox = flexBox(toolColumns * fontWidth, 2 * fontHeight)
+    magnify = 16 * scale
+    let toolBox = flexBox(toolColumns * magnify, 2 * fontHeight)
     toolBox.bottomSpace = 2 * fontHeight
     toolBox.funX = 'center'
     toolBox.fromX = viewBox
@@ -139,12 +128,21 @@ export class PaintEdit {
     paletteBox.fromY = toolBox
     this.paletteBox = paletteBox
 
-    flexSolve(width, height, sheetBox, viewBox, toolBox, paletteBox)
+    let collection = [sheetBox, viewBox, toolBox, paletteBox]
+    flexSolve(width, height, ...collection)
 
-    console.log(flexSize(sheetBox, viewBox, toolBox, paletteBox))
+    let size = flexSize(...collection)
+    let canvas = flexBox(size[2], size[3])
+    canvas.funX = 'center'
+    flexSolve(width, height, canvas)
 
-    // let canvas = flexBox(x, y)
-    // flexResolve()
+    sheetBox.argX = canvas.x
+    flexSolve(width, height, ...collection)
+
+    // let topBarPaint = flexBox(fontWidth, fontHeight)
+    // topBarPaint.argX = 'center'
+    // topBarPaint.argY = viewBox
+    // this.topBarPaint = topBarPaint
   }
 
   read(content, into) {
@@ -316,22 +314,82 @@ export class PaintEdit {
       }
     }
 
-    if (input.a()) {
-      if (this.canUpdate) {
-        let columns = this.sheetColumns
-        let index = this.positionC + this.positionOffsetC + (this.positionR + this.positionOffsetR) * columns
-        let color = this.paletteC + this.paletteR * this.paletteColumns
-        if (this.tool === PENCIL) this.pencil(index, color)
-        else if (this.tool === FILL) this.fill(index, color)
-        else if (this.tool === DROPLET) this.droplet(index)
-        this.hasUpdates = true
-        this.canUpdate = false
-      }
+    if (input.mouseMoved()) {
+      input.mouseMoveOff()
+      let x = input.mouseX()
+      let y = input.mouseY()
+      if (this.viewBox.inside(x, y)) this.mouseInViewBox(x, y)
     }
 
+    if (input.mouseLeft()) {
+      let x = input.mouseX()
+      let y = input.mouseY()
+      if (this.viewBox.inside(x, y)) {
+        this.mouseInViewBox(x, y)
+        this.action()
+      } else if (this.paletteBox.inside(x, y)) this.mouseInPaletteBox(x, y)
+      else if (this.sheetBox.inside(x, y)) this.mouseInSheetBox(x, y)
+    }
+
+    if (input.a()) this.action()
     if (input.pressB()) this.paletteFocus = !this.paletteFocus
     if (input.pressX()) this.undo()
     if (input.pressY()) this.redo()
+  }
+
+  mouseInViewBox(x, y) {
+    let c = this.positionC
+    let r = this.positionR
+    x = Math.floor((x - this.viewBox.x) / 32)
+    y = Math.floor((this.viewBox.height - (y - this.viewBox.y)) / 32)
+    if (x < 8 && y < 8 && (x !== c || y !== r)) {
+      this.positionC = x
+      this.positionR = y
+      this.canUpdate = true
+    }
+  }
+
+  mouseInPaletteBox(x, y) {
+    let c = this.paletteC
+    let r = this.paletteR
+    x = Math.floor((x - this.paletteBox.x) / 32)
+    y = Math.floor((this.paletteBox.height - (y - this.paletteBox.y)) / 32)
+    if (x < this.paletteColumns && y < this.paletteRows && (x !== c || y !== r)) {
+      this.paletteC = x
+      this.paletteR = y
+      this.canUpdate = true
+    }
+  }
+
+  mouseInSheetBox(x, y) {
+    let c = this.positionOffsetC
+    let r = this.positionOffsetR
+    let columns = this.sheetBox.width / this.sheetColumns
+    let rows = this.sheetBox.height / this.sheetRows
+    x = Math.floor((x - this.sheetBox.x) / columns)
+    y = Math.floor((this.sheetBox.height - (y - this.sheetBox.y)) / rows)
+    if (x + this.canvasZoom > this.sheetColumns) x = this.sheetColumns - this.canvasZoom
+    if (y + this.canvasZoom > this.sheetRows) y = this.sheetRows - this.canvasZoom
+    x = Math.floor(x / 8) * 8
+    y = Math.floor(y / 8) * 8
+    if (x !== c || y !== r) {
+      this.positionOffsetC = x
+      this.positionOffsetR = y
+      this.canUpdate = true
+    }
+  }
+
+  action() {
+    if (this.canUpdate) {
+      let columns = this.sheetColumns
+      let index = this.positionC + this.positionOffsetC + (this.positionR + this.positionOffsetR) * columns
+      let color = this.paletteC + this.paletteR * this.paletteColumns
+      if (this.tool === PENCIL) this.pencil(index, color)
+      else if (this.tool === FILL) this.fill(index, color)
+      else if (this.tool === DROPLET) this.droplet(index)
+      this.hasUpdates = true
+      this.canUpdate = false
+    }
   }
 
   pencil(start, color) {
@@ -402,7 +460,7 @@ export class PaintEdit {
   saveHistory() {
     let sheet = this.sheet
     let history = this.history
-    console.debug('history', this.historyPosition, history)
+    // console.debug('history', this.historyPosition, history)
     if (this.historyPosition >= history.length) {
       if (history.length === HISTORY_LIMIT) {
         let last = history[0]
