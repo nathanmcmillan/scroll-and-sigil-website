@@ -1,9 +1,10 @@
 import {exportSheetPixels, exportSheetToCanvas, PaintEdit} from '/src/editor/paint.js'
 import {textureByName} from '/src/assets/assets.js'
 import {drawText, drawTextSpecial, drawRectangle, drawHollowRectangle, drawImage, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
+import {renderTouch} from '/src/client/render-touch.js'
 import {spr, sprcol} from '/src/render/pico.js'
 import {identity, multiply} from '/src/math/matrix.js'
-import {blackf, whitef, redf, darkpurplef, bluef, luminosity, luminosityTable} from '/src/editor/palette.js'
+import {blackf, whitef, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress, decompress} from '/src/compress/huffman.js'
 import {createPixelsToTexture} from '/src/webgl/webgl.js'
@@ -194,14 +195,7 @@ export class PaintState {
     const projection = this.projection
     const scale = painter.scale
 
-    // gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
-    gl.clearColor(bluef(0), bluef(1), bluef(2), 1.0)
-
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.clear(gl.DEPTH_BUFFER_BIT)
-
-    gl.disable(gl.CULL_FACE)
-    gl.disable(gl.DEPTH_TEST)
+    if (client.touch) renderTouch(client.touchRender)
 
     identity(view)
     multiply(projection, client.orthographic, view)
@@ -219,7 +213,7 @@ export class PaintState {
     const pad = 2 * scale
 
     let canvasWidth = client.width
-    let canvasHeight = client.height
+    let canvasHeight = client.height - client.top
 
     let brushSize = painter.brushSize
     let canvasZoom = painter.canvasZoom
@@ -251,8 +245,14 @@ export class PaintState {
     let white2 = whitef(2)
 
     rendering.setProgram(1)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, canvasWidth, canvasHeight)
     rendering.updateUniformMatrix('u_mvp', projection)
+
+    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+    gl.disable(gl.CULL_FACE)
+    gl.disable(gl.DEPTH_TEST)
 
     client.bufferGUI.zero()
 
@@ -293,7 +293,7 @@ export class PaintState {
     rendering.updateAndDraw(client.bufferGUI)
 
     rendering.setProgram(0)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, canvasWidth, canvasHeight)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     // box around view
@@ -368,7 +368,7 @@ export class PaintState {
 
     // special textures
     rendering.setProgram(3)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, canvasWidth, canvasHeight)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     client.bufferGUI.zero()
@@ -393,7 +393,7 @@ export class PaintState {
 
     // text
     rendering.setProgram(4)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, canvasWidth, canvasHeight)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     client.bufferGUI.zero()
@@ -407,7 +407,7 @@ export class PaintState {
     posBox.funY = 'above'
     posBox.fromY = viewBox
     flexSolve(0, 0, posBox)
-    drawTextSpecial(client.bufferGUI, posBox.x, posBox.y, text, fontScale, white0, white1, white2, 1.0)
+    drawTextSpecial(client.bufferGUI, posBox.x, posBox.y, text, fontScale, white0, white1, white2)
 
     let displaySheet = 'sheet #' + (sheetIndex < 10 ? '00' + sheetIndex : sheetIndex < 100 ? '0' + sheetIndex : '' + sheetIndex)
     let sheetNumBox = flexBox(fontWidth * displaySheet.length, fontHeight)
@@ -416,7 +416,7 @@ export class PaintState {
     sheetNumBox.funY = 'above'
     sheetNumBox.fromY = sheetBox
     flexSolve(0, 0, sheetNumBox)
-    drawTextSpecial(client.bufferGUI, sheetNumBox.x, sheetNumBox.y, displaySheet, fontScale, white0, white1, white2, 1.0)
+    drawTextSpecial(client.bufferGUI, sheetNumBox.x, sheetNumBox.y, displaySheet, fontScale, white0, white1, white2)
 
     let displayPC = '' + (posOffsetC + posC)
     let displayPR = '' + (posOffsetR + posR)
@@ -429,18 +429,18 @@ export class PaintState {
     positionBox.funY = 'above'
     positionBox.fromY = sheetBox
     flexSolve(0, 0, positionBox)
-    drawTextSpecial(client.bufferGUI, positionBox.x, positionBox.y, displayPosition, fontScale, white0, white1, white2, 1.0)
+    drawTextSpecial(client.bufferGUI, positionBox.x, positionBox.y, displayPosition, fontScale, white0, white1, white2)
 
     // let displaySize = 'brush size ' + brushSize
-    // drawTextSpecial(client.bufferGUI, 10, 50 + fontHeight * 2, displaySize, fontScale, white0, white1, white2, 1.0)
+    // drawTextSpecial(client.bufferGUI, 10, 50 + fontHeight * 2, displaySize, fontScale, white0, white1, white2)
 
     // let displayZoom = 'canvas zoom ' + canvasZoom
-    // drawTextSpecial(client.bufferGUI, 10, 50, displayZoom, fontScale, white0, white1, white2, 1.0)
+    // drawTextSpecial(client.bufferGUI, 10, 50, displayZoom, fontScale, white0, white1, white2)
     // drawText(client.bufferGUI, 10, 0, displayZoom, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
 
     // let topBarText = '(+)File Edit View Help'
     let topBarText = '(+)FILE EDIT VIEW HELP'
-    // drawTextSpecial(client.bufferGUI, 0, canvasHeight - topBarHeight + pad, topBarText, fontScale, white0, white1, white2, 1.0)
+    // drawTextSpecial(client.bufferGUI, 0, canvasHeight - topBarHeight + pad, topBarText, fontScale, white0, white1, white2)
     drawText(client.bufferGUI, 0, canvasHeight - topBarHeight + pad - scale, topBarText, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
 
     let topBarSwitch = '(-)HCLPSM '

@@ -1,27 +1,44 @@
-import {drawText} from '/src/render/render.js'
+import {drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply} from '/src/math/matrix.js'
+import {whitef, blackf} from '/src/editor/palette.js'
+import {flexText, flexSolve} from '/src/flex/flex.js'
 import {textureByName} from '/src/assets/assets.js'
+import {renderTouch} from '/src/client/render-touch.js'
 
-export function renderLoadInProgress(client, gl, rendering, view, projection) {
-  gl.clear(gl.COLOR_BUFFER_BIT)
-  gl.clear(gl.DEPTH_BUFFER_BIT)
+export function renderLoadingInProgress(client, view, projection) {
+  const gl = client.gl
+  const rendering = client.rendering
+  const width = client.width
+  const height = client.height - client.top
+  const scale = client.scale
 
-  // text
+  if (client.touch) renderTouch(client.touchRender)
+
+  const fontScale = Math.floor(1.5 * scale)
+  const fontWidth = fontScale * FONT_WIDTH
+  const fontHeight = fontScale * FONT_HEIGHT
+
   rendering.setProgram(4)
-  rendering.setView(0, 0, client.width, client.height)
+  rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
-  gl.disable(gl.CULL_FACE)
-  gl.disable(gl.DEPTH_TEST)
+  gl.clearColor(blackf(0), blackf(1), blackf(2), 1.0)
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   identity(view)
   multiply(projection, client.orthographic, view)
   rendering.updateUniformMatrix('u_mvp', projection)
 
   client.bufferGUI.zero()
+
   let text = 'Loading. Please wait...'
-  drawText(client.bufferGUI, 12.0, 8.0, text, 2.0, 0.0, 0.0, 0.0, 1.0)
-  drawText(client.bufferGUI, 10.0, 10.0, text, 2.0, 1.0, 0.0, 0.0, 1.0)
+  let box = flexText(text, fontWidth * text.length, fontHeight)
+  box.funX = 'center'
+  box.funY = 'center'
+  flexSolve(width, height, box)
+
+  drawTextSpecial(client.bufferGUI, box.x, box.y, box.text, fontScale, whitef(0), whitef(1), whitef(2))
+
   rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
   rendering.updateAndDraw(client.bufferGUI)
 }

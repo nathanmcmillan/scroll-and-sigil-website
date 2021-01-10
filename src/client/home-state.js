@@ -1,11 +1,14 @@
 import {Game} from '/src/game/game.js'
-import {renderLoadInProgress} from '/src/client/render-loading.js'
+import {renderLoadingInProgress} from '/src/client/render-loading.js'
+import {renderTouch} from '/src/client/render-touch.js'
 import {textureByName, textureByIndex} from '/src/assets/assets.js'
 import {drawSprite, drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply, rotateX, rotateY, translate} from '/src/math/matrix.js'
 import {whitef} from '/src/editor/palette.js'
 import {flexText, flexSolve} from '/src/flex/flex.js'
 import {Home} from '/src/menu/home.js'
+import {speech} from '/src/sound/speech.js'
+import {animal} from '/src/sound/animal.js'
 
 export class HomeState {
   constructor(client) {
@@ -19,6 +22,20 @@ export class HomeState {
     this.projection = new Float32Array(16)
 
     this.home = new Home(client.width, client.height, client.scale, client.input)
+
+    if (true) {
+      let text = 'scrol and sigil'
+      let base = 60
+      let speed = 1.5
+      speech(text, base, speed)
+    }
+
+    if (false) {
+      let text = 'scroll and sigil'
+      let pitch = 1.0
+      let shorten = false
+      animal(text, pitch, shorten)
+    }
   }
 
   resize(width, height, scale) {
@@ -48,9 +65,11 @@ export class HomeState {
     for (const sector of world.sectors) client.sectorRender(sector)
     for (const buffer of client.sectorBuffers.values()) client.rendering.updateVAO(buffer, gl.STATIC_DRAW)
 
-    this.loading = false
-
-    this.game.update()
+    // Temporary
+    setTimeout(() => {
+      this.loading = false
+      this.game.update()
+    }, 1000)
   }
 
   update(timestamp) {
@@ -82,7 +101,7 @@ export class HomeState {
     const projection = this.projection
 
     if (this.loading) {
-      renderLoadInProgress(client, gl, rendering, view, projection)
+      renderLoadingInProgress(client, view, projection)
       return
     }
 
@@ -91,14 +110,13 @@ export class HomeState {
 
     const scale = home.scale
     const width = client.width
-    const height = client.height
+    const height = client.height - client.top
 
     const fontScale = Math.floor(1.5 * scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
 
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.clear(gl.DEPTH_BUFFER_BIT)
+    if (client.touch) renderTouch(client.touchRender)
 
     // render world
 
@@ -107,7 +125,10 @@ export class HomeState {
     const camera = game.camera
 
     rendering.setProgram(2)
-    rendering.setView(0, 0, client.width, client.height)
+    rendering.setView(0, client.top, width, height)
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
@@ -176,7 +197,7 @@ export class HomeState {
 
     // text
     rendering.setProgram(4)
-    rendering.setView(0, 0, width, height)
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     let titleBox = home.titleBox
@@ -197,7 +218,7 @@ export class HomeState {
     let creditsBox = home.creditsBox
     drawTextSpecial(client.bufferGUI, creditsBox.x, creditsBox.y, creditsBox.text, fontScale, white0, white1, white2)
 
-    let text = ')'
+    let text = '>'
     let indicatorBox = flexText(text, fontWidth * text.length, fontHeight)
     indicatorBox.funX = 'left-of'
     indicatorBox.funY = 'center'

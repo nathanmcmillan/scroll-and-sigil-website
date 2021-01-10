@@ -22,6 +22,8 @@ export class Home {
     this.editorBox = null
     this.optionsBox = null
     this.creditsBox = null
+
+    this.resize(width, height, scale)
   }
 
   resize(width, height, scale) {
@@ -43,6 +45,7 @@ export class Home {
     const fontScale = Math.floor(1.5 * this.scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
+    const fontPad = Math.floor(0.15 * fontHeight)
 
     let text = 'Scroll and Sigil'
     let titleBox = flexText(text, 2 * fontWidth * text.length, 2 * fontHeight)
@@ -54,7 +57,7 @@ export class Home {
 
     text = 'continue'
     let continueGameBox = flexText(text, fontWidth * text.length, fontHeight)
-    continueGameBox.leftSpace = fontWidth
+    continueGameBox.bottomSpace = fontPad
     continueGameBox.funX = '%'
     continueGameBox.argX = 15
     continueGameBox.funY = '%'
@@ -63,7 +66,7 @@ export class Home {
 
     text = 'new game'
     let newGameBox = flexText(text, fontWidth * text.length, fontHeight)
-    newGameBox.leftSpace = fontWidth
+    newGameBox.bottomSpace = fontPad
     newGameBox.funX = 'align-left'
     newGameBox.fromX = continueGameBox
     newGameBox.funY = 'below'
@@ -72,7 +75,7 @@ export class Home {
 
     text = 'editor'
     let editorBox = flexText(text, fontWidth * text.length, fontHeight)
-    editorBox.leftSpace = fontWidth
+    editorBox.bottomSpace = fontPad
     editorBox.funX = 'align-left'
     editorBox.fromX = newGameBox
     editorBox.funY = 'below'
@@ -81,7 +84,7 @@ export class Home {
 
     text = 'options'
     let optionsBox = flexText(text, fontWidth * text.length, fontHeight)
-    optionsBox.leftSpace = fontWidth
+    optionsBox.bottomSpace = fontPad
     optionsBox.funX = 'align-left'
     optionsBox.fromX = editorBox
     optionsBox.funY = 'below'
@@ -90,7 +93,7 @@ export class Home {
 
     text = 'credits'
     let creditsBox = flexText(text, fontWidth * text.length, fontHeight)
-    creditsBox.leftSpace = fontWidth
+    creditsBox.bottomSpace = fontPad
     creditsBox.funX = 'align-left'
     creditsBox.fromX = optionsBox
     creditsBox.funY = 'below'
@@ -110,13 +113,13 @@ export class Home {
 
     let input = this.input
 
-    if (input.timerLeftUp(timestamp, INPUT_RATE)) {
+    if (input.timerStickUp(timestamp, INPUT_RATE)) {
       this.row--
       if (this.row < 0) this.row = 0
       else playSound('baron-pain')
     }
 
-    if (input.timerLeftDown(timestamp, INPUT_RATE)) {
+    if (input.timerStickDown(timestamp, INPUT_RATE)) {
       this.row++
       if (this.row > 4) this.row = 4
       else playSound('baron-pain')

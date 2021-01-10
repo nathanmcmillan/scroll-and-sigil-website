@@ -1,12 +1,12 @@
-import {semitoneName, MusicEdit, SEMITONES} from '/src/editor/music.js'
+import {semitoneName, lengthName, MusicEdit, SEMITONES} from '/src/editor/music.js'
 import {textureByName} from '/src/assets/assets.js'
 import {drawText, drawTextSpecial, drawRectangle, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {spr, sprcol} from '/src/render/pico.js'
 import {identity, multiply} from '/src/math/matrix.js'
 import {whitef, redf, darkpurplef, darkgreyf} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
-import {speech, SYNTH_SPEECH_FREQ} from '/src/sound/speech.js'
 import {compress} from '/src/compress/huffman.js'
+import * as In from '/src/input/input.js'
 
 export class MusicState {
   constructor(client) {
@@ -18,30 +18,6 @@ export class MusicState {
 
     let music = new MusicEdit(client.width, client.height, client.scale, client.input)
     this.music = music
-
-    if (false) {
-      // let text = 'scroll and sigil'
-      // let shorten = false
-      // let pitch = 1.0
-      // let buffer = animal(text, shorten, pitch)
-
-      let base = 60
-      let speed = 1.5
-      let text = 'scroll and sigil'
-      let seconds = 10
-      let wave = SYNTH_SPEECH_FREQ * 2 * 2 * seconds
-      let buffer = new Int16Array(new ArrayBuffer(wave))
-      speech(buffer, text, base, speed, 0)
-
-      let amp = 22000
-      let str = ''
-      for (var i = 0; i < buffer.length; i++) {
-        var y = (buffer[i] / amp) * 0x7800
-        str += String.fromCharCode(y & 255, (y >> 8) & 255)
-      }
-      let audio = new Audio('data:audio/wav;base64,' + btoa(atob('UklGRti/UABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YbS/UAA') + str))
-      audio.play()
-    }
   }
 
   resize(width, height, scale) {
@@ -102,8 +78,7 @@ export class MusicState {
 
     gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
 
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.clear(gl.DEPTH_BUFFER_BIT)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
@@ -136,6 +111,21 @@ export class MusicState {
     // bottom bar
     drawRectangle(buffer, 0, 0, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
+    // sub menu
+    if (music.subMenu !== null) {
+      drawRectangle(
+        buffer,
+        Math.floor(canvasWidth * 0.1),
+        Math.floor(canvasHeight * 0.1),
+        Math.floor(canvasWidth * 0.8),
+        Math.floor(canvasHeight * 0.8),
+        whitef(0),
+        whitef(1),
+        whitef(2),
+        1.0
+      )
+    }
+
     rendering.updateAndDraw(buffer)
 
     // text
@@ -153,7 +143,7 @@ export class MusicState {
     posBox.argX = 20
     posBox.argY = 40
     flexSolve(canvasWidth, canvasHeight, posBox)
-    drawTextSpecial(client.bufferGUI, posBox.x, posBox.y, text, fontScale, whitef(0), whitef(1), whitef(2), 1.0)
+    drawTextSpecial(client.bufferGUI, posBox.x, posBox.y, text, fontScale, whitef(0), whitef(1), whitef(2))
 
     const smallFontScale = Math.floor(1.5 * scale)
     const smallFontWidth = smallFontScale * FONT_WIDTH
@@ -175,34 +165,55 @@ export class MusicState {
         let pitch = num === 0 ? '-' : '' + num
         let pos = x + c * noteWidth
         if (pitch >= 10) pos -= smallFontHalfWidth
-        if (c === noteC && r === noteR) drawTextSpecial(client.bufferGUI, pos, y - r * noteHeight, pitch, smallFontScale, redf(0), redf(1), redf(2), 1.0)
-        else drawTextSpecial(client.bufferGUI, pos, y - r * noteHeight, pitch, smallFontScale, whitef(0), whitef(1), whitef(2), 1.0)
+        if (c === noteC && r === noteR) drawTextSpecial(client.bufferGUI, pos, y - r * noteHeight, pitch, smallFontScale, redf(0), redf(1), redf(2))
+        else drawTextSpecial(client.bufferGUI, pos, y - r * noteHeight, pitch, smallFontScale, whitef(0), whitef(1), whitef(2))
       }
     }
 
+    // keys
+    let startKey = this.keys.reversed(In.BUTTON_START)
+    if (startKey.startsWith('Key')) startKey = startKey.substring(3)
+
+    let selectKey = this.keys.reversed(In.BUTTON_SELECT)
+    if (selectKey.startsWith('Key')) selectKey = selectKey.substring(3)
+
+    let buttonA = this.keys.reversed(In.BUTTON_A)
+    if (buttonA.startsWith('Key')) buttonA = buttonA.substring(3)
+
+    let buttonB = this.keys.reversed(In.BUTTON_B)
+    if (buttonB.startsWith('Key')) buttonB = buttonB.substring(3)
+
+    let buttonX = this.keys.reversed(In.BUTTON_X)
+    if (buttonX.startsWith('Key')) buttonX = buttonX.substring(3)
+
+    let buttonY = this.keys.reversed(In.BUTTON_Y)
+    if (buttonY.startsWith('Key')) buttonY = buttonY.substring(3)
+
     let tempoText = 'Tempo:' + music.tempo
-    drawTextSpecial(client.bufferGUI, 20, canvasHeight - fontHeight * 3, tempoText, fontScale, whitef(0), whitef(1), whitef(2), 1.0)
+    drawTextSpecial(client.bufferGUI, 20, canvasHeight - fontHeight * 3, tempoText, fontScale, whitef(0), whitef(1), whitef(2))
 
     // top info
-    let topBarText = '(+)FILE EDIT VIEW HELP'
+    let topBarText = '(' + startKey + ')FILE EDIT VIEW HELP'
     drawText(client.bufferGUI, 0, canvasHeight - topBarHeight + pad - scale, topBarText, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
 
-    let topBarSwitch = '(-)HCLPSM '
+    let topBarSwitch = '(' + selectKey + ')HCLPSM '
     let width = topBarSwitch.length * fontWidth
     drawText(client.bufferGUI, canvasWidth - width, canvasHeight - topBarHeight + pad - scale, topBarSwitch, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
 
-    let infoText
-    infoText = noteR === 0 ? '(x)Duration down (z)Duration up ' : '(z)Pitch down (x)Pitch up '
-    infoText += '(+)Insert note (-)Delete note '
-    infoText += music.play ? '(c)Stop' : '(c)Play'
-    drawTextSpecial(client.bufferGUI, 20, 100, infoText, fontScale, whitef(0), whitef(1), whitef(2), 1.0)
+    let infoText = noteR === 0 ? '(' + buttonB + ')Duration down (' + buttonA + ')Duration up ' : '(' + buttonB + ')Pitch down (' + buttonA + ')Pitch up '
+    infoText += '(' + buttonY + ')Options '
+    infoText += '(' + selectKey + ')Edit track  '
+    infoText += '(' + startKey + ')Menu '
+    infoText += music.play ? '(' + buttonX + ')Stop' : '(' + buttonX + ')Play'
+    drawTextSpecial(client.bufferGUI, 20, 100, infoText, fontScale, whitef(0), whitef(1), whitef(2))
 
+    drawTextSpecial(client.bufferGUI, 20, 200, lengthName(notes[noteC][0]), smallFontScale, whitef(0), whitef(1), whitef(2))
     for (let r = 1; r < noteRows; r++) {
       let note = notes[noteC][r]
       let noteText
       if (note === 0) noteText = '-'
       else noteText = semitoneName(note - SEMITONES)
-      drawTextSpecial(client.bufferGUI, 20, 200 - r * noteHeight, noteText, smallFontScale, whitef(0), whitef(1), whitef(2), 1.0)
+      drawTextSpecial(client.bufferGUI, 20, 200 - r * noteHeight, noteText, smallFontScale, whitef(0), whitef(1), whitef(2))
     }
 
     rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)

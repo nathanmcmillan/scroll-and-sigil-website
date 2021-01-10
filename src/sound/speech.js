@@ -1,8 +1,8 @@
-export const SYNTH_SPEECH_FREQ = 44100
+export const SYNTH_SPEECH_RATE = 44100
 
 const pi = Math.PI
 const tau = 2.0 * pi
-
+const context = new AudioContext()
 const phonemes = {
   o: {f: [12, 15, 0], w: [10, 10, 0], len: 3, amp: 6, osc: false, plosive: false},
   i: {f: [5, 56, 0], w: [10, 10, 0], len: 3, amp: 3, osc: false, plosive: false},
@@ -36,32 +36,31 @@ function sawtooth(x) {
   return 0.5 - (x - Math.floor(x / tau) * tau) / tau
 }
 
-export function speech(buffer, text, base, speed, position) {
-  for (let c = 0; c < text.length; c++) {
-    let l = text.charAt(c)
+function algo(data, text, base, speed, position) {
+  const len = text.length
+  for (let c = 0; c < len; c++) {
+    let l = text[c]
     let p = phonemes[l]
     if (!p) {
-      if (l == ' ' || l == '\n') {
-        position += Math.floor(SYNTH_SPEECH_FREQ * 0.2 * speed)
-      }
+      if (l == ' ' || l == '\n') position += Math.floor(SYNTH_SPEECH_RATE * 0.1 * speed)
       continue
     }
     let v = p.amp
-    let sl = p.len * (SYNTH_SPEECH_FREQ / 15) * speed
+    let sl = p.len * (SYNTH_SPEECH_RATE / 15) * speed
     for (let f = 0; f < 3; f++) {
       let ff = p.f[f]
-      let freq = ff * (50 / SYNTH_SPEECH_FREQ)
+      let freq = ff * (50 / SYNTH_SPEECH_RATE)
       if (!ff) continue
       let one = 0
       let two = 0
-      let q = 1.0 - p.w[f] * ((pi * 10) / SYNTH_SPEECH_FREQ)
+      let q = 1.0 - p.w[f] * ((pi * 10) / SYNTH_SPEECH_RATE)
       let current = position
       let xp = 0
       for (let s = 0; s < sl; s++) {
         let n = Math.random() - 0.5
         let x = n
         if (!p.osc) {
-          x = sawtooth(s * ((base * tau) / SYNTH_SPEECH_FREQ))
+          x = sawtooth(s * ((base * tau) / SYNTH_SPEECH_RATE))
           xp = 0
         }
         x = x + 2 * Math.cos(tau * freq) * one * q - two * q * q
@@ -71,13 +70,23 @@ export function speech(buffer, text, base, speed, position) {
         xp = x
         let y = Math.sin((pi * s) / sl) * 5
         if (y > 1.0) y = 1.0
-        if (y < -1.0) y = -1.0
+        else if (y < -1.0) y = -1.0
         x *= y * 10
-        buffer[current++] = buffer[current] / 2 + x
-        buffer[current++] = buffer[current] / 2 + x
+        data[current++] = 0.5 * data[current] + x / 32767.0
       }
     }
-    position += ((3 * sl) / 4) << 1
-    if (p.plosive) position += sl & 0xfffffe
+    position += Math.floor((3 * sl) / 4)
+    if (p.plosive) position += Math.floor(0.5 * (sl & 0xfffffe))
   }
+}
+
+export function speech(text, base, speed, position = 0, when = 0) {
+  let seconds = text.length * speed
+  let buffer = context.createBuffer(1, Math.ceil(SYNTH_SPEECH_RATE * seconds), SYNTH_SPEECH_RATE)
+  let data = buffer.getChannelData(0)
+  algo(data, text, base, speed, position)
+  let source = context.createBufferSource()
+  source.buffer = buffer
+  source.connect(context.destination)
+  source.start(when)
 }

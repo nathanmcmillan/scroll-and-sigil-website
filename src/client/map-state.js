@@ -16,20 +16,20 @@ export class MapState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.editor = new MapEdit(client.width, client.height, client.scale, callbacks)
+    this.maps = new MapEdit(client.width, client.height, client.scale, callbacks)
   }
 
   resize(width, height, scale) {
-    this.editor.resize(width, height, scale)
+    this.maps.resize(width, height, scale)
   }
 
   keyEvent(code, down) {
     if (this.keys.has(code)) {
-      this.editor.input.set(this.keys.get(code), down)
+      this.maps.input.set(this.keys.get(code), down)
     } else if (down && code === 'Digit1') {
       this.client.openState('dashboard')
     } else if (down && code === 'Digit0') {
-      console.log(this.editor.export())
+      console.log(this.maps.export())
     }
   }
 
@@ -38,21 +38,21 @@ export class MapState {
   mouseMove() {}
 
   async initialize(file) {
-    await this.editor.load(file)
+    await this.maps.load(file)
   }
 
   switchMode() {
-    if (this.editor.mode === VIEW_MODE) {
+    if (this.maps.mode === VIEW_MODE) {
       updateMapEditViewSectorBuffer(this)
     }
   }
 
   update() {
-    this.editor.update()
+    this.maps.update()
   }
 
   render() {
-    if (this.editor.mode === TOP_MODE) {
+    if (this.maps.mode === TOP_MODE) {
       renderMapEditTopMode(this)
     } else {
       renderMapEditViewMode(this)

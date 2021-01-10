@@ -463,23 +463,19 @@ export class MapEdit {
     const cursor = this.cursor
     const camera = this.camera
 
-    if (input.pressPadDown()) {
+    if (input.pressSelect()) {
       this.toolSelectionActive = !this.toolSelectionActive
     }
 
     if (this.toolSelectionActive) {
       if (input.pressA()) {
         this.toolSelectionActive = false
-      } else if (input.leftUp() || input.rightUp()) {
-        input.in[In.LEFT_STICK_UP] = false
-        input.in[In.RIGHT_STICK_UP] = false
+      } else if (input.pressStickUp()) {
         if (this.tool > 0) {
           this.tool--
           this.switchTool()
         }
-      } else if (input.leftDown() || input.rightDown()) {
-        input.in[In.LEFT_STICK_DOWN] = false
-        input.in[In.RIGHT_STICK_DOWN] = false
+      } else if (input.pressStickDown()) {
         if (this.tool + 1 < TOOL_COUNT) {
           this.tool++
           this.switchTool()
@@ -488,7 +484,7 @@ export class MapEdit {
       return
     }
 
-    if (input.pressPadLeft()) {
+    if (input.leftTrigger() && input.pressStickLeft()) {
       this.mode = VIEW_MODE
       this.camera.x += cursor.x / this.zoom
       this.camera.z += cursor.y / this.zoom
@@ -496,23 +492,23 @@ export class MapEdit {
       return
     }
 
-    if (input.pressPadRight()) {
+    if (input.leftTrigger() && input.pressStickRight()) {
       this.menuActive = !this.menuActive
       return
     }
 
-    if (input.pressPadUp()) {
+    if (input.leftTrigger() && input.pressStickUp()) {
       this.snapToGrid = !this.snapToGrid
       return
     }
 
-    if (input.leftClick()) {
+    if (input.leftTrigger() && input.pressA()) {
       this.zoom += 0.25
       this.camera.x -= 1.0 / this.zoom
       this.camera.z -= 1.0 / this.zoom
     }
 
-    if (input.rightClick()) {
+    if (input.leftTrigger() && input.pressB()) {
       this.zoom -= 0.25
       this.camera.x += 1.0 / this.zoom
       this.camera.z += 1.0 / this.zoom
@@ -549,25 +545,25 @@ export class MapEdit {
         if (cursor.y < 0.0) cursor.y = 0.0
       }
 
-      if (input.pressLeftLeft()) {
+      if (input.pressStickLeft()) {
         let x = Math.floor(camera.x)
         let modulo = x % grid
         if (modulo == 0) camera.x -= grid
         else camera.x -= modulo
       }
-      if (input.pressLeftRight()) {
+      if (input.pressStickRight()) {
         let x = Math.floor(camera.x)
         let modulo = x % grid
         if (modulo == 0) camera.x += grid
         else camera.x += grid - modulo
       }
-      if (input.pressLeftUp()) {
+      if (input.pressStickUp()) {
         let z = Math.floor(camera.z)
         let modulo = z % grid
         if (modulo == 0) camera.z += grid
         else camera.z += grid - modulo
       }
-      if (input.pressLeftDown()) {
+      if (input.pressStickDown()) {
         let z = Math.floor(camera.z)
         let modulo = z % grid
         if (modulo == 0) camera.z -= grid
@@ -575,34 +571,34 @@ export class MapEdit {
       }
     } else {
       const look = input.leftTrigger() ? 5.0 : 1.0
-      if (input.rightLeft()) {
+      if (input.stickLeft()) {
         cursor.x -= look
         if (cursor.x < 0.0) cursor.x = 0.0
       }
-      if (input.rightRight()) {
+      if (input.stickRight()) {
         cursor.x += look
         if (cursor.x > this.width) cursor.x = this.width
       }
-      if (input.rightUp()) {
+      if (input.stickUp()) {
         cursor.y += look
         if (cursor.y > this.height) cursor.y = this.height
       }
-      if (input.rightDown()) {
+      if (input.stickDown()) {
         cursor.y -= look
         if (cursor.y < 0.0) cursor.y = 0.0
       }
 
       const speed = input.leftTrigger() ? 2.0 : 0.5
-      if (input.leftLeft()) {
+      if (input.stickLeft()) {
         camera.x -= speed
       }
-      if (input.leftRight()) {
+      if (input.stickRight()) {
         camera.x += speed
       }
-      if (input.leftUp()) {
+      if (input.stickUp()) {
         camera.z += speed
       }
-      if (input.leftDown()) {
+      if (input.stickDown()) {
         camera.z -= speed
       }
     }
@@ -859,12 +855,12 @@ export class MapEdit {
     let direction = null
     let rotation = null
 
-    if (input.leftUp()) {
+    if (input.stickUp()) {
       direction = 'w'
       rotation = camera.ry
     }
 
-    if (input.leftDown()) {
+    if (input.stickDown()) {
       if (direction === null) {
         direction = 's'
         rotation = camera.ry + Math.PI
@@ -874,7 +870,7 @@ export class MapEdit {
       }
     }
 
-    if (input.leftLeft()) {
+    if (input.stickLeft()) {
       if (direction === null) {
         direction = 'a'
         rotation = camera.ry - 0.5 * Math.PI
@@ -887,7 +883,7 @@ export class MapEdit {
       }
     }
 
-    if (input.leftRight()) {
+    if (input.stickRight()) {
       if (direction === null) {
         rotation = camera.ry + 0.5 * Math.PI
       } else if (direction === 'a') {

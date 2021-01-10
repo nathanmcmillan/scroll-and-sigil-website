@@ -191,7 +191,7 @@ function heroOpenMenu(self) {
 }
 
 function heroBusy(self) {
-  if (self.input.pressRightTrigger()) {
+  if (self.input.pressSelect()) {
     self.status = STATUS_IDLE
     if (self.menu) self.menu = null
     if (self.interaction) {
@@ -293,7 +293,7 @@ function heroMove(self) {
   heroFindClosestThing(self)
   if (self.reaction > 0) {
     self.reaction--
-  } else if (self.input.a() && self.stamina >= MISSILE_COST) {
+  } else if (self.input.x() && self.stamina >= MISSILE_COST) {
     playSound('baron-missile')
     self.status = STATUS_MISSILE
     thingSetAnimation(self, 'missile')
@@ -309,22 +309,23 @@ function heroMove(self) {
     return
   } else if (self.input.pressRightTrigger()) {
     if (heroInteract(self)) return
+    else playSound('baron-scream')
   }
-  if (self.input.pressRightBumper()) {
+  if (self.input.pressSelect()) {
     heroOpenMenu(self)
   }
   if (self.ground) {
-    if (self.input.pressRightClick()) {
+    if (self.input.pressLeftTrigger()) {
       self.ground = false
       self.deltaY += 0.4
     } else {
       let direction = null
       let rotation = null
-      if (self.input.leftUp()) {
+      if (self.input.stickUp()) {
         direction = 'w'
         rotation = self.rotation
       }
-      if (self.input.leftDown()) {
+      if (self.input.stickDown()) {
         if (direction === null) {
           direction = 's'
           rotation = self.rotation + Math.PI
@@ -333,7 +334,7 @@ function heroMove(self) {
           rotation = null
         }
       }
-      if (self.input.leftLeft()) {
+      if (self.input.stickLeft()) {
         if (direction === null) {
           direction = 'a'
           rotation = self.rotation - 0.5 * Math.PI
@@ -345,7 +346,7 @@ function heroMove(self) {
           rotation += 0.25 * Math.PI
         }
       }
-      if (self.input.leftRight()) {
+      if (self.input.stickRight()) {
         if (direction === null) {
           rotation = self.rotation + 0.5 * Math.PI
         } else if (direction === 'a') {

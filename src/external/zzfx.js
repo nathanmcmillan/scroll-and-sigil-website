@@ -10,16 +10,24 @@ export function zzfxt() {
 }
 
 export function zzfxb(...t) {
-  let node = context.createBufferSource()
-  let f = context.createBuffer(t.length, t[0].length, zzfxr)
-  t.map((d, i) => f.getChannelData(i).set(d)), (node.buffer = f), node.connect(context.destination)
-  return node
+  let source = context.createBufferSource()
+  let buffer = context.createBuffer(t.length, t[0].length, zzfxr)
+  t.map((d, i) => buffer.getChannelData(i).set(d))
+  source.buffer = buffer
+  source.connect(context.destination)
+  return source
 }
 
 export function zzfxp(...t) {
-  let node = zzfxb(...t)
-  node.start()
-  return node
+  let source = zzfxb(...t)
+  source.start()
+  return source
+}
+
+export function zzfxpd(when, ...t) {
+  let source = zzfxb(...t)
+  source.start(when)
+  return source
 }
 
 export function zzfxg(q = 1, k = 0.05, c = 220, e = 0, t = 0, u = 0.1, r = 0, F = 1, v = 0, z = 0, w = 0, A = 0, l = 0, B = 0, x = 0, G = 0, d = 0, y = 1, m = 0, C = 0) {
@@ -76,4 +84,8 @@ export function zzfxg(q = 1, k = 0.05, c = 220, e = 0, t = 0, u = 0.1, r = 0, F 
 
 export function zzfx(...t) {
   return zzfxp(zzfxg(...t))
+}
+
+export function zzfxd(when, ...t) {
+  return zzfxpd(when, zzfxg(...t))
 }

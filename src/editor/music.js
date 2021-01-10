@@ -1,22 +1,35 @@
-// import {fetchText} from '/src/client/net.js'
-// import {newPalette, newPaletteFloat} from '/src/editor/palette.js'
-// import {flexBox, flexSolve, flexSize} from '/src/flex/flex.js'
-// import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-
-import {zzfx} from '/src/external/zzfx.js'
+import {noise, sine, square, pulse, triangle, sawtooth, synthTime} from '/src/sound/synth.js'
 
 export const SEMITONES = 49
 
 const INPUT_RATE = 128
-
 const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']
 
 class Track {
   constructor(name) {
     this.name = name
-    this.instrument = null
+    this.instrument = name.toLowerCase()
     this.tuning = 0
     this.notes = [[2, 0, 49, 0]]
+  }
+}
+
+export function lengthName(num) {
+  switch (num) {
+    case 0:
+      return 'whole'
+    case 1:
+      return 'half'
+    case 2:
+      return 'quarter'
+    case 3:
+      return 'eigth'
+    case 4:
+      return 'sixteenth'
+    case 5:
+      return 'thirty second'
+    default:
+      return null
   }
 }
 
@@ -44,6 +57,7 @@ export class MusicEdit {
     this.pitcheRows = 3
     this.noteRows = this.pitcheRows + 1
     this.maxDuration = 6
+    this.maxPitch = 99
 
     this.noteC = 0
     this.noteR = 2
@@ -53,10 +67,12 @@ export class MusicEdit {
     this.play = false
     this.noteTimestamp = 0
 
-    let guitar = new Track('Guitar')
-
-    this.tracks = [guitar]
+    this.tracks = [new Track('Sine')]
     this.trackIndex = 0
+
+    this.subMenu = null
+
+    this.sounds = []
   }
 
   resize(width, height, scale) {
@@ -69,13 +85,25 @@ export class MusicEdit {
 
   async load() {}
 
-  playAndCalculateNote(timestamp) {
-    let note = this.tracks[this.trackIndex].notes[this.noteC]
-    for (let r = 1; r < this.noteRows; r++) {
-      let pitch = diatonic(note[r] - SEMITONES)
-      zzfx(1, 0.05, pitch, 0.01, 0, 0.15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5)
+  noteWaveform(name) {
+    switch (name) {
+      case 'noise':
+        return noise
+      case 'sine':
+        return sine
+      case 'square':
+        return square
+      case 'pulse':
+        return pulse
+      case 'triangle':
+        return triangle
+      case 'sawtooth':
+        return sawtooth
     }
-    let duration = note[0]
+    return sine
+  }
+
+  noteSeconds(duration) {
     // 16 ms tick update
     // timestamp is in milliseconds
     // tempo = 120
@@ -92,14 +120,53 @@ export class MusicEdit {
     else if (duration === 3) length = this.tempo / 2
     else if (duration === 4) length = this.tempo / 4
     else if (duration === 5) length = this.tempo / 8
-    length /= 60
-    length *= 1000
-    this.noteTimestamp = timestamp + length
+    return length / 60
+  }
+
+  playOneNote(row) {
+    for (let sound of this.sounds) sound.stop()
+    this.sounds.length = 0
+    let track = this.tracks[this.trackIndex]
+    let waveform = this.noteWaveform(track.instrument)
+    let note = track.notes[this.noteC]
+    let seconds = this.noteSeconds(note[0])
+    if (row === 0) {
+      for (let r = 1; r < this.noteRows; r++) {
+        let num = note[r]
+        if (num === 0) continue
+        let pitch = diatonic(num - SEMITONES)
+        this.sounds.push(waveform(0.25, pitch, seconds))
+      }
+    } else {
+      let num = note[row]
+      if (num > 0) {
+        let pitch = diatonic(num - SEMITONES)
+        this.sounds.push(waveform(0.25, pitch, seconds))
+      }
+    }
+  }
+
+  playAndCalculateNote(timestamp) {
+    const time = synthTime()
+    const when = time + (1.0 / 1000.0) * 16.0
+    let track = this.tracks[this.trackIndex]
+    let waveform = this.noteWaveform(track.instrument)
+    let note = track.notes[this.noteC]
+    let seconds = this.noteSeconds(note[0])
+    for (let r = 1; r < this.noteRows; r++) {
+      let num = note[r]
+      if (num === 0) continue
+      let pitch = diatonic(num - SEMITONES)
+      this.sounds.push(waveform(0.25, pitch, seconds, when))
+    }
+    this.noteTimestamp = timestamp + seconds * 1000
   }
 
   updatePlay(timestamp) {
     let input = this.input
     if (input.pressX()) {
+      for (let sound of this.sounds) sound.stop()
+      this.sounds.length = 0
       this.play = false
       this.doPaint = true
       return
@@ -108,8 +175,9 @@ export class MusicEdit {
       this.doPaint = true
       this.noteC++
       if (this.noteC === this.tracks[this.trackIndex].notes.length) {
-        this.noteC = 0
+        this.sounds.length = 0
         this.play = false
+        this.noteC = 0
       } else {
         this.playAndCalculateNote(timestamp)
       }
@@ -133,15 +201,15 @@ export class MusicEdit {
 
     let input = this.input
 
-    if (input.timerLeftUp(timestamp, INPUT_RATE)) {
+    if (input.timerStickUp(timestamp, INPUT_RATE)) {
       if (this.noteR > 0) this.noteR--
-    } else if (input.timerLeftDown(timestamp, INPUT_RATE)) {
+    } else if (input.timerStickDown(timestamp, INPUT_RATE)) {
       if (this.noteR < this.noteRows - 1) this.noteR++
     }
 
-    if (input.timerLeftLeft(timestamp, INPUT_RATE)) {
+    if (input.timerStickLeft(timestamp, INPUT_RATE)) {
       if (this.noteC > 0) this.noteC--
-    } else if (input.timerLeftRight(timestamp, INPUT_RATE)) {
+    } else if (input.timerStickRight(timestamp, INPUT_RATE)) {
       this.noteC++
       let notes = this.tracks[this.trackIndex].notes
       if (this.noteC === notes.length) {
@@ -157,36 +225,23 @@ export class MusicEdit {
       let track = this.tracks[this.trackIndex]
       let note = track.notes[this.noteC]
       if (row === 0) {
-        if (note[row] > 0) {
-          note[row]--
-          // plain sawtooth: zzfx(...[1.52,0,174.6141,,,1,2,0])
-          // violin: zzfx(...[1.98,0,261.6256,.03,1.85,.39,2,1.43,,,,,.34,.2,,,.06,.82,.01,.11]);
-          zzfx(1, 0.05, 537, 0.02, 0.22, 1, 1.59, -6.98, 4.97, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5)
-        }
+        if (input.leftTrigger()) note[row] = this.maxDuration - 1
+        else if (note[row] < this.maxDuration - 1) note[row]++
       } else {
-        if (note[row] > 0) {
-          note[row]--
-          let pitch = diatonic(note[row] - SEMITONES)
-          zzfx(1, 0.05, pitch, 0.01, 0, 0.15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5)
-        }
+        if (input.leftTrigger()) note[row] = Math.min(note[row] + 12, this.maxPitch)
+        else if (note[row] < this.maxPitch) note[row]++
       }
+      this.playOneNote(this.noteR)
     } else if (input.timerB(timestamp, INPUT_RATE)) {
       let row = this.noteR
       let track = this.tracks[this.trackIndex]
       let note = track.notes[this.noteC]
-      if (row === 0) {
-        if (note[row] < this.maxDuration - 1) {
-          note[row]++
-          zzfx(1, 0.05, 537, 0.02, 0.22, 1, 1.59, -6.98, 4.97, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5)
-        }
-      } else {
-        if (note[row] < 99) {
-          note[row]++
-          let pitch = diatonic(note[row] - SEMITONES)
-          zzfx(1, 0.05, pitch, 0.01, 0, 0.15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5)
-        }
-      }
+      if (input.leftTrigger()) note[row] = Math.max(note[row] - 12, 0)
+      else if (note[row] > 0) note[row]--
+      this.playOneNote(this.noteR)
     }
+
+    if (input.pressRightTrigger()) this.playOneNote(0)
 
     if (input.pressX()) {
       this.play = true
@@ -194,8 +249,31 @@ export class MusicEdit {
     }
 
     if (input.pressY()) {
-      let notes = this.tracks[this.trackIndex].notes
-      notes.splice(this.noteC + 1, 0, [2, 0, 49, 0])
+      // todo
+      // open dialog box with options for insert / delete note
+      //
+      // insert note
+      // let notes = this.tracks[this.trackIndex].notes
+      // notes.splice(this.noteC + 1, 0, [2, 0, 49, 0])
+      // this.noteC++
+    }
+
+    if (input.pressSelect()) {
+      if (this.subMenu !== null) {
+        this.subMenu = null
+      } else {
+        // open submenu
+        // tempo / transpose
+        // new track / delete track
+        // change track name / change track instrument
+        this.subMenu = 'New track'
+      }
+    }
+
+    if (input.pressStart()) {
+      // open main menu
+      // save / import / export
+      // back to home editor screen
     }
   }
 
