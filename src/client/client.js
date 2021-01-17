@@ -16,7 +16,7 @@ import {DashboardState} from '/src/client/dashboard-state.js'
 import {GameState} from '/src/client/game-state.js'
 import {HomeState} from '/src/client/home-state.js'
 import {TwoWayMap} from '/src/util/collections.js'
-import {TouchRender, touchRenderResize} from '/src/client/render-touch.js'
+import {TouchRender, touchRenderEvent, touchRenderResize} from '/src/client/render-touch.js'
 import * as Wad from '/src/wad/wad.js'
 import * as In from '/src/input/input.js'
 
@@ -36,6 +36,7 @@ export class Client {
     this.bufferSky = null
     this.sectorBuffers = new Map()
     this.spriteBuffers = new Map()
+    this.pack = null
     this.music = null
     this.state = null
     this.keys = null
@@ -72,6 +73,24 @@ export class Client {
     this.state.mouseMove(event.clientX, this.height - event.clientY)
   }
 
+  touchStart(event) {
+    let input = touchRenderEvent(this.touchRender, event)
+    if (input !== null) {
+      let code = this.keys.reversed(input)
+      this.state.keyEvent(code, true)
+    }
+  }
+
+  touchEnd(event) {
+    let input = touchRenderEvent(this.touchRender, event)
+    if (input !== null) {
+      let code = this.keys.reversed(input)
+      this.state.keyEvent(code, false)
+    }
+  }
+
+  touchMove() {}
+
   pause() {
     pauseMusic()
   }
@@ -85,10 +104,6 @@ export class Client {
     this.height = height
     this.canvas.width = width
     this.canvas.height = height
-
-    console.info('requrested size:', this.width, this.height)
-    console.info('canvas     size:', this.canvas.clientWidth, this.canvas.clientHeight)
-    console.info('webgl      size:', this.gl.drawingBufferWidth, this.gl.drawingBufferHeight)
 
     let ratio = width / height
 
@@ -171,7 +186,8 @@ export class Client {
     let directory = '/pack/' + pack
     let contents = Wad.parse(await fetchText(directory + '/' + pack + '.wad'))
 
-    this.ini = main
+    this.boot = main
+    this.pack = pack
 
     for (const entity of contents.get('entities')) {
       saveEntity(entity, directory, '/entities/' + entity + '.wad')
@@ -329,12 +345,12 @@ export class Client {
   }
 
   async openState(open) {
-    let ini = this.ini
+    let boot = this.boot
     let file = null
     switch (open) {
       case 'paint':
         this.state = new PaintState(this)
-        if (ini.has('image')) file = '/pack/default/textures/' + ini.get('image') + '.image'
+        if (boot.has('image')) file = '/pack/' + this.pack + '/textures/' + boot.get('image') + '.image'
         break
       case 'sfx':
         this.state = new SfxState(this)
@@ -344,14 +360,14 @@ export class Client {
         break
       case 'maps':
         this.state = new MapState(this)
-        if (ini.has('map')) file = '/maps/' + ini.get('map') + '.map'
+        if (boot.has('map')) file = '/pack/' + this.pack + '/maps/' + boot.get('map') + '.map'
         break
       case 'dashboard':
         this.state = new DashboardState(this)
         break
       case 'game':
         this.state = new GameState(this)
-        if (ini.has('map')) file = '/maps/' + ini.get('map') + '.map'
+        if (boot.has('map')) file = '/pack/' + this.pack + '/maps/' + boot.get('map') + '.map'
         break
       default:
         this.state = new HomeState(this)

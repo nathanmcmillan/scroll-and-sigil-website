@@ -46,7 +46,7 @@ export function flexText(text, width = 0, height = 0) {
 export function flexSolve(width, height, ...list) {
   for (let flex of list) {
     let funX = flex.funX
-    if (funX) {
+    if (funX != null) {
       if (funX === 'center') {
         if (flex.fromX) {
           flex.x = Math.floor(flex.fromX.x + 0.5 * flex.fromX.width - 0.5 * flex.width)
@@ -69,7 +69,7 @@ export function flexSolve(width, height, ...list) {
     }
 
     let funY = flex.funY
-    if (funY) {
+    if (funY != null) {
       if (funY === 'center') {
         if (flex.fromY) {
           flex.y = Math.floor(flex.fromY.y + 0.5 * flex.fromY.height - 0.5 * flex.height)

@@ -77,7 +77,6 @@ export class DashboardState {
     let white2 = whitef(2)
 
     // text
-
     rendering.setProgram(4)
     rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)

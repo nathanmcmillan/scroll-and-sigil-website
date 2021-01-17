@@ -1,0 +1,24 @@
+vectors 8
+35 58.4
+50.2 55.8
+43 47.4
+48.5 42.3
+57.2 37.4
+31.5 35.9
+40 25.9
+50.7 25.7
+lines 9
+1 4 none grass none
+4 7 none grass none
+2 3 none grass none
+3 7 none grass none
+5 0 none grass none
+6 5 none grass none
+7 6 none grass none
+0 2 none grass none
+2 1 none grass none
+sectors 3
+0 0 5 6 none none 5 4 7 3 2 1 5 1 0 8 2 3
+0 0 5 6 none none 6 0 2 3 7 6 5 6 7 4 5 6 3 2
+0 0 5 6 none none 7 0 2 1 4 7 6 5 7 7 8 0 1 6 5 4
+things 0

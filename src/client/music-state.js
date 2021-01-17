@@ -75,10 +75,8 @@ export class MusicState {
     const view = this.view
     const projection = this.projection
     const scale = music.scale
-
-    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
-
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    const width = client.width
+    const height = client.height - client.top
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
@@ -95,42 +93,32 @@ export class MusicState {
 
     const pad = 2 * scale
 
-    let canvasWidth = client.width
-    let canvasHeight = client.height
-
     rendering.setProgram(0)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
+
+    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     client.bufferGUI.zero()
 
     // top bar
     let topBarHeight = fontHeight + 2 * pad
-    drawRectangle(buffer, 0, canvasHeight - topBarHeight, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
+    drawRectangle(buffer, 0, height - topBarHeight, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
     // bottom bar
-    drawRectangle(buffer, 0, 0, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
+    drawRectangle(buffer, 0, 0, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
     // sub menu
     if (music.subMenu !== null) {
-      drawRectangle(
-        buffer,
-        Math.floor(canvasWidth * 0.1),
-        Math.floor(canvasHeight * 0.1),
-        Math.floor(canvasWidth * 0.8),
-        Math.floor(canvasHeight * 0.8),
-        whitef(0),
-        whitef(1),
-        whitef(2),
-        1.0
-      )
+      drawRectangle(buffer, Math.floor(width * 0.1), Math.floor(height * 0.1), Math.floor(width * 0.8), Math.floor(height * 0.8), whitef(0), whitef(1), whitef(2), 1.0)
     }
 
     rendering.updateAndDraw(buffer)
 
     // text
     rendering.setProgram(4)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     client.bufferGUI.zero()
@@ -142,7 +130,7 @@ export class MusicState {
     let posBox = flexBox(fontWidth * text.length, fontHeight)
     posBox.argX = 20
     posBox.argY = 40
-    flexSolve(canvasWidth, canvasHeight, posBox)
+    flexSolve(width, height, posBox)
     drawTextSpecial(client.bufferGUI, posBox.x, posBox.y, text, fontScale, whitef(0), whitef(1), whitef(2))
 
     const smallFontScale = Math.floor(1.5 * scale)
@@ -153,21 +141,29 @@ export class MusicState {
     const noteC = music.noteC
     const noteR = music.noteR
 
-    let x = 20
-    let y = canvasHeight - 150
+    const noteSides = 20
+
+    let x = noteSides
+    let pos = x
+    let y = height - 150
     let noteWidth = Math.floor(2.5 * smallFontWidth)
     let noteHeight = Math.floor(1.2 * smallFontHeight)
 
     for (let c = 0; c < notes.length; c++) {
       let note = notes[c]
+      if (pos > width - noteSides) {
+        pos = x
+        y -= 6 * noteHeight
+      }
       for (let r = 1; r < noteRows; r++) {
         let num = note[r]
         let pitch = num === 0 ? '-' : '' + num
-        let pos = x + c * noteWidth
-        if (pitch >= 10) pos -= smallFontHalfWidth
-        if (c === noteC && r === noteR) drawTextSpecial(client.bufferGUI, pos, y - r * noteHeight, pitch, smallFontScale, redf(0), redf(1), redf(2))
-        else drawTextSpecial(client.bufferGUI, pos, y - r * noteHeight, pitch, smallFontScale, whitef(0), whitef(1), whitef(2))
+        let xx = pos
+        if (pitch >= 10) xx -= smallFontHalfWidth
+        if (c === noteC && r === noteR) drawTextSpecial(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, redf(0), redf(1), redf(2))
+        else drawTextSpecial(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, whitef(0), whitef(1), whitef(2))
       }
+      pos += noteWidth
     }
 
     // keys
@@ -190,15 +186,15 @@ export class MusicState {
     if (buttonY.startsWith('Key')) buttonY = buttonY.substring(3)
 
     let tempoText = 'Tempo:' + music.tempo
-    drawTextSpecial(client.bufferGUI, 20, canvasHeight - fontHeight * 3, tempoText, fontScale, whitef(0), whitef(1), whitef(2))
+    drawTextSpecial(client.bufferGUI, 20, height - fontHeight * 3, tempoText, fontScale, whitef(0), whitef(1), whitef(2))
 
     // top info
     let topBarText = '(' + startKey + ')FILE EDIT VIEW HELP'
-    drawText(client.bufferGUI, 0, canvasHeight - topBarHeight + pad - scale, topBarText, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
+    drawText(client.bufferGUI, 0, height - topBarHeight + pad - scale, topBarText, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
 
     let topBarSwitch = '(' + selectKey + ')HCLPSM '
-    let width = topBarSwitch.length * fontWidth
-    drawText(client.bufferGUI, canvasWidth - width, canvasHeight - topBarHeight + pad - scale, topBarSwitch, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
+    let topBarWidth = topBarSwitch.length * fontWidth
+    drawText(client.bufferGUI, width - topBarWidth, height - topBarHeight + pad - scale, topBarSwitch, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
 
     let infoText = noteR === 0 ? '(' + buttonB + ')Duration down (' + buttonA + ')Duration up ' : '(' + buttonB + ')Pitch down (' + buttonA + ')Pitch up '
     infoText += '(' + buttonY + ')Options '
@@ -223,21 +219,28 @@ export class MusicState {
 
     // sprites
     rendering.setProgram(3)
-    rendering.setView(0, 0, canvasWidth, canvasHeight)
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     const spriteScale = Math.floor(1.5 * scale)
     const spriteSize = 8 * spriteScale
 
-    y += Math.floor(0.5 * noteHeight)
+    x = noteSides
+    pos = x
+    y = height - 150 + Math.floor(0.5 * noteHeight)
+
     const r = 0
     for (let c = 0; c < notes.length; c++) {
       let note = notes[c]
       let duration = 33 + note[r]
-      let pos = x + c * noteWidth
+      if (pos > width - noteSides) {
+        pos = x
+        y -= 6 * noteHeight
+      }
       sprcol(client.bufferGUI, duration, 1.0, 1.0, pos, y - spriteScale, spriteSize, spriteSize, 0.0, 0.0, 0.0, 1.0)
       if (c === noteC && r === noteR) sprcol(client.bufferGUI, duration, 1.0, 1.0, pos, y, spriteSize, spriteSize, redf(0), redf(1), redf(2), 1.0)
       else spr(client.bufferGUI, duration, 1.0, 1.0, pos, y, spriteSize, spriteSize)
+      pos += noteWidth
     }
 
     rendering.bindTexture(gl.TEXTURE0, textureByName('editor-sprites').texture)

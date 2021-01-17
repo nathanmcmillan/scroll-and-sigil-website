@@ -1,9 +1,12 @@
 import {Game} from '/src/game/game.js'
 import {drawDecal} from '/src/client/render-sector.js'
 import {renderLoadingInProgress} from '/src/client/render-loading.js'
+import {renderTouch} from '/src/client/render-touch.js'
 import {drawRectangle, drawSprite, drawText, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply, rotateX, rotateY, translate, multiplyVector3} from '/src/math/matrix.js'
 import {textureByName, textureByIndex} from '/src/assets/assets.js'
+import {speech} from '/src/sound/speech.js'
+import {animal} from '/src/sound/animal.js'
 
 function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
   drawText(b, x + scale, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
@@ -21,6 +24,20 @@ export class GameState {
 
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
+
+    if (true) {
+      let text = 'scrol and sigil'
+      let base = 60
+      let speed = 1.5
+      speech(text, base, speed)
+    }
+
+    if (false) {
+      let text = 'scroll and sigil'
+      let pitch = 1.0
+      let shorten = false
+      animal(text, pitch, shorten)
+    }
   }
 
   resize() {}
@@ -59,7 +76,7 @@ export class GameState {
     switch (trigger) {
       case 'hero-goto-map':
         this.loading = true
-        this.load('/maps/' + params + '.map')
+        this.load('/pack/' + this.client.pack + '/maps/' + params + '.map')
         return
     }
   }
@@ -95,6 +112,10 @@ export class GameState {
 
     const pad = 10.0
 
+    if (client.touch) renderTouch(client.touchRender)
+
+    // sky box
+
     rendering.setProgram(2)
     rendering.setView(0, client.top, width, height)
 
@@ -113,6 +134,8 @@ export class GameState {
     let sky = textureByName('sky-box-1')
     rendering.bindTexture(gl.TEXTURE0, sky.texture)
     rendering.bindAndDraw(client.bufferSky)
+
+    // render world
 
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
@@ -209,6 +232,8 @@ export class GameState {
     client.bufferGUI.zero()
 
     const hero = game.hero
+
+    // overlay
 
     if (game.cinema) {
       const black = 60.0

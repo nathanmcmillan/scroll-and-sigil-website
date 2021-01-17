@@ -1,3 +1,5 @@
+import {playSound} from '/src/assets/sounds.js'
+
 const INPUT_RATE = 128
 
 export class Dashboard {
@@ -39,11 +41,13 @@ export class Dashboard {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
         this.column--
         if (this.column < 0) this.column = 0
+        else playSound('baron-pain')
       }
 
       if (input.timerStickDown(timestamp, INPUT_RATE)) {
         this.column++
         if (this.column > 4) this.column = 4
+        else playSound('baron-pain')
       }
 
       if (input.pressA()) {
@@ -54,11 +58,13 @@ export class Dashboard {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
         this.column--
         if (this.column < 0) this.column = 0
+        else playSound('baron-pain')
       }
 
       if (input.timerStickDown(timestamp, INPUT_RATE)) {
         this.column++
         if (this.column > 4) this.column = 4
+        else playSound('baron-pain')
       }
 
       if (input.pressA()) {

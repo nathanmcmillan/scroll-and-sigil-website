@@ -1,7 +1,7 @@
 import {Client} from '/src/client/client.js'
 
 function newCanvas(width, height) {
-  let canvas = document.createElement('canvas')
+  let canvas = document.getElementById('canvas')
   canvas.style.display = 'block'
   canvas.style.position = 'absolute'
   canvas.style.left = '0'
@@ -61,7 +61,6 @@ function tick(timestamp) {
 async function main() {
   let canvas = newCanvas(window.innerWidth, window.innerHeight)
   let gl = canvas.getContext('webgl2')
-  document.body.appendChild(canvas)
 
   client = new Client(canvas, gl)
 
@@ -74,6 +73,7 @@ async function main() {
   document.onkeydown = (event) => {
     if (event.code === 'Escape') {
       if (document.fullscreenElement === null) canvas.requestFullscreen()
+      else document.exitFullscreen()
     } else {
       client.keyDown(event)
     }
@@ -95,9 +95,10 @@ async function main() {
     document.ontouchstart = (event) => {
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
-        console.log('touch start', touches[i])
         let touch = touches[i]
-        ongoingTouches.push({identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY})
+        let content = {identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY}
+        ongoingTouches.push(content)
+        client.touchStart(content)
       }
     }
 
@@ -105,7 +106,8 @@ async function main() {
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
-        console.log('touch move', touch)
+        let content = {identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY}
+        client.touchMove(content)
       }
     }
 
@@ -113,10 +115,10 @@ async function main() {
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
-        console.log('touch end', touch)
         let index = touchIndexById(touch.identifier)
         if (index >= 0) {
-          ongoingTouches.splice(index, 1)
+          let start = ongoingTouches.splice(index, 1)[0]
+          client.touchEnd(start)
         }
       }
     }
@@ -125,7 +127,6 @@ async function main() {
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
-        console.log('touch cancel', touch)
         let index = touchIndexById(touch.identifier)
         if (index >= 0) ongoingTouches.splice(index, 1)
       }

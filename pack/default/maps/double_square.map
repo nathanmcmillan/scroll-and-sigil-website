@@ -1,0 +1,22 @@
+vectors 8
+22.4 67.9
+104.2 63.6
+79.3 51.1
+52 49
+52 31.6
+79.3 31.6
+26.8 13.8
+104.8 13.8
+lines 8
+0 6 none plank none
+6 7 none grass none
+7 1 none grass none
+3 2 none grass none
+2 5 none grass none
+5 4 none grass none
+4 3 none grass none
+0 1 none grass none
+sectors 2
+0 0 5 6 plank-floor plank 4 3 2 5 4 4 3 4 5 6
+0 0 5 6 stone-floor stone 4 6 0 1 7 4 0 7 2 1
+things 0

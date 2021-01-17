@@ -320,7 +320,7 @@ function heroMove(self) {
       self.deltaY += 0.4
     } else {
       let direction = null
-      let rotation = null
+      let rotation = 0.0
       if (self.input.stickUp()) {
         direction = 'w'
         rotation = self.rotation
@@ -348,20 +348,26 @@ function heroMove(self) {
       }
       if (self.input.stickRight()) {
         if (direction === null) {
+          direction = 'd'
           rotation = self.rotation + 0.5 * Math.PI
         } else if (direction === 'a') {
+          direction = null
           rotation = null
         } else if (direction === 'wa') {
+          direction = 'w'
           rotation = self.rotation
         } else if (direction === 'sa') {
+          direction = 's'
           rotation = self.rotation + Math.PI
         } else if (direction === 'w') {
+          direction = 'wd'
           rotation += 0.25 * Math.PI
         } else if (direction === 's') {
+          direction = 'sd'
           rotation -= 0.25 * Math.PI
         }
       }
-      if (rotation) {
+      if (direction !== null) {
         self.deltaX += Math.cos(rotation) * self.speed
         self.deltaZ += Math.sin(rotation) * self.speed
         if (thingUpdateAnimation(self) === ANIMATION_DONE) self.animationFrame = 0

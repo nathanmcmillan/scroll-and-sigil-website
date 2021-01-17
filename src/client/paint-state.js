@@ -9,6 +9,8 @@ import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress, decompress} from '/src/compress/huffman.js'
 import {createPixelsToTexture} from '/src/webgl/webgl.js'
 
+// TODO: Need a sprite mode, selection rectangle + name = sprite
+
 function updatePixelsToTexture(gl, texture, width, height, pixels) {
   gl.bindTexture(gl.TEXTURE_2D, texture)
   gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGB, gl.UNSIGNED_BYTE, pixels, 0)

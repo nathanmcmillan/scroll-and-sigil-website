@@ -1,0 +1,22 @@
+vectors 5
+64.4 55.1
+41.6 39.9
+32.6 28.4
+49.1 28.4
+70.4 26.6
+lines 6
+1 2 none grass none
+2 3 none grass none
+3 1 stone none stone-floor
+3 4 none plank none
+4 0 none grass none
+0 1 plank-floor grass none
+sectors 2
+0 0 3 10 stone none 4 1 0 4 3 4 5 4 3 2
+0 1.5 6 10 plank none 3 2 1 3 3 0 2 1
+things 2
+52.0 34.6 hero
+40.0 31.1 zombie
+info 2
+music vampire-killer
+background night-sky
