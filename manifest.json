@@ -1,0 +1,14 @@
+{
+  "name": "Scroll and Sigil",
+  "short_name": "Scroll & Sigil",
+  "theme_color": "#7e2553",
+  "background_color": "#7e2553",
+  "display": "standalone",
+  "start_url": "/index.html",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "type": "image/png"
+    }
+  ]
+}

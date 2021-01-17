@@ -93,6 +93,7 @@ async function main() {
 
   if ('ontouchstart' in window) {
     document.ontouchstart = (event) => {
+      event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
@@ -103,6 +104,7 @@ async function main() {
     }
 
     document.ontouchmove = (event) => {
+      event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
@@ -112,6 +114,7 @@ async function main() {
     }
 
     document.ontouchend = (event) => {
+      event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
@@ -124,6 +127,7 @@ async function main() {
     }
 
     document.ontouchcancel = (event) => {
+      event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
