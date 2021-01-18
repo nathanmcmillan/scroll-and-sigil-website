@@ -77,6 +77,8 @@ export class PaintState {
     this.texture = createPixelsToTexture(gl, columns, rows, pixels, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE).texture
   }
 
+  reset() {}
+
   resize(width, height, scale) {
     this.painter.resize(width, height, scale)
   }

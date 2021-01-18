@@ -6,12 +6,50 @@
     <meta rel="manifest" href="manifest.json" />
     <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Scroll & Sigil</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #7e2553;
+      }
+    </style>
   </head>
   <body>
-    <script>
+    <canvas id="canvas" style="display: none"></canvas>
+    <button id="mobile" style="display: none">Run game</button>
+    <script type="module">
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('service.js')
+      if ('ontouchstart' in window) {
+        let mobile = document.getElementById('mobile')
+        mobile.style.display = 'flex'
+        mobile.style.fontFamily = 'monospace'
+        mobile.style.fontSize = '1.8rem'
+        mobile.style.fontWeight = 'bold'
+        mobile.style.color = '#fff1e8'
+        mobile.style.backgroundColor = '#ff004d'
+        mobile.style.border = 'none'
+        mobile.style.borderRadius = '6px'
+        mobile.style.outline = 'none'
+        mobile.style.padding = '0.4em 0.8em'
+        mobile.style.textShadow = '0 1px 0px #5f574f'
+        mobile.ontouchstart = (event) => {
+          event.preventDefault()
+          mobile.remove()
+          canvas.requestFullscreen()
+          import('/src/index.js')
+        }
+      } else {
+        document.getElementById('mobile').remove()
+        import('/src/index.js')
+      }
     </script>
-    <canvas id="canvas"></canvas>
-    <script type="module" src="/src/index.js"></script>
   </body>
 </html>

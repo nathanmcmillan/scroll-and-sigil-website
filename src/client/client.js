@@ -37,7 +37,13 @@ export class Client {
     this.sectorBuffers = new Map()
     this.spriteBuffers = new Map()
     this.pack = null
+    this.paint = null
+    this.sfx = null
     this.music = null
+    this.maps = null
+    this.dashboard = null
+    this.game = null
+    this.home = null
     this.state = null
     this.keys = null
     this.input = null
@@ -349,28 +355,42 @@ export class Client {
     let file = null
     switch (open) {
       case 'paint':
-        this.state = new PaintState(this)
+        if (this.paint === null) this.paint = new PaintState(this)
+        else this.paint.reset()
+        this.state = this.paint
         if (boot.has('image')) file = '/pack/' + this.pack + '/textures/' + boot.get('image') + '.image'
         break
       case 'sfx':
-        this.state = new SfxState(this)
+        if (this.sfx === null) this.sfx = new SfxState(this)
+        else this.sfx.reset()
+        this.state = this.sfx
         break
       case 'music':
-        this.state = new MusicState(this)
+        if (this.music === null) this.music = new MusicState(this)
+        else this.music.reset()
+        this.state = this.music
         break
       case 'maps':
-        this.state = new MapState(this)
+        if (this.maps === null) this.maps = new MapState(this)
+        else this.maps.reset()
+        this.state = this.maps
         if (boot.has('map')) file = '/pack/' + this.pack + '/maps/' + boot.get('map') + '.map'
         break
       case 'dashboard':
-        this.state = new DashboardState(this)
+        if (this.dashboard === null) this.dashboard = new DashboardState(this)
+        else this.dashboard.reset()
+        this.state = this.dashboard
         break
       case 'game':
-        this.state = new GameState(this)
+        if (this.game === null) this.game = new GameState(this)
+        else this.game.reset()
+        this.state = this.game
         if (boot.has('map')) file = '/pack/' + this.pack + '/maps/' + boot.get('map') + '.map'
         break
       default:
-        this.state = new HomeState(this)
+        if (this.home === null) this.home = new HomeState(this)
+        else this.home.reset()
+        this.state = this.home
     }
     await this.state.initialize(file)
   }

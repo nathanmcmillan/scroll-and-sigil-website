@@ -17,6 +17,8 @@ export class DashboardState {
     this.dashboard = new Dashboard(client.width, client.height, client.scale, client.input)
   }
 
+  reset() {}
+
   resize(width, height, scale) {
     this.dashboard.resize(width, height, scale)
   }

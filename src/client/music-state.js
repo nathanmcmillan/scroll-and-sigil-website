@@ -20,6 +20,8 @@ export class MusicState {
     this.music = music
   }
 
+  reset() {}
+
   resize(width, height, scale) {
     this.music.resize(width, height, scale)
   }

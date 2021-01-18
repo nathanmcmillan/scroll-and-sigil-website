@@ -18,6 +18,8 @@ export class SfxState {
     this.sfx = sfx
   }
 
+  reset() {}
+
   resize(width, height, scale) {
     this.sfx.resize(width, height, scale)
   }

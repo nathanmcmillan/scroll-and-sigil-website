@@ -19,6 +19,8 @@ export class MapState {
     this.maps = new MapEdit(client.width, client.height, client.scale, callbacks)
   }
 
+  reset() {}
+
   resize(width, height, scale) {
     this.maps.resize(width, height, scale)
   }

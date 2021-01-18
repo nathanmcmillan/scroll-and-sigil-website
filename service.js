@@ -1,16 +1,7 @@
 const cacheName = 'dev-1'
 
 self.addEventListener('install', function (event) {
-  const cacheList = [
-    '/index.html',
-    '/index.js',
-    '/favicon.ico',
-    '/sounds/baron-missile.wav',
-    '/sounds/baron-death.wav',
-    '/sounds/baron-pain.wav',
-    '/sounds/baron-scream.wav',
-    '/sounds/plasma-impact.wav',
-  ]
+  const cacheList = ['/index.html', '/favicon.ico']
   event.waitUntil(
     caches
       .open(cacheName)

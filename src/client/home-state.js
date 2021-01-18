@@ -22,6 +22,8 @@ export class HomeState {
     this.home = new Home(client.width, client.height, client.scale, client.input)
   }
 
+  reset() {}
+
   resize(width, height, scale) {
     this.home.resize(width, height, scale)
   }
