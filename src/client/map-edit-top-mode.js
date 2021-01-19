@@ -3,6 +3,7 @@ import {identity, multiply} from '/src/math/matrix.js'
 import {textureByName} from '/src/assets/assets.js'
 import {vectorSize, thingSize, DESCRIBE_MENU, DESCRIBE_TOOL, DESCRIBE_ACTION, DESCRIBE_OPTIONS, OPTION_END_LINE, OPTION_END_LINE_NEW_VECTOR} from '/src/editor/maps.js'
 import {darkgreyf, yellowf, whitef, greenf, redf} from '/src/editor/palette.js'
+import {renderTouch} from '/src/client/render-touch.js'
 import * as In from '/src/input/input.js'
 
 function mapX(x, zoom, camera) {
@@ -102,10 +103,14 @@ export function renderMapEditTopMode(state) {
   const projection = state.projection
   const scale = maps.scale
   const width = client.width
-  const height = client.height
+  const height = client.height - client.top
+
+  if (client.touch) renderTouch(client.touchRender)
+
+  rendering.setProgram(0)
+  rendering.setView(0, client.top, width, height)
 
   gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   gl.disable(gl.CULL_FACE)
@@ -113,9 +118,6 @@ export function renderMapEditTopMode(state) {
 
   identity(view)
   multiply(projection, client.orthographic, view)
-
-  rendering.setProgram(0)
-  rendering.setView(0, 0, client.width, client.height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
   client.bufferColor.zero()
@@ -135,7 +137,7 @@ export function renderMapEditTopMode(state) {
   rendering.updateAndDraw(client.bufferColor)
 
   rendering.setProgram(1)
-  rendering.setView(0, 0, client.width, client.height)
+  rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
   client.bufferGUI.zero()
@@ -145,7 +147,7 @@ export function renderMapEditTopMode(state) {
   rendering.updateAndDraw(client.bufferGUI)
 
   rendering.setProgram(4)
-  rendering.setView(0, 0, client.width, client.height)
+  rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
   client.bufferGUI.zero()
@@ -192,6 +194,7 @@ export function renderMapEditTopMode(state) {
   }
 
   // keys
+
   let startKey = state.keys.reversed(In.BUTTON_START)
   if (startKey.startsWith('Key')) startKey = startKey.substring(3)
 

@@ -26,6 +26,11 @@ export class Home {
     this.resize(width, height, scale)
   }
 
+  reset() {
+    this.row = 0
+    this.yes = false
+  }
+
   resize(width, height, scale) {
     this.width = width
     this.height = height

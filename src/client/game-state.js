@@ -18,7 +18,7 @@ export class GameState {
     this.client = client
     this.keys = client.keys
 
-    this.game = new Game(this)
+    this.game = new Game(this, client.input)
     this.events = []
     this.loading = true
 
@@ -43,9 +43,7 @@ export class GameState {
   resize() {}
 
   keyEvent(code, down) {
-    if (this.keys.has(code)) {
-      this.game.input.set(this.keys.get(code), down)
-    }
+    if (this.keys.has(code)) this.game.input.set(this.keys.get(code), down)
   }
 
   mouseEvent() {}

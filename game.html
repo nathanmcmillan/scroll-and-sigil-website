@@ -25,10 +25,12 @@
   <body>
     <canvas id="canvas" style="display: none"></canvas>
     <button id="mobile" style="display: none">Run game</button>
+    <p id="loading" style="display: none">Loading. Please wait...</p>
     <script type="module">
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('service.js')
+      let mobile = document.getElementById('mobile')
+      let loading = document.getElementById('loading')
       if ('ontouchstart' in window) {
-        let mobile = document.getElementById('mobile')
         mobile.style.display = 'flex'
         mobile.style.fontFamily = 'monospace'
         mobile.style.fontSize = '1.8rem'
@@ -42,12 +44,24 @@
         mobile.style.textShadow = '0 1px 0px #5f574f'
         mobile.ontouchstart = (event) => {
           event.preventDefault()
-          mobile.remove()
           canvas.requestFullscreen()
+          mobile.remove()
+          loading.style.display = 'flex'
+          loading.style.fontFamily = 'monospace'
+          loading.style.fontSize = '3vh'
+          loading.style.fontWeight = 'bold'
+          loading.style.color = '#fff1e8'
+          loading.style.textShadow = '0 1px 0px #5f574f'
           import('/src/index.js')
         }
       } else {
-        document.getElementById('mobile').remove()
+        mobile.remove()
+        loading.style.display = 'flex'
+        loading.style.fontFamily = 'monospace'
+        loading.style.fontSize = '1.8rem'
+        loading.style.fontWeight = 'bold'
+        loading.style.color = '#fff1e8'
+        loading.style.textShadow = '0 1px 0px #5f574f'
         import('/src/index.js')
       }
     </script>

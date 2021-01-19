@@ -8,6 +8,17 @@ import {sectorLineNeighbors, sectorInsideOutside} from '/src/map/sector.js'
 import {sectorTriangulateForEditor} from '/src/map/triangulate.js'
 import * as In from '/src/input/input.js'
 
+// Input
+// WASD: Move cursor (also need touch edge to move)
+// BUTTON X + WASD: Move camera
+// TRIGGER LEFT: Toggle view mode
+// TRIGGER RIGHT: ?
+// BUTTON A: ?
+// BUTTON B: ?
+// BUTTON Y: ?
+// SELECT: ?
+// START: FILE MENU
+
 export const TOP_MODE = 0
 export const VIEW_MODE = 1
 
@@ -162,22 +173,27 @@ function referenceLinesFromVec(vec, lines) {
 }
 
 export class MapEdit {
-  constructor(width, height, scale, callbacks) {
+  constructor(width, height, scale, input, callbacks) {
     this.width = width
     this.height = height
     this.scale = scale
+    this.input = input
     this.callbacks = callbacks
-    this.input = new In.Input()
+    this.shadowInput = true
+    this.doPaint = true
+
     this.camera = new Camera(0.0, 1.0, 0.0, 0.0, 0.0)
     this.mode = TOP_MODE
     this.tool = DRAW_TOOL
     this.action = OPTION_DRAW_MODE_DEFAULT
     this.zoom = 10.0
     this.cursor = new VectorReference(0.5 * width, 0.5 * height)
+
     this.vecs = []
     this.lines = []
     this.sectors = []
     this.things = []
+
     this.selectedVec = null
     this.selectedLine = null
     this.selectedSector = null
@@ -189,14 +205,13 @@ export class MapEdit {
     this.defaultEntity = null
     this.menuActive = false
     this.toolSelectionActive = false
+
     this.snapToGrid = false
     this.viewVecs = true
     this.viewLines = true
     this.viewSectors = true
     this.viewThings = true
     this.viewLineNormals = true
-    this.shadowInput = true
-    this.doPaint = true
   }
 
   resize(width, height, scale) {
@@ -484,7 +499,7 @@ export class MapEdit {
       return
     }
 
-    if (input.leftTrigger() && input.pressStickLeft()) {
+    if (input.pressLeftTrigger()) {
       this.mode = VIEW_MODE
       this.camera.x += cursor.x / this.zoom
       this.camera.z += cursor.y / this.zoom
@@ -516,28 +531,28 @@ export class MapEdit {
 
     if (this.snapToGrid) {
       const grid = 10
-      if (input.pressRightLeft()) {
+      if (input.pressStickLeft()) {
         let x = Math.floor(cursor.x)
         let modulo = x % grid
         if (modulo == 0) cursor.x -= grid
         else cursor.x -= modulo
         if (cursor.x < 0.0) cursor.x = 0.0
       }
-      if (input.pressRightight()) {
+      if (input.pressStickRight()) {
         let x = Math.floor(cursor.x)
         let modulo = x % grid
         if (modulo == 0) cursor.x += grid
         else cursor.x += grid - modulo
         if (cursor.x > this.width) cursor.x = this.width
       }
-      if (input.pressRightUp()) {
+      if (input.pressStickUp()) {
         let y = Math.floor(cursor.y)
         let modulo = y % grid
         if (modulo == 0) cursor.y += grid
         else cursor.y += grid - modulo
         if (cursor.y > this.height) cursor.y = this.height
       }
-      if (input.pressRightDown()) {
+      if (input.pressStickDown()) {
         let y = Math.floor(cursor.y)
         let modulo = y % grid
         if (modulo == 0) cursor.y -= grid
@@ -570,36 +585,50 @@ export class MapEdit {
         else camera.z -= modulo
       }
     } else {
-      const look = input.leftTrigger() ? 5.0 : 1.0
-      if (input.stickLeft()) {
-        cursor.x -= look
-        if (cursor.x < 0.0) cursor.x = 0.0
-      }
-      if (input.stickRight()) {
-        cursor.x += look
-        if (cursor.x > this.width) cursor.x = this.width
-      }
-      if (input.stickUp()) {
-        cursor.y += look
-        if (cursor.y > this.height) cursor.y = this.height
-      }
-      if (input.stickDown()) {
-        cursor.y -= look
-        if (cursor.y < 0.0) cursor.y = 0.0
-      }
-
-      const speed = input.leftTrigger() ? 2.0 : 0.5
-      if (input.stickLeft()) {
-        camera.x -= speed
-      }
-      if (input.stickRight()) {
-        camera.x += speed
-      }
-      if (input.stickUp()) {
-        camera.z += speed
-      }
-      if (input.stickDown()) {
-        camera.z -= speed
+      const look = 3.0 // input.leftTrigger() ? 5.0 : 1.0
+      const speed = 0.5 // input.leftTrigger() ? 2.0 : 0.5
+      if (input.b()) {
+        if (input.stickLeft()) {
+          camera.x -= speed
+        }
+        if (input.stickRight()) {
+          camera.x += speed
+        }
+        if (input.stickUp()) {
+          camera.z += speed
+        }
+        if (input.stickDown()) {
+          camera.z -= speed
+        }
+      } else {
+        if (input.stickLeft()) {
+          cursor.x -= look
+          if (cursor.x < 0.0) {
+            cursor.x = 0.0
+            camera.x -= speed
+          }
+        }
+        if (input.stickRight()) {
+          cursor.x += look
+          if (cursor.x > this.width) {
+            cursor.x = this.width
+            camera.x += speed
+          }
+        }
+        if (input.stickUp()) {
+          cursor.y += look
+          if (cursor.y > this.height) {
+            cursor.y = this.height
+            camera.y += speed
+          }
+        }
+        if (input.stickDown()) {
+          cursor.y -= look
+          if (cursor.y < 0.0) {
+            cursor.y = 0.0
+            camera.y -= speed
+          }
+        }
       }
     }
 

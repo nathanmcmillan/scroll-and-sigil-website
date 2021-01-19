@@ -21,10 +21,10 @@ function texture(name) {
 }
 
 export class Game {
-  constructor(parent) {
+  constructor(parent, input) {
     this.parent = parent
+    this.input = input
     this.world = new World(this)
-    this.input = new Input()
     this.hero = null
     this.camera = new Camera(0.0, 0.0, 0.0, 0.0, 0.0, 8.0)
     this.cinema = false

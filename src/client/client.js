@@ -321,8 +321,8 @@ export class Client {
 
     let keys = new TwoWayMap()
 
-    keys.set('KeyZ', In.BUTTON_START)
-    keys.set('Enter', In.BUTTON_SELECT)
+    keys.set('Enter', In.BUTTON_START)
+    keys.set('Space', In.BUTTON_SELECT)
 
     keys.set('KeyW', In.STICK_UP)
     keys.set('KeyA', In.STICK_LEFT)

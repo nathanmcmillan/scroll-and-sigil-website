@@ -1,5 +1,8 @@
 import {playSound} from '/src/assets/sounds.js'
 
+export const PACKAGE_MENU = 0
+export const PROGRAM_MENU = 1
+
 const INPUT_RATE = 128
 
 export class Dashboard {
@@ -12,7 +15,16 @@ export class Dashboard {
     this.doPaint = true
 
     this.menu = 0
-    this.column = 0
+    this.packageRow = 0
+    this.programRow = 0
+    this.yes = false
+    this.back = false
+  }
+
+  reset() {
+    this.menu = 0
+    this.packageRow = 0
+    this.programRow = 0
     this.yes = false
     this.back = false
   }
@@ -37,38 +49,38 @@ export class Dashboard {
 
     let input = this.input
 
-    if (this.menu === 0) {
+    if (this.menu === PACKAGE_MENU) {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
-        this.column--
-        if (this.column < 0) this.column = 0
+        this.packageRow--
+        if (this.packageRow < 0) this.packageRow = 0
         else playSound('baron-pain')
       }
 
       if (input.timerStickDown(timestamp, INPUT_RATE)) {
-        this.column++
-        if (this.column > 4) this.column = 4
+        this.packageRow++
+        if (this.packageRow > 4) this.packageRow = 4
         else playSound('baron-pain')
       }
 
       if (input.pressA()) {
-        if (this.column === 4) this.back = true
-        else this.menu = 1
+        if (this.packageRow === 4) this.back = true
+        else this.menu = PROGRAM_MENU
       }
     } else {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
-        this.column--
-        if (this.column < 0) this.column = 0
+        this.programRow--
+        if (this.programRow < 0) this.programRow = 0
         else playSound('baron-pain')
       }
 
       if (input.timerStickDown(timestamp, INPUT_RATE)) {
-        this.column++
-        if (this.column > 4) this.column = 4
+        this.programRow++
+        if (this.programRow > 4) this.programRow = 4
         else playSound('baron-pain')
       }
 
       if (input.pressA()) {
-        if (this.column === 4) this.menu = 0
+        if (this.programRow === 4) this.menu = PACKAGE_MENU
         else this.yes = true
       }
     }

@@ -16,7 +16,7 @@ export class MapState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.maps = new MapEdit(client.width, client.height, client.scale, callbacks)
+    this.maps = new MapEdit(client.width, client.height, client.scale, client.input, callbacks)
   }
 
   reset() {}
@@ -44,9 +44,7 @@ export class MapState {
   }
 
   switchMode() {
-    if (this.maps.mode === VIEW_MODE) {
-      updateMapEditViewSectorBuffer(this)
-    }
+    if (this.maps.mode === VIEW_MODE) updateMapEditViewSectorBuffer(this)
   }
 
   update() {
@@ -54,10 +52,7 @@ export class MapState {
   }
 
   render() {
-    if (this.maps.mode === TOP_MODE) {
-      renderMapEditTopMode(this)
-    } else {
-      renderMapEditViewMode(this)
-    }
+    if (this.maps.mode === TOP_MODE) renderMapEditTopMode(this)
+    else renderMapEditViewMode(this)
   }
 }

@@ -13,7 +13,7 @@ export class HomeState {
     this.client = client
     this.keys = client.keys
 
-    this.game = new Game(this)
+    this.game = new Game(this, client.input)
     this.loading = true
 
     this.view = new Float32Array(16)
@@ -22,7 +22,10 @@ export class HomeState {
     this.home = new Home(client.width, client.height, client.scale, client.input)
   }
 
-  reset() {}
+  reset() {
+    this.loading = true
+    this.home.reset()
+  }
 
   resize(width, height, scale) {
     this.home.resize(width, height, scale)

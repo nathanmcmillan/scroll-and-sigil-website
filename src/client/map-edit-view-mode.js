@@ -2,6 +2,7 @@ import {drawSprite, drawText} from '/src/render/render.js'
 import {identity, multiply, rotateX, rotateY, translate} from '/src/math/matrix.js'
 import {textureByName, textureByIndex} from '/src/assets/assets.js'
 import {drawWall, drawFloorCeil} from '/src/client/render-sector.js'
+import {renderTouch} from '/src/client/render-touch.js'
 
 function lineRender(client, line) {
   let wall = line.top
@@ -47,11 +48,17 @@ export function renderMapEditViewMode(state) {
   const camera = maps.camera
   const view = state.view
   const projection = state.projection
+  const width = client.width
+  const height = client.height - client.top
 
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+  if (client.touch) renderTouch(client.touchRender)
+
+  // sky box
 
   rendering.setProgram(2)
-  rendering.setView(0, 0, client.width, client.height)
+  rendering.setView(0, client.top, width, height)
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   gl.disable(gl.CULL_FACE)
   gl.disable(gl.DEPTH_TEST)
@@ -66,6 +73,8 @@ export function renderMapEditViewMode(state) {
   let sky = textureByName('sky-box-1')
   rendering.bindTexture(gl.TEXTURE0, sky.texture)
   rendering.bindAndDraw(client.bufferSky)
+
+  // render world
 
   gl.enable(gl.CULL_FACE)
   gl.enable(gl.DEPTH_TEST)
@@ -106,7 +115,7 @@ export function renderMapEditViewMode(state) {
 
   // text
   rendering.setProgram(4)
-  rendering.setView(0, 0, client.width, client.height)
+  rendering.setView(0, client.top, width, height)
 
   gl.disable(gl.CULL_FACE)
   gl.disable(gl.DEPTH_TEST)

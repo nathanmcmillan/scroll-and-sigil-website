@@ -4,7 +4,7 @@ import {renderTouch} from '/src/client/render-touch.js'
 import {identity, multiply} from '/src/math/matrix.js'
 import {darkgreyf, whitef} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
-import {Dashboard} from '/src/menu/dashboard.js'
+import {Dashboard, PACKAGE_MENU} from '/src/menu/dashboard.js'
 
 export class DashboardState {
   constructor(client) {
@@ -17,7 +17,9 @@ export class DashboardState {
     this.dashboard = new Dashboard(client.width, client.height, client.scale, client.input)
   }
 
-  reset() {}
+  reset() {
+    this.dashboard.reset()
+  }
 
   resize(width, height, scale) {
     this.dashboard.resize(width, height, scale)
@@ -37,13 +39,13 @@ export class DashboardState {
     let dashboard = this.dashboard
     dashboard.update(timestamp)
     if (dashboard.yes) {
-      if (dashboard.column === 0) {
+      if (dashboard.programRow === 0) {
         this.client.openState('maps')
-      } else if (dashboard.column === 1) {
+      } else if (dashboard.programRow === 1) {
         this.client.openState('paint')
-      } else if (dashboard.column === 2) {
+      } else if (dashboard.programRow === 2) {
         this.client.openState('music')
-      } else if (dashboard.column === 3) {
+      } else if (dashboard.programRow === 3) {
         this.client.openState('sfx')
       }
     } else if (dashboard.back) {
@@ -100,7 +102,7 @@ export class DashboardState {
     flexSolve(width, height, mainMenu)
     drawTextSpecial(client.bufferGUI, mainMenu.x, mainMenu.y, text, fontScale, white0, white1, white2)
 
-    if (dashboard.menu === 0) {
+    if (dashboard.menu === PACKAGE_MENU) {
       text = 'Open'
       let optionOpen = flexBox(fontWidth * text.length, fontHeight)
       optionOpen.bottomSpace = fontPad
@@ -155,21 +157,27 @@ export class DashboardState {
       let indicator = flexBox(fontWidth * text.length, fontHeight)
       indicator.funX = 'left-of'
       indicator.funY = 'center'
-      if (dashboard.column === 0) {
-        indicator.fromX = optionOpen
-        indicator.fromY = optionOpen
-      } else if (dashboard.column === 1) {
-        indicator.fromX = optionExport
-        indicator.fromY = optionExport
-      } else if (dashboard.column === 2) {
-        indicator.fromX = optionNew
-        indicator.fromY = optionNew
-      } else if (dashboard.column === 3) {
-        indicator.fromX = optionCopy
-        indicator.fromY = optionCopy
-      } else if (dashboard.column === 4) {
-        indicator.fromX = optionBack
-        indicator.fromY = optionBack
+      switch (dashboard.packageRow) {
+        case 0:
+          indicator.fromX = optionOpen
+          indicator.fromY = optionOpen
+          break
+        case 1:
+          indicator.fromX = optionExport
+          indicator.fromY = optionExport
+          break
+        case 2:
+          indicator.fromX = optionNew
+          indicator.fromY = optionNew
+          break
+        case 3:
+          indicator.fromX = optionCopy
+          indicator.fromY = optionCopy
+          break
+        case 4:
+          indicator.fromX = optionBack
+          indicator.fromY = optionBack
+          break
       }
       flexSolve(width, height, indicator)
       drawTextSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0, white1, white2)
@@ -231,21 +239,27 @@ export class DashboardState {
       let indicator = flexBox(fontWidth * text.length, fontHeight)
       indicator.funX = 'left-of'
       indicator.funY = 'center'
-      if (dashboard.column === 0) {
-        indicator.fromX = optionMaps
-        indicator.fromY = optionMaps
-      } else if (dashboard.column === 1) {
-        indicator.fromX = optionPaint
-        indicator.fromY = optionPaint
-      } else if (dashboard.column === 2) {
-        indicator.fromX = optionMusic
-        indicator.fromY = optionMusic
-      } else if (dashboard.column === 3) {
-        indicator.fromX = optionSound
-        indicator.fromY = optionSound
-      } else if (dashboard.column === 4) {
-        indicator.fromX = optionBack
-        indicator.fromY = optionBack
+      switch (dashboard.programRow) {
+        case 0:
+          indicator.fromX = optionMaps
+          indicator.fromY = optionMaps
+          break
+        case 1:
+          indicator.fromX = optionPaint
+          indicator.fromY = optionPaint
+          break
+        case 2:
+          indicator.fromX = optionMusic
+          indicator.fromY = optionMusic
+          break
+        case 3:
+          indicator.fromX = optionSound
+          indicator.fromY = optionSound
+          break
+        case 4:
+          indicator.fromX = optionBack
+          indicator.fromY = optionBack
+          break
       }
       flexSolve(width, height, indicator)
       drawTextSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0, white1, white2)

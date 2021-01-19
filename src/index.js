@@ -66,6 +66,8 @@ async function main() {
 
   await client.initialize()
 
+  document.getElementById('loading').remove()
+
   document.onkeyup = (event) => {
     client.keyUp(event)
   }
