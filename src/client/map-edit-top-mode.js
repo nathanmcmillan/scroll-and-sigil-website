@@ -158,7 +158,7 @@ export function renderMapEditTopMode(state) {
 
   if (maps.toolSelectionActive) {
     let x = 10.0
-    let y = client.height - 10.0 - 2.0 * FONT_HEIGHT
+    let y = height - 10.0 - 2.0 * FONT_HEIGHT
     for (let i = 0; i < DESCRIBE_TOOL.length; i++) {
       const option = DESCRIBE_TOOL[i]
       if (i == maps.tool) drawTextSpecial(client.bufferGUI, x, y, option, 2.0, yellowf(0), yellowf(1), yellowf(2))
@@ -169,7 +169,7 @@ export function renderMapEditTopMode(state) {
 
   if (maps.menuActive) {
     let x = 10.0
-    let y = client.height - 10.0 - 2.0 * FONT_HEIGHT
+    let y = height - 10.0 - 2.0 * FONT_HEIGHT
     for (const option of DESCRIBE_MENU) {
       drawTextSpecial(client.bufferGUI, x, y, option, 2.0, whitef(0), whitef(1), whitef(2))
       y -= 2.5 * FONT_HEIGHT

@@ -14,7 +14,7 @@ export class DashboardState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.dashboard = new Dashboard(client.width, client.height, client.scale, client.input)
+    this.dashboard = new Dashboard(client.width, client.height - client.top, client.scale, client.input)
   }
 
   reset() {

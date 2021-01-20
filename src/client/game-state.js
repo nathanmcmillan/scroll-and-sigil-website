@@ -99,7 +99,7 @@ export class GameState {
     const gl = client.gl
     const rendering = client.rendering
     const game = this.game
-    const scale = game.scale
+    const scale = client.scale
     const width = client.width
     const height = client.height - client.top
     const world = game.world

@@ -13,13 +13,12 @@ export class HomeState {
     this.client = client
     this.keys = client.keys
 
-    this.game = new Game(this, client.input)
-    this.loading = true
-
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.home = new Home(client.width, client.height, client.scale, client.input)
+    this.home = new Home(client.width, client.height - client.top, client.scale, client.input)
+    this.game = new Game(this, client.input)
+    this.loading = true
   }
 
   reset() {

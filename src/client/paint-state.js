@@ -66,7 +66,7 @@ export class PaintState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    let painter = new PaintEdit(client.width, client.height, client.scale, client.input)
+    let painter = new PaintEdit(client.width, client.height - client.top, client.scale, client.input)
     this.painter = painter
 
     let rows = painter.sheetRows

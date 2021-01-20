@@ -1,5 +1,6 @@
 import {renderMapEditTopMode} from '/src/client/map-edit-top-mode.js'
 import {renderMapEditViewMode, updateMapEditViewSectorBuffer} from '/src/client/map-edit-view-mode.js'
+import {renderLoadingInProgress} from '/src/client/render-loading.js'
 import {MapEdit, TOP_MODE, VIEW_MODE, SWITCH_MODE_CALLBACK} from '/src/editor/maps.js'
 
 export class MapState {
@@ -16,7 +17,8 @@ export class MapState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.maps = new MapEdit(client.width, client.height, client.scale, client.input, callbacks)
+    this.maps = new MapEdit(client.width, client.height - client.top, client.scale, client.input, callbacks)
+    this.loading = true
   }
 
   reset() {}
@@ -41,6 +43,7 @@ export class MapState {
 
   async initialize(file) {
     await this.maps.load(file)
+    this.loading = false
   }
 
   switchMode() {
@@ -48,11 +51,13 @@ export class MapState {
   }
 
   update() {
+    if (this.loading) return
     this.maps.update()
   }
 
   render() {
-    if (this.maps.mode === TOP_MODE) renderMapEditTopMode(this)
+    if (this.loading) renderLoadingInProgress(this.client, this.view, this.projection)
+    else if (this.maps.mode === TOP_MODE) renderMapEditTopMode(this)
     else renderMapEditViewMode(this)
   }
 }

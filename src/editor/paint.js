@@ -71,8 +71,6 @@ export class PaintEdit {
     this.shadowInput = true
     this.doPaint = true
 
-    console.warn('paint size', width, height, scale)
-
     this.plan()
   }
 

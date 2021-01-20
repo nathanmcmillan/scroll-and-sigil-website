@@ -14,7 +14,7 @@ export class SfxState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    let sfx = new SfxEdit(client.width, client.height, client.scale, client.input)
+    let sfx = new SfxEdit(client.width, client.height - client.top, client.scale, client.input)
     this.sfx = sfx
   }
 

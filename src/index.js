@@ -11,6 +11,7 @@ function newCanvas(width, height) {
   canvas.style.margin = 'auto'
   canvas.width = width
   canvas.height = height
+  if ('ontouchstart' in window) canvas.requestFullscreen()
   return canvas
 }
 
@@ -47,7 +48,7 @@ function tick(timestamp) {
       perfTick++
       if (perfTick === 16) {
         let average = (performance.now() - perfStart) / perfTick
-        console.log('time (low := ' + perfLow + ') (high := ' + perfHigh + ') average :=', average)
+        console.info('time (low := ' + perfLow + ') (high := ' + perfHigh + ') average :=', average)
         perfLow = Number.MAX_VALUE
         perfHigh = -Number.MAX_VALUE
         perfTick = 0

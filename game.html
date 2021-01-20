@@ -42,9 +42,9 @@
         mobile.style.outline = 'none'
         mobile.style.padding = '0.4em 0.8em'
         mobile.style.textShadow = '0 1px 0px #5f574f'
+        mobile.style.boxShadow = '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.18)'
         mobile.ontouchstart = (event) => {
           event.preventDefault()
-          canvas.requestFullscreen()
           mobile.remove()
           loading.style.display = 'flex'
           loading.style.fontFamily = 'monospace'

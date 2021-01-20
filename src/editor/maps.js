@@ -10,10 +10,10 @@ import * as In from '/src/input/input.js'
 
 // Input
 // WASD: Move cursor (also need touch edge to move)
-// BUTTON X + WASD: Move camera
+// BUTTON B + WASD: Move camera
 // TRIGGER LEFT: Toggle view mode
 // TRIGGER RIGHT: ?
-// BUTTON A: ?
+// BUTTON A: Start line / Place thing
 // BUTTON B: ?
 // BUTTON Y: ?
 // SELECT: ?
@@ -102,7 +102,7 @@ DESCRIBE_OPTIONS[OPTION_DRAW_MODE_DEFAULT] = DRAW_MODE_OPTIONS
 
 const VECTOR_UNDER_CURSOR_OPTIONS = new Map()
 VECTOR_UNDER_CURSOR_OPTIONS.set(In.BUTTON_A, DO_START_LINE)
-VECTOR_UNDER_CURSOR_OPTIONS.set(In.BUTTON_B, DO_MOVE_VECTOR)
+VECTOR_UNDER_CURSOR_OPTIONS.set(In.BUTTON_Y, DO_MOVE_VECTOR)
 DESCRIBE_OPTIONS[OPTION_VECTOR_UNDER_CURSOR] = VECTOR_UNDER_CURSOR_OPTIONS
 
 const MOVE_VECTOR_OPTIONS = new Map()
@@ -115,18 +115,18 @@ DESCRIBE_OPTIONS[OPTION_VECTOR_OVERLAP] = VECTOR_OVERLAP_OPTIONS
 
 const LINE_UNDER_CURSOR_OPTIONS = new Map()
 LINE_UNDER_CURSOR_OPTIONS.set(In.BUTTON_A, DO_FLIP_LINE)
-LINE_UNDER_CURSOR_OPTIONS.set(In.BUTTON_B, DO_DELETE_LINE)
+LINE_UNDER_CURSOR_OPTIONS.set(In.BUTTON_Y, DO_DELETE_LINE)
 LINE_UNDER_CURSOR_OPTIONS.set(In.BUTTON_X, DO_SPLIT_LINE)
 DESCRIBE_OPTIONS[OPTION_LINE_UNDER_CURSOR] = LINE_UNDER_CURSOR_OPTIONS
 
 const END_LINE_OPTIONS = new Map()
 END_LINE_OPTIONS.set(In.BUTTON_A, DO_END_LINE)
-END_LINE_OPTIONS.set(In.BUTTON_B, DO_CANCEL)
+END_LINE_OPTIONS.set(In.BUTTON_Y, DO_CANCEL)
 DESCRIBE_OPTIONS[OPTION_END_LINE] = END_LINE_OPTIONS
 
 const DO_END_LINE_NEW_VECTOR_OPTIONS = new Map()
 DO_END_LINE_NEW_VECTOR_OPTIONS.set(In.BUTTON_A, DO_END_LINE_NEW_VECTOR)
-DO_END_LINE_NEW_VECTOR_OPTIONS.set(In.BUTTON_B, DO_CANCEL)
+DO_END_LINE_NEW_VECTOR_OPTIONS.set(In.BUTTON_Y, DO_CANCEL)
 DESCRIBE_OPTIONS[OPTION_END_LINE_NEW_VECTOR] = DO_END_LINE_NEW_VECTOR_OPTIONS
 
 const THING_MODE_OPTIONS = new Map()
@@ -135,7 +135,7 @@ DESCRIBE_OPTIONS[OPTION_THING_MODE_DEFAULT] = THING_MODE_OPTIONS
 
 const THING_UNDER_CURSOR_OPTIONS = new Map()
 THING_UNDER_CURSOR_OPTIONS.set(In.BUTTON_A, DO_MOVE_THING)
-THING_UNDER_CURSOR_OPTIONS.set(In.BUTTON_B, DO_DELETE_THING)
+THING_UNDER_CURSOR_OPTIONS.set(In.BUTTON_Y, DO_DELETE_THING)
 THING_UNDER_CURSOR_OPTIONS.set(In.BUTTON_X, DO_EDIT_THING)
 DESCRIBE_OPTIONS[OPTION_THING_UNDER_CURSOR] = THING_UNDER_CURSOR_OPTIONS
 
@@ -323,6 +323,9 @@ export class MapEdit {
         index += count + 1
       } else throw "unknown map data: '" + top[0] + "'"
     }
+
+    this.shadowInput = true
+    this.doPaint = true
   }
 
   vectorUnderCursor(ignore = null) {
@@ -507,27 +510,27 @@ export class MapEdit {
       return
     }
 
-    if (input.leftTrigger() && input.pressStickRight()) {
-      this.menuActive = !this.menuActive
-      return
-    }
+    // if (input.leftTrigger() && input.pressStickRight()) {
+    //   this.menuActive = !this.menuActive
+    //   return
+    // }
 
-    if (input.leftTrigger() && input.pressStickUp()) {
-      this.snapToGrid = !this.snapToGrid
-      return
-    }
+    // if (input.leftTrigger() && input.pressStickUp()) {
+    //   this.snapToGrid = !this.snapToGrid
+    //   return
+    // }
 
-    if (input.leftTrigger() && input.pressA()) {
-      this.zoom += 0.25
-      this.camera.x -= 1.0 / this.zoom
-      this.camera.z -= 1.0 / this.zoom
-    }
+    // if (input.leftTrigger() && input.pressA()) {
+    //   this.zoom += 0.25
+    //   this.camera.x -= 1.0 / this.zoom
+    //   this.camera.z -= 1.0 / this.zoom
+    // }
 
-    if (input.leftTrigger() && input.pressB()) {
-      this.zoom -= 0.25
-      this.camera.x += 1.0 / this.zoom
-      this.camera.z += 1.0 / this.zoom
-    }
+    // if (input.leftTrigger() && input.pressB()) {
+    //   this.zoom -= 0.25
+    //   this.camera.x += 1.0 / this.zoom
+    //   this.camera.z += 1.0 / this.zoom
+    // }
 
     if (this.snapToGrid) {
       const grid = 10
@@ -585,8 +588,8 @@ export class MapEdit {
         else camera.z -= modulo
       }
     } else {
-      const look = 3.0 // input.leftTrigger() ? 5.0 : 1.0
-      const speed = 0.5 // input.leftTrigger() ? 2.0 : 0.5
+      const look = 4.0
+      const speed = 0.5
       if (input.b()) {
         if (input.stickLeft()) {
           camera.x -= speed
@@ -619,14 +622,14 @@ export class MapEdit {
           cursor.y += look
           if (cursor.y > this.height) {
             cursor.y = this.height
-            camera.y += speed
+            camera.z += speed
           }
         }
         if (input.stickDown()) {
           cursor.y -= look
           if (cursor.y < 0.0) {
             cursor.y = 0.0
-            camera.y -= speed
+            camera.z -= speed
           }
         }
       }

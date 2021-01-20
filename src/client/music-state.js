@@ -16,7 +16,7 @@ export class MusicState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    let music = new MusicEdit(client.width, client.height, client.scale, client.input)
+    let music = new MusicEdit(client.width, client.height - client.top, client.scale, client.input)
     this.music = music
   }
 
