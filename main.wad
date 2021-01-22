@@ -12,7 +12,7 @@ package: default
 open: sfx
 open: music
 open: maps
-open: paint
 open: dashboard
 open: game
 open: home
+open: paint

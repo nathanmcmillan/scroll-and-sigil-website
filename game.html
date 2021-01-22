@@ -41,8 +41,6 @@
         mobile.style.borderRadius = '6px'
         mobile.style.outline = 'none'
         mobile.style.padding = '0.4em 0.8em'
-        mobile.style.textShadow = '0 1px 0px #5f574f'
-        mobile.style.boxShadow = '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.18)'
         mobile.ontouchstart = (event) => {
           event.preventDefault()
           mobile.remove()
@@ -51,7 +49,6 @@
           loading.style.fontSize = '3vh'
           loading.style.fontWeight = 'bold'
           loading.style.color = '#fff1e8'
-          loading.style.textShadow = '0 1px 0px #5f574f'
           import('/src/index.js')
         }
       } else {
@@ -61,7 +58,6 @@
         loading.style.fontSize = '1.8rem'
         loading.style.fontWeight = 'bold'
         loading.style.color = '#fff1e8'
-        loading.style.textShadow = '0 1px 0px #5f574f'
         import('/src/index.js')
       }
     </script>
