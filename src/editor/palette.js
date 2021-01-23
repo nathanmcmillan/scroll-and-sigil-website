@@ -264,3 +264,40 @@ export function newPaletteFloat(source) {
   while (i--) palettef[i] = source[i] / 255.0
   return palettef
 }
+
+export function describeColor(i) {
+  switch (i) {
+    case 0:
+      return 'black'
+    case 1:
+      return 'dark blue'
+    case 2:
+      return 'dark purple'
+    case 3:
+      return 'dark green'
+    case 4:
+      return 'brown'
+    case 5:
+      return 'dark grey'
+    case 6:
+      return 'light grey'
+    case 7:
+      return 'white'
+    case 8:
+      return 'red'
+    case 9:
+      return 'orange'
+    case 10:
+      return 'yellow'
+    case 11:
+      return 'green'
+    case 12:
+      return 'blue'
+    case 13:
+      return 'lavender'
+    case 14:
+      return 'pink'
+    case 15:
+      return 'light peach'
+  }
+}

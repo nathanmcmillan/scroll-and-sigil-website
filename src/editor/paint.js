@@ -1,11 +1,7 @@
 import {fetchText} from '/src/client/net.js'
-import {newPalette, newPaletteFloat} from '/src/editor/palette.js'
+import {newPalette, newPaletteFloat, describeColor} from '/src/editor/palette.js'
 import {flexBox, flexSolve, flexSize} from '/src/flex/flex.js'
 import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-
-export const PAINT_FOCUS = 0
-export const TOOL_FOCUS = 1
-export const MENU_FOCUS = 2
 
 const PENCIL = 0
 const FILL = 1
@@ -54,8 +50,6 @@ export class PaintEdit {
 
     this.toolColumns = 3
     this.tool = 0
-
-    this.focus = PAINT_FOCUS
 
     this.history = []
     this.historyPosition = 0
@@ -188,6 +182,27 @@ export class PaintEdit {
     this.read(image, 0)
   }
 
+  leftStatusBar() {
+    let input = this.input
+    if (input.y()) {
+      const prefix = 'TOOL: '
+      if (this.tool === 0) return prefix + 'DRAW'
+      else if (this.tool === 1) return prefix + 'FILL'
+      else return prefix + 'COLOR PICKER'
+    } else if (input.x()) return 'COLOR: ' + describeColor(this.paletteC + this.paletteR * this.paletteColumns).toUpperCase()
+    else if (input.select()) return 'BRUSH SIZE: ' + this.brushSize + ' ZOOM: ' + this.canvasZoom + 'X'
+    else return 'X:' + (this.positionOffsetC + this.positionC) + ' Y:' + (this.positionOffsetR + this.positionR)
+  }
+
+  rightStatusBar() {
+    let input = this.input
+    if (input.x()) return '(X)OK'
+    else if (input.y()) return '(Y)OK'
+    else if (input.b()) return '(B)OK'
+    else if (input.select()) return '(SELECT)OK'
+    else return '(X)COLOR (Y)TOOL (B)MOVE (A)DRAW'
+  }
+
   update(timestamp) {
     this.doPaint = false
     if (this.input.nothingOn()) {
@@ -199,132 +214,31 @@ export class PaintEdit {
 
     let input = this.input
 
-    if (this.focus === PAINT_FOCUS) {
-      if (input.b()) {
-        const move = 8
-
-        if (input.timerStickUp(timestamp, INPUT_RATE)) {
-          this.positionOffsetR -= move
-          if (this.positionOffsetR < 0) this.positionOffsetR = 0
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickDown(timestamp, INPUT_RATE)) {
-          this.positionOffsetR += move
-          if (this.positionOffsetR + this.canvasZoom >= this.sheetRows) this.positionOffsetR = this.sheetRows - this.canvasZoom
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickLeft(timestamp, INPUT_RATE)) {
-          this.positionOffsetC -= move
-          if (this.positionOffsetC < 0) this.positionOffsetC = 0
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickRight(timestamp, INPUT_RATE)) {
-          this.positionOffsetC += move
-          if (this.positionOffsetC + this.canvasZoom >= this.sheetColumns) this.positionOffsetC = this.sheetColumns - this.canvasZoom
-          else this.canUpdate = true
-        }
-      } else if (input.x()) {
-        if (input.timerStickUp(timestamp, INPUT_RATE)) {
-          this.paletteR--
-          if (this.paletteR < 0) this.paletteR = 0
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickDown(timestamp, INPUT_RATE)) {
-          this.paletteR++
-          if (this.paletteR >= this.paletteRows) this.paletteR = this.paletteRows - 1
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickLeft(timestamp, INPUT_RATE)) {
-          this.paletteC--
-          if (this.paletteC < 0) this.paletteC = 0
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickRight(timestamp, INPUT_RATE)) {
-          this.paletteC++
-          if (this.paletteC >= this.paletteColumns) this.paletteC = this.paletteColumns - 1
-          else this.canUpdate = true
-        }
-      } else if (input.select()) {
-        if (input.timerStickLeft(timestamp, INPUT_RATE)) {
-          this.brushSize--
-          if (this.brushSize < 1) this.brushSize = 1
-          else this.canUpdate = true
-        }
-        if (input.timerStickRight(timestamp, INPUT_RATE)) {
-          this.brushSize++
-          if (this.brushSize > 4) this.brushSize = 4
-          if (this.positionR + this.brushSize >= this.canvasZoom) this.positionR = this.canvasZoom - this.brushSize
-          if (this.positionC + this.brushSize > this.canvasZoom) this.positionC = this.canvasZoom - this.brushSize
-          this.canUpdate = true
-        }
-        if (input.timerStickUp(timestamp, INPUT_RATE)) {
-          this.canvasZoom /= 2
-          if (this.canvasZoom < 8) this.canvasZoom = 8
-          if (this.positionR + this.brushSize >= this.canvasZoom) this.positionR = this.canvasZoom - this.brushSize
-          if (this.positionC + this.brushSize > this.canvasZoom) this.positionC = this.canvasZoom - this.brushSize
-          this.canUpdate = true
-        }
-        if (input.timerStickDown(timestamp, INPUT_RATE)) {
-          this.canvasZoom *= 2
-          if (this.canvasZoom > 64) this.canvasZoom = 64
-          if (this.positionOffsetR + this.canvasZoom >= this.sheetRows) this.positionOffsetR = this.sheetRows - this.canvasZoom
-          if (this.positionOffsetC + this.canvasZoom >= this.sheetColumns) this.positionOffsetC = this.sheetColumns - this.canvasZoom
-          this.canUpdate = true
-        }
-      } else {
-        if (input.timerStickUp(timestamp, INPUT_RATE)) {
-          this.positionR--
-          if (this.positionR < 0) this.positionR = 0
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickDown(timestamp, INPUT_RATE)) {
-          this.positionR++
-          if (this.positionR + this.brushSize > this.canvasZoom) this.positionR = this.canvasZoom - this.brushSize
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickLeft(timestamp, INPUT_RATE)) {
-          this.positionC--
-          if (this.positionC < 0) this.positionC = 0
-          else this.canUpdate = true
-        }
-
-        if (input.timerStickRight(timestamp, INPUT_RATE)) {
-          this.positionC++
-          if (this.positionC + this.brushSize > this.canvasZoom) this.positionC = this.canvasZoom - this.brushSize
-          else this.canUpdate = true
-        }
+    if (input.x()) {
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        this.paletteR--
+        if (this.paletteR < 0) this.paletteR = 0
+        else this.canUpdate = true
       }
 
-      if (input.a()) this.action()
-      if (input.pressY()) this.focus = TOOL_FOCUS
-      if (input.pressLeftTrigger()) this.undo()
-      if (input.pressRightTrigger()) this.redo()
-
-      if (input.mouseMoved()) {
-        input.mouseMoveOff()
-        let x = input.mouseX()
-        let y = input.mouseY()
-        if (this.viewBox.inside(x, y)) this.mouseInViewBox(x, y)
+      if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        this.paletteR++
+        if (this.paletteR >= this.paletteRows) this.paletteR = this.paletteRows - 1
+        else this.canUpdate = true
       }
 
-      if (input.mouseLeft()) {
-        let x = input.mouseX()
-        let y = input.mouseY()
-        if (this.viewBox.inside(x, y)) {
-          this.mouseInViewBox(x, y)
-          this.action()
-        } else if (this.paletteBox.inside(x, y)) this.mouseInPaletteBox(x, y)
-        else if (this.sheetBox.inside(x, y)) this.mouseInSheetBox(x, y)
+      if (input.timerStickLeft(timestamp, INPUT_RATE)) {
+        this.paletteC--
+        if (this.paletteC < 0) this.paletteC = 0
+        else this.canUpdate = true
       }
-    } else if (this.focus === TOOL_FOCUS) {
+
+      if (input.timerStickRight(timestamp, INPUT_RATE)) {
+        this.paletteC++
+        if (this.paletteC >= this.paletteColumns) this.paletteC = this.paletteColumns - 1
+        else this.canUpdate = true
+      }
+    } else if (input.y()) {
       if (input.timerStickLeft(timestamp, INPUT_RATE)) {
         this.tool--
         if (this.tool < 0) this.tool = 0
@@ -336,8 +250,104 @@ export class PaintEdit {
         if (this.tool >= this.toolColumns) this.tool = this.toolColumns - 1
         else this.canUpdate = true
       }
+    } else if (input.b()) {
+      const move = 8
 
-      if (input.pressA()) this.focus = PAINT_FOCUS
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        this.positionOffsetR -= move
+        if (this.positionOffsetR < 0) this.positionOffsetR = 0
+        else this.canUpdate = true
+      }
+
+      if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        this.positionOffsetR += move
+        if (this.positionOffsetR + this.canvasZoom >= this.sheetRows) this.positionOffsetR = this.sheetRows - this.canvasZoom
+        else this.canUpdate = true
+      }
+
+      if (input.timerStickLeft(timestamp, INPUT_RATE)) {
+        this.positionOffsetC -= move
+        if (this.positionOffsetC < 0) this.positionOffsetC = 0
+        else this.canUpdate = true
+      }
+
+      if (input.timerStickRight(timestamp, INPUT_RATE)) {
+        this.positionOffsetC += move
+        if (this.positionOffsetC + this.canvasZoom >= this.sheetColumns) this.positionOffsetC = this.sheetColumns - this.canvasZoom
+        else this.canUpdate = true
+      }
+    } else if (input.select()) {
+      if (input.timerStickLeft(timestamp, INPUT_RATE)) {
+        this.brushSize--
+        if (this.brushSize < 1) this.brushSize = 1
+        else this.canUpdate = true
+      }
+      if (input.timerStickRight(timestamp, INPUT_RATE)) {
+        this.brushSize++
+        if (this.brushSize > 4) this.brushSize = 4
+        if (this.positionR + this.brushSize >= this.canvasZoom) this.positionR = this.canvasZoom - this.brushSize
+        if (this.positionC + this.brushSize > this.canvasZoom) this.positionC = this.canvasZoom - this.brushSize
+        this.canUpdate = true
+      }
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        this.canvasZoom /= 2
+        if (this.canvasZoom < 8) this.canvasZoom = 8
+        if (this.positionR + this.brushSize >= this.canvasZoom) this.positionR = this.canvasZoom - this.brushSize
+        if (this.positionC + this.brushSize > this.canvasZoom) this.positionC = this.canvasZoom - this.brushSize
+        this.canUpdate = true
+      }
+      if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        this.canvasZoom *= 2
+        if (this.canvasZoom > 64) this.canvasZoom = 64
+        if (this.positionOffsetR + this.canvasZoom >= this.sheetRows) this.positionOffsetR = this.sheetRows - this.canvasZoom
+        if (this.positionOffsetC + this.canvasZoom >= this.sheetColumns) this.positionOffsetC = this.sheetColumns - this.canvasZoom
+        this.canUpdate = true
+      }
+    } else {
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        this.positionR--
+        if (this.positionR < 0) this.positionR = 0
+        else this.canUpdate = true
+      }
+
+      if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        this.positionR++
+        if (this.positionR + this.brushSize > this.canvasZoom) this.positionR = this.canvasZoom - this.brushSize
+        else this.canUpdate = true
+      }
+
+      if (input.timerStickLeft(timestamp, INPUT_RATE)) {
+        this.positionC--
+        if (this.positionC < 0) this.positionC = 0
+        else this.canUpdate = true
+      }
+
+      if (input.timerStickRight(timestamp, INPUT_RATE)) {
+        this.positionC++
+        if (this.positionC + this.brushSize > this.canvasZoom) this.positionC = this.canvasZoom - this.brushSize
+        else this.canUpdate = true
+      }
+    }
+
+    if (input.a()) this.action()
+    if (input.pressLeftTrigger()) this.undo()
+    if (input.pressRightTrigger()) this.redo()
+
+    if (input.mouseMoved()) {
+      input.mouseMoveOff()
+      let x = input.mouseX()
+      let y = input.mouseY()
+      if (this.viewBox.inside(x, y)) this.mouseInViewBox(x, y)
+    }
+
+    if (input.mouseLeft()) {
+      let x = input.mouseX()
+      let y = input.mouseY()
+      if (this.viewBox.inside(x, y)) {
+        this.mouseInViewBox(x, y)
+        this.action()
+      } else if (this.paletteBox.inside(x, y)) this.mouseInPaletteBox(x, y)
+      else if (this.sheetBox.inside(x, y)) this.mouseInSheetBox(x, y)
     }
   }
 

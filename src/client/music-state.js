@@ -220,6 +220,7 @@ export class MusicState {
     client.bufferGUI.zero()
 
     // sprites
+
     rendering.setProgram(3)
     rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
