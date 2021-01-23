@@ -70,10 +70,11 @@ export function touchRenderResize(touch) {
 
   orthographic(touch.orthographic, 0.0, width, 0.0, height, 0.0, 1.0)
 
+  const size = 42
   const scale = client.scale
 
-  let bwidth = 32 * scale
-  let bheight = 32 * scale
+  let bwidth = size * scale
+  let bheight = size * scale
 
   let xcenter = Math.floor(0.5 * width)
   let ycenter = Math.floor(0.5 * height)

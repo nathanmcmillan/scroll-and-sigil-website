@@ -4,6 +4,7 @@ import {flexBox, flexSolve, flexSize} from '/src/flex/flex.js'
 import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 
 // TODO: Fullscreen mode (show the sprite sheet in full view)
+// TODO: Need a sprite mode, selection rectangle + name = sprite
 
 const PENCIL = 0
 const FILL = 1
