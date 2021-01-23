@@ -4,7 +4,7 @@ import {drawText, drawTextSpecial, drawRectangle, drawHollowRectangle, drawImage
 import {renderTouch} from '/src/client/render-touch.js'
 import {spr, sprcol} from '/src/render/pico.js'
 import {identity, multiply} from '/src/math/matrix.js'
-import {blackf, whitef, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
+import {blackf, whitef, lightgreyf, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress, decompress} from '/src/compress/huffman.js'
 import {createPixelsToTexture} from '/src/webgl/webgl.js'
@@ -211,7 +211,8 @@ export class PaintState {
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
 
-    const thickness = scale
+    const thickness = 2 * scale
+    const halfThick = Math.floor(0.5 * thickness)
     const doubleThick = 2 * thickness
     const fourThick = 2 * doubleThick
     const pad = 2 * scale
@@ -266,6 +267,7 @@ export class PaintState {
     let paletteBox = paint.paletteBox
 
     // sheet
+
     magnify = 2 * scale
     left = sheetBox.x
     top = sheetBox.y
@@ -275,6 +277,7 @@ export class PaintState {
     drawImage(client.bufferGUI, left, top, width, height, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0)
 
     // view
+
     magnify = scale
     if (canvasZoom === 8) magnify *= 16
     if (canvasZoom === 16) magnify *= 8
@@ -301,11 +304,13 @@ export class PaintState {
     rendering.updateUniformMatrix('u_mvp', projection)
 
     // box around view
+
     drawHollowRectangle(buffer, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, left - doubleThick, top - doubleThick, width + fourThick, height + fourThick, thickness, white0, white1, white2, 1.0)
-    drawRectangle(buffer, left - doubleThick, top - doubleThick - thickness, width + fourThick, thickness, blackf(0), blackf(1), blackf(2), 1.0)
+    // drawHollowRectangle(buffer, left - doubleThick, top - doubleThick, width + fourThick, height + fourThick, thickness, white0, white1, white2, 1.0)
+    // drawRectangle(buffer, left - doubleThick, top - doubleThick - thickness, width + fourThick, thickness, blackf(0), blackf(1), blackf(2), 1.0)
 
     // box around view focus
+
     x = left + posC * magnify
     y = top + height - posR * magnify
     box = magnify * brushSize
@@ -313,6 +318,7 @@ export class PaintState {
     drawHollowRectangle(buffer, x - doubleThick, y - doubleThick - box, box + fourThick, box + fourThick, thickness, white0, white1, white2, 1.0)
 
     // sheet
+
     magnify = 2 * scale
     left = sheetBox.x
     top = sheetBox.y
@@ -320,18 +326,21 @@ export class PaintState {
     height = sheetBox.height
 
     // box around sheet
+
     drawHollowRectangle(buffer, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, left - doubleThick, top - doubleThick, width + fourThick, height + fourThick, thickness, white0, white1, white2, 1.0)
-    drawRectangle(buffer, left - doubleThick, top - doubleThick - thickness, width + fourThick, thickness, blackf(0), blackf(1), blackf(2), 1.0)
+    // drawHollowRectangle(buffer, left - doubleThick, top - doubleThick, width + fourThick, height + fourThick, thickness, white0, white1, white2, 1.0)
+    // drawRectangle(buffer, left - doubleThick, top - doubleThick - thickness, width + fourThick, thickness, blackf(0), blackf(1), blackf(2), 1.0)
 
     // box around sheet focus
+
     x = left + posOffsetC * magnify
     y = top + height - posOffsetR * magnify
     box = canvasZoom * magnify
-    drawHollowRectangle(buffer, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, x - doubleThick, y - doubleThick - box, box + fourThick, box + fourThick, thickness, white0, white1, white2, 1.0)
+    // drawHollowRectangle(buffer, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(buffer, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
 
     // pallete
+
     magnify = 16 * scale
     width = paletteBox.width
     height = paletteBox.height
@@ -350,22 +359,25 @@ export class PaintState {
     }
 
     // box around palette
+
     drawHollowRectangle(buffer, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, left - doubleThick, top - doubleThick, width + fourThick, height + fourThick, thickness, white0, white1, white2, 1.0)
-    drawRectangle(buffer, left - doubleThick, top - doubleThick - thickness, width + fourThick, thickness, blackf(0), blackf(1), blackf(2), 1.0)
+    // drawHollowRectangle(buffer, left - doubleThick, top - doubleThick, width + fourThick, height + fourThick, thickness, white0, white1, white2, 1.0)
+    // drawRectangle(buffer, left - doubleThick, top - doubleThick - thickness, width + fourThick, thickness, blackf(0), blackf(1), blackf(2), 1.0)
 
     // box around palette focus
+
     x = left + paint.paletteC * magnify
     y = top + height - (paint.paletteR + 1) * magnify
-    drawHollowRectangle(buffer, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, x - doubleThick, y - doubleThick, magnify + fourThick, magnify + fourThick, thickness, white0, white1, white2, 1.0)
+    // drawHollowRectangle(buffer, x - halfThick, y - halfThick, magnify + thickness, magnify + thickness, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(buffer, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, white0, white1, white2, 1.0)
 
     // top bar
+
     let topBarHeight = fontHeight + 2 * pad
     drawRectangle(buffer, 0, canvasHeight - topBarHeight, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
-    // drawRectangle(buffer, 0, canvasHeight - topBarHeight - thickness, canvasWidth, thickness, darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
 
     // bottom bar
+
     drawRectangle(buffer, 0, 0, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
     rendering.updateAndDraw(buffer)
@@ -396,7 +408,12 @@ export class PaintState {
 
     // right top bar
 
-    spr(client.bufferGUI, 0, 1.0, 1.0, canvasWidth - width, canvasHeight - topBarHeight, toolMagnify, toolMagnify)
+    let spriteSize = 10 * scale
+    x = canvasWidth - fontWidth
+    y = canvasHeight - Math.floor(0.5 * (topBarHeight + spriteSize))
+    for (let c = 17; c < 21; c++) {
+      sprcol(client.bufferGUI, c, 1.0, 1.0, x - (21 - c) * spriteSize, y, spriteSize, spriteSize, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
+    }
 
     rendering.bindTexture(gl.TEXTURE0, textureByName('editor-sprites').texture)
     rendering.updateAndDraw(client.bufferGUI)
@@ -433,14 +450,15 @@ export class PaintState {
     let displayPR = '' + (posOffsetR + posR)
     while (displayPC.length < 3) displayPC = '0' + displayPC
     while (displayPR.length < 3) displayPR = '0' + displayPR
-    let displayPosition = 'x=' + displayPC + ' y=' + displayPR
+    let displayPosition = 'x=' + displayPC + ' y=' + displayPR + ' i=' + (posOffsetC + posOffsetR * 8) / 8
     let positionBox = flexBox(fontWidth * displayPosition.length, fontHeight)
     positionBox.funX = 'align-right'
     positionBox.fromX = sheetBox
     positionBox.funY = 'above'
     positionBox.fromY = sheetBox
     flexSolve(0, 0, positionBox)
-    drawTextSpecial(client.bufferGUI, positionBox.x, positionBox.y, displayPosition, fontScale, white0, white1, white2)
+    // drawTextSpecial(client.bufferGUI, positionBox.x, positionBox.y, displayPosition, fontScale, white0, white1, white2)
+    drawText(client.bufferGUI, positionBox.x, positionBox.y, displayPosition, fontScale, lightgreyf(0), lightgreyf(1), lightgreyf(2), 1.0)
 
     // left top bar
 

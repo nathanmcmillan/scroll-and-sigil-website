@@ -3,6 +3,8 @@ import {newPalette, newPaletteFloat, describeColor} from '/src/editor/palette.js
 import {flexBox, flexSolve, flexSize} from '/src/flex/flex.js'
 import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 
+// TODO: Fullscreen mode (show the sprite sheet in full view)
+
 const PENCIL = 0
 const FILL = 1
 const DROPLET = 2
@@ -139,11 +141,6 @@ export class PaintEdit {
 
     sheetBox.argX = canvas.x
     flexSolve(width, height, ...collection)
-
-    // let topBarPaint = flexBox(fontWidth, fontHeight)
-    // topBarPaint.argX = 'center'
-    // topBarPaint.argY = viewBox
-    // this.topBarPaint = topBarPaint
   }
 
   read(content, into) {
