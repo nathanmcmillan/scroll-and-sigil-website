@@ -1,5 +1,7 @@
 import {sawtooth} from '/src/sound/synth.js'
 
+// TODO: Every sound effect needs to be chainable e.g. (noise for 1s + sine for 1s + etc)
+
 const INPUT_RATE = 128
 
 export class SfxEdit {

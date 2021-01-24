@@ -62,8 +62,10 @@ export class PaintEdit {
     this.toolBox = null
     this.paletteBox = null
 
-    this.menuOptions = ['file', 'new sheet']
-    this.fileOptions = ['open', 'save', 'export']
+    this.startMenu = false
+    this.startMenuAt = 0
+    this.startMenuOptions = ['new', 'open', 'save', 'export', 'exit']
+    this.fileMenuOptions = ['open', 'save', 'export']
 
     this.resize(width, height, scale)
   }
@@ -181,24 +183,26 @@ export class PaintEdit {
   }
 
   leftStatusBar() {
+    if (this.startMenu) return 'START MENU'
     let input = this.input
-    if (input.y()) {
+    if (input.x()) return 'COLOR: ' + describeColor(this.paletteC + this.paletteR * this.paletteColumns).toUpperCase()
+    else if (input.y()) {
       const prefix = 'TOOL: '
       if (this.tool === 0) return prefix + 'DRAW'
       else if (this.tool === 1) return prefix + 'FILL'
       else return prefix + 'COLOR PICKER'
-    } else if (input.x()) return 'COLOR: ' + describeColor(this.paletteC + this.paletteR * this.paletteColumns).toUpperCase()
-    else if (input.select()) return 'BRUSH SIZE: ' + this.brushSize + ' ZOOM: ' + this.canvasZoom + 'X'
+    } else if (input.select()) return 'BRUSH SIZE: ' + this.brushSize + ' ZOOM: ' + this.canvasZoom + 'X'
     else return 'X:' + (this.positionOffsetC + this.positionC) + ' Y:' + (this.positionOffsetR + this.positionR)
   }
 
   rightStatusBar() {
+    if (this.startMenu) return 'A/OK B/CLOSE'
     let input = this.input
-    if (input.x()) return '(X)OK'
-    else if (input.y()) return '(Y)OK'
-    else if (input.b()) return '(B)OK'
-    else if (input.select()) return '(SELECT)OK'
-    else return '(X)COLOR (Y)TOOL (B)MOVE (A)DRAW'
+    if (input.x()) return 'X/OK'
+    else if (input.y()) return 'Y/OK'
+    else if (input.b()) return 'B/OK'
+    else if (input.select()) return 'SELECT/OK'
+    else return 'X/COLOR Y/TOOL B/MOVE A/DRAW'
   }
 
   update(timestamp) {
@@ -212,17 +216,33 @@ export class PaintEdit {
 
     let input = this.input
 
-    if (input.x()) {
+    if (this.startMenu) {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
-        this.paletteR--
-        if (this.paletteR < 0) this.paletteR = 0
-        else this.canUpdate = true
+        if (this.startMenuAt > 0) this.startMenuAt--
       }
 
       if (input.timerStickDown(timestamp, INPUT_RATE)) {
-        this.paletteR++
-        if (this.paletteR >= this.paletteRows) this.paletteR = this.paletteRows - 1
-        else this.canUpdate = true
+        if (this.startMenuAt < this.startMenuOptions.length - 1) this.startMenuAt++
+      }
+
+      if (input.pressB()) this.startMenu = false
+
+      return
+    }
+
+    if (input.x()) {
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        if (this.paletteR > 0) {
+          this.paletteR--
+          this.canUpdate = true
+        }
+      }
+
+      if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        if (this.paletteR < this.paletteRows - 1) {
+          this.paletteR++
+          this.canUpdate = true
+        }
       }
 
       if (input.timerStickLeft(timestamp, INPUT_RATE)) {
@@ -232,21 +252,24 @@ export class PaintEdit {
       }
 
       if (input.timerStickRight(timestamp, INPUT_RATE)) {
-        this.paletteC++
-        if (this.paletteC >= this.paletteColumns) this.paletteC = this.paletteColumns - 1
-        else this.canUpdate = true
+        if (this.paletteC < this.paletteColumns - 1) {
+          this.paletteC++
+          this.canUpdate = true
+        }
       }
     } else if (input.y()) {
       if (input.timerStickLeft(timestamp, INPUT_RATE)) {
-        this.tool--
-        if (this.tool < 0) this.tool = 0
-        else this.canUpdate = true
+        if (this.tool > 0) {
+          this.tool--
+          this.canUpdate = true
+        }
       }
 
       if (input.timerStickRight(timestamp, INPUT_RATE)) {
-        this.tool++
-        if (this.tool >= this.toolColumns) this.tool = this.toolColumns - 1
-        else this.canUpdate = true
+        if (this.tool < this.toolColumns - 1) {
+          this.tool++
+          this.canUpdate = true
+        }
       }
     } else if (input.b()) {
       const move = 8
@@ -330,6 +353,11 @@ export class PaintEdit {
     if (input.a()) this.action()
     if (input.pressLeftTrigger()) this.undo()
     if (input.pressRightTrigger()) this.redo()
+
+    if (input.pressStart()) {
+      this.startMenu = true
+      this.startMenuAt = 0
+    }
 
     if (input.mouseMoved()) {
       input.mouseMoveOff()

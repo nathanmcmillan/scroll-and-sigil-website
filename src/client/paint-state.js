@@ -4,11 +4,11 @@ import {drawText, drawRectangle, drawHollowRectangle, drawImage, FONT_WIDTH, FON
 import {renderTouch} from '/src/client/render-touch.js'
 import {spr, sprcol} from '/src/render/pico.js'
 import {identity, multiply} from '/src/math/matrix.js'
-import {blackf, whitef, lightgreyf, lavenderf, lightpeachf, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
+import {blackf, whitef, lightgreyf, lavenderf, darkbluef, lightpeachf, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress, decompress} from '/src/compress/huffman.js'
 import {createPixelsToTexture} from '/src/webgl/webgl.js'
-import {calcFontScale, calcThickness, calcTopBarHeight, calcBottomBarHeight} from '/src/client/client-const.js'
+import {calcFontScale, calcFontPad, calcThickness, calcTopBarHeight, calcBottomBarHeight, calcLongest} from '/src/client/client-const.js'
 
 function updatePixelsToTexture(gl, texture, width, height, pixels) {
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -203,9 +203,6 @@ export class PaintState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
-    let buffer = client.bufferColor
-    buffer.zero()
-
     const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT_BASE
@@ -310,15 +307,17 @@ export class PaintState {
 
     // box around view
 
-    drawHollowRectangle(buffer, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
+    client.bufferColor.zero()
+
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
 
     // focus box around view
 
     x = left + posC * magnify
     y = top + height - posR * magnify
     box = magnify * brushSize
-    drawHollowRectangle(buffer, x, y - box, box, box, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
+    drawHollowRectangle(client.bufferColor, x, y - box, box, box, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
 
     // sheet
 
@@ -330,14 +329,14 @@ export class PaintState {
 
     // box around sheet
 
-    drawHollowRectangle(buffer, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
 
     // focus box around sheet
 
     x = left + posOffsetC * magnify
     y = top + height - posOffsetR * magnify
     box = canvasZoom * magnify
-    drawHollowRectangle(buffer, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
+    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
 
     // pallete
 
@@ -354,30 +353,30 @@ export class PaintState {
         let red = palette[index]
         let green = palette[index + 1]
         let blue = palette[index + 2]
-        drawRectangle(buffer, x, y, magnify, magnify, red, green, blue, 1.0)
+        drawRectangle(client.bufferColor, x, y, magnify, magnify, red, green, blue, 1.0)
       }
     }
 
     // box around palette
 
-    drawHollowRectangle(buffer, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
 
     // focus box around palette
 
     x = left + paint.paletteC * magnify
     y = top + height - (paint.paletteR + 1) * magnify
-    drawHollowRectangle(buffer, x, y, magnify, magnify, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(buffer, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, white0, white1, white2, 1.0)
+    drawHollowRectangle(client.bufferColor, x, y, magnify, magnify, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, white0, white1, white2, 1.0)
 
     // top and bottom bar
 
     const topBarHeight = calcTopBarHeight(scale)
-    drawRectangle(buffer, 0, canvasHeight - topBarHeight, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
+    drawRectangle(client.bufferColor, 0, canvasHeight - topBarHeight, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
     const bottomBarHeight = calcBottomBarHeight(scale)
-    drawRectangle(buffer, 0, 0, canvasWidth, bottomBarHeight, redf(0), redf(1), redf(2), 1.0)
+    drawRectangle(client.bufferColor, 0, 0, canvasWidth, bottomBarHeight, redf(0), redf(1), redf(2), 1.0)
 
-    rendering.updateAndDraw(buffer)
+    rendering.updateAndDraw(client.bufferColor)
 
     // special textures
 
@@ -473,5 +472,47 @@ export class PaintState {
 
     rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
     rendering.updateAndDraw(client.bufferGUI)
+
+    if (paint.startMenu) {
+      rendering.setProgram(0)
+      rendering.setView(0, client.top, canvasWidth, canvasHeight)
+      rendering.updateUniformMatrix('u_mvp', projection)
+
+      // start menu
+
+      const fontPad = calcFontPad(fontHeight)
+      const fontHeightAndPad = fontHeight + fontPad
+
+      client.bufferColor.zero()
+
+      const options = paint.startMenuOptions
+      let startMenuWidth = (calcLongest(options) + 2) * fontWidth
+      let startMenuHeight = (options.length + 2) * fontHeightAndPad
+      x = Math.floor(0.5 * (canvasWidth - startMenuWidth))
+      y = Math.floor(0.5 * (canvasHeight - startMenuHeight)) // canvasHeight - topBarHeight - startMenuHeight - doubleThick
+      drawRectangle(client.bufferColor, x, y, startMenuWidth + doubleThick, startMenuHeight + doubleThick, darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
+
+      drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, startMenuWidth, startMenuHeight, thickness, lightpeachf(0), lightpeachf(1), lightpeachf(2), 1.0)
+
+      rendering.updateAndDraw(client.bufferColor)
+
+      rendering.setProgram(4)
+      rendering.setView(0, client.top, canvasWidth, canvasHeight)
+      rendering.updateUniformMatrix('u_mvp', projection)
+
+      client.bufferGUI.zero()
+
+      y += startMenuHeight - 2 * fontHeightAndPad // + startMenuHeight // canvasHeight - topBarHeight - 2 * fontHeightAndPad
+
+      for (let i = 0; i < options.length; i++) {
+        let option = options[i]
+        let xx = x + fontWidth
+        if (i === paint.startMenuAt) option = '>' + option
+        drawText(client.bufferGUI, xx, y - i * fontHeightAndPad, option, fontScale, white0, white1, white2, 1.0)
+      }
+
+      rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+      rendering.updateAndDraw(client.bufferGUI)
+    }
   }
 }
