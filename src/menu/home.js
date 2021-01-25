@@ -1,6 +1,7 @@
 import {flexText, flexSolve} from '/src/flex/flex.js'
 import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {playSound} from '/src/assets/sounds.js'
+import {calcFontScale, calcFontPad} from '/src/editor/editor-util.js'
 
 const INPUT_RATE = 128
 
@@ -47,10 +48,10 @@ export class Home {
     const width = this.width
     const height = this.height
 
-    const fontScale = Math.floor(1.5 * this.scale)
+    const fontScale = calcFontScale(this.scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
-    const fontPad = Math.floor(0.15 * fontHeight)
+    const fontPad = calcFontPad(fontHeight)
 
     let text = 'Scroll and Sigil'
     let titleBox = flexText(text, 2 * fontWidth * text.length, 2 * fontHeight)
@@ -119,17 +120,17 @@ export class Home {
     let input = this.input
 
     if (input.timerStickUp(timestamp, INPUT_RATE)) {
-      this.row--
-      if (this.row < 0) this.row = 0
-      else playSound('baron-pain')
+      if (this.row > 0) {
+        this.row--
+        playSound('baron-pain')
+      }
+    } else if (input.timerStickDown(timestamp, INPUT_RATE)) {
+      if (this.row < 4) {
+        this.row++
+        playSound('baron-pain')
+      }
     }
 
-    if (input.timerStickDown(timestamp, INPUT_RATE)) {
-      this.row++
-      if (this.row > 4) this.row = 4
-      else playSound('baron-pain')
-    }
-
-    if (input.pressA()) this.yes = true
+    if (input.pressA() || input.pressStart()) this.yes = true
   }
 }

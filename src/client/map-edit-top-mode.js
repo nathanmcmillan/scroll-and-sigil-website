@@ -2,9 +2,10 @@ import {drawText, drawImage, drawRectangle, drawLine, drawTriangle, FONT_WIDTH, 
 import {identity, multiply} from '/src/math/matrix.js'
 import {textureByName} from '/src/assets/assets.js'
 import {vectorSize, thingSize, DESCRIBE_MENU, DESCRIBE_TOOL, DESCRIBE_ACTION, DESCRIBE_OPTIONS, OPTION_END_LINE, OPTION_END_LINE_NEW_VECTOR} from '/src/editor/maps.js'
-import {darkgreyf, yellowf, whitef, greenf, redf} from '/src/editor/palette.js'
+import {darkpurplef, darkgreyf, yellowf, whitef, greenf, redf} from '/src/editor/palette.js'
 import {renderTouch} from '/src/client/render-touch.js'
-import * as In from '/src/input/input.js'
+import {calcFontScale, calcTopBarHeight, calcBottomBarHeight} from '/src/editor/editor-util.js'
+// import * as In from '/src/input/input.js'
 
 function mapX(x, zoom, camera) {
   return zoom * (x - camera.x)
@@ -134,6 +135,14 @@ export function renderMapEditTopMode(state) {
     drawLineWithNormal(client.bufferColor, x, y, maps.cursor.x, maps.cursor.y, thickness, yellowf(0), yellowf(1), yellowf(2), 1.0, zoom, maps.viewLineNormals)
   }
 
+  // top and bottom bar
+
+  const topBarHeight = calcTopBarHeight(scale)
+  drawRectangle(client.bufferColor, 0, height - topBarHeight, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
+
+  const bottomBarHeight = calcBottomBarHeight(scale)
+  drawRectangle(client.bufferColor, 0, 0, width, bottomBarHeight, redf(0), redf(1), redf(2), 1.0)
+
   rendering.updateAndDraw(client.bufferColor)
 
   rendering.setProgram(1)
@@ -152,9 +161,8 @@ export function renderMapEditTopMode(state) {
 
   client.bufferGUI.zero()
 
-  const fontScale = Math.floor(1.5 * scale)
+  const fontScale = calcFontScale(scale)
   const fontWidth = fontScale * FONT_WIDTH
-  const fontHeight = fontScale * FONT_HEIGHT
 
   if (maps.toolSelectionActive) {
     let x = 10.0
@@ -176,47 +184,49 @@ export function renderMapEditTopMode(state) {
     }
   }
 
+  drawText(client.bufferGUI, fontWidth, height - topBarHeight, DESCRIBE_TOOL[maps.tool].toUpperCase(), fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
+
   const options = DESCRIBE_OPTIONS[maps.action]
-  let x = 10.0
+  let x = fontWidth
+  let y = 0
   for (const [button, option] of options) {
     let key = state.keys.reversed(button)
     if (key.startsWith('Key')) key = key.substring(3)
-    let text = '(' + key + ')' + DESCRIBE_ACTION[option]
-    drawTextSpecial(client.bufferGUI, x, 10.0, text, fontScale, redf(0), redf(1), redf(2))
+    let text = key + '/' + DESCRIBE_ACTION[option]
+    drawText(client.bufferGUI, x, y, text, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
     x += fontWidth * (text.length + 1)
   }
 
   if (maps.selectedVec) {
     let text = 'X:' + maps.selectedVec.x + ' Y:' + maps.selectedVec.y
-    let x = width - text.length * fontWidth - 10
-    let y = height - fontHeight - 10
-    drawTextSpecial(client.bufferGUI, x, y, text, fontScale, redf(0), redf(1), redf(2))
+    let x = width - (text.length + 1) * fontWidth
+    drawText(client.bufferGUI, x, height - topBarHeight, text, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
   }
 
   // keys
 
-  let startKey = state.keys.reversed(In.BUTTON_START)
-  if (startKey.startsWith('Key')) startKey = startKey.substring(3)
+  // let startKey = state.keys.reversed(In.BUTTON_START)
+  // if (startKey.startsWith('Key')) startKey = startKey.substring(3)
 
-  let selectKey = state.keys.reversed(In.BUTTON_SELECT)
-  if (selectKey.startsWith('Key')) selectKey = selectKey.substring(3)
+  // let selectKey = state.keys.reversed(In.BUTTON_SELECT)
+  // if (selectKey.startsWith('Key')) selectKey = selectKey.substring(3)
 
-  let buttonA = state.keys.reversed(In.BUTTON_A)
-  if (buttonA.startsWith('Key')) buttonA = buttonA.substring(3)
+  // let buttonA = state.keys.reversed(In.BUTTON_A)
+  // if (buttonA.startsWith('Key')) buttonA = buttonA.substring(3)
 
-  let buttonB = state.keys.reversed(In.BUTTON_B)
-  if (buttonB.startsWith('Key')) buttonB = buttonB.substring(3)
+  // let buttonB = state.keys.reversed(In.BUTTON_B)
+  // if (buttonB.startsWith('Key')) buttonB = buttonB.substring(3)
 
-  let buttonX = state.keys.reversed(In.BUTTON_X)
-  if (buttonX.startsWith('Key')) buttonX = buttonX.substring(3)
+  // let buttonX = state.keys.reversed(In.BUTTON_X)
+  // if (buttonX.startsWith('Key')) buttonX = buttonX.substring(3)
 
-  let buttonY = state.keys.reversed(In.BUTTON_Y)
-  if (buttonY.startsWith('Key')) buttonY = buttonY.substring(3)
+  // let buttonY = state.keys.reversed(In.BUTTON_Y)
+  // if (buttonY.startsWith('Key')) buttonY = buttonY.substring(3)
 
-  let infoText = '(' + buttonY + ')Options '
-  infoText += '(' + selectKey + ')Edit track  '
-  infoText += '(' + startKey + ')Menu '
-  drawTextSpecial(client.bufferGUI, 10, height - fontHeight - 10, infoText, fontScale, whitef(0), whitef(1), whitef(2))
+  // let infoText = '(' + buttonY + ')Options '
+  // infoText += '(' + selectKey + ')Edit track  '
+  // infoText += '(' + startKey + ')Menu '
+  // drawTextSpecial(client.bufferGUI, 10, height - fontHeight - 10, infoText, fontScale, whitef(0), whitef(1), whitef(2))
 
   rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
   rendering.updateAndDraw(client.bufferGUI)

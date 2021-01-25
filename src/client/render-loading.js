@@ -4,6 +4,7 @@ import {whitef, blackf} from '/src/editor/palette.js'
 import {flexText, flexSolve} from '/src/flex/flex.js'
 import {textureByName} from '/src/assets/assets.js'
 import {renderTouch} from '/src/client/render-touch.js'
+import {calcFontScale} from '/src/editor/editor-util.js'
 
 export function renderLoadingInProgress(client, view, projection) {
   const gl = client.gl
@@ -14,7 +15,7 @@ export function renderLoadingInProgress(client, view, projection) {
 
   if (client.touch) renderTouch(client.touchRender)
 
-  const fontScale = Math.floor(1.5 * scale)
+  const fontScale = calcFontScale(scale)
   const fontWidth = fontScale * FONT_WIDTH
   const fontHeight = fontScale * FONT_HEIGHT
 

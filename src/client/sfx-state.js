@@ -4,6 +4,7 @@ import {identity, multiply} from '/src/math/matrix.js'
 import {whitef, darkgreyf} from '/src/editor/palette.js'
 import {compress} from '/src/compress/huffman.js'
 import {SfxEdit} from '/src/editor/sfx.js'
+import {calcFontScale} from '/src/editor/editor-util.js'
 import * as In from '/src/input/input.js'
 
 export class SfxState {
@@ -88,7 +89,7 @@ export class SfxState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
-    const fontScale = Math.floor(1.5 * scale)
+    const fontScale = calcFontScale(scale)
 
     // text
     rendering.setProgram(4)

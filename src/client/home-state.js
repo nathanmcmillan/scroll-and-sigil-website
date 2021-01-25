@@ -7,6 +7,7 @@ import {identity, multiply, rotateX, rotateY, translate} from '/src/math/matrix.
 import {whitef} from '/src/editor/palette.js'
 import {flexText, flexSolve} from '/src/flex/flex.js'
 import {Home} from '/src/menu/home.js'
+import {calcFontScale} from '/src/editor/editor-util.js'
 
 export class HomeState {
   constructor(client) {
@@ -97,7 +98,7 @@ export class HomeState {
     const width = client.width
     const height = client.height - client.top
 
-    const fontScale = Math.floor(1.5 * scale)
+    const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
 

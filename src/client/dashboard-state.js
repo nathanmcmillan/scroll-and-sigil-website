@@ -5,6 +5,7 @@ import {identity, multiply} from '/src/math/matrix.js'
 import {darkgreyf, whitef} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {Dashboard, PACKAGE_MENU} from '/src/menu/dashboard.js'
+import {calcFontScale, calcFontPad} from '/src/editor/editor-util.js'
 
 export class DashboardState {
   constructor(client) {
@@ -39,15 +40,10 @@ export class DashboardState {
     let dashboard = this.dashboard
     dashboard.update(timestamp)
     if (dashboard.yes) {
-      if (dashboard.programRow === 0) {
-        this.client.openState('maps')
-      } else if (dashboard.programRow === 1) {
-        this.client.openState('paint')
-      } else if (dashboard.programRow === 2) {
-        this.client.openState('music')
-      } else if (dashboard.programRow === 3) {
-        this.client.openState('sfx')
-      }
+      if (dashboard.programRow === 0) this.client.openState('maps')
+      else if (dashboard.programRow === 1) this.client.openState('paint')
+      else if (dashboard.programRow === 2) this.client.openState('music')
+      else if (dashboard.programRow === 3) this.client.openState('sfx')
     } else if (dashboard.back) {
       this.client.openState('home')
     }
@@ -66,10 +62,10 @@ export class DashboardState {
     const width = client.width
     const height = client.height - client.top
 
-    const fontScale = Math.floor(1.5 * scale)
+    const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
-    const fontPad = Math.floor(0.15 * fontHeight)
+    const fontPad = calcFontPad(fontHeight)
 
     if (client.touch) renderTouch(client.touchRender)
 

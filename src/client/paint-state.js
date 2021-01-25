@@ -4,11 +4,12 @@ import {drawText, drawRectangle, drawHollowRectangle, drawImage, FONT_WIDTH, FON
 import {renderTouch} from '/src/client/render-touch.js'
 import {spr, sprcol} from '/src/render/pico.js'
 import {identity, multiply} from '/src/math/matrix.js'
-import {blackf, whitef, lightgreyf, lavenderf, darkbluef, lightpeachf, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
+import {blackf, whitef, lightgreyf, lavenderf, lightpeachf, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress, decompress} from '/src/compress/huffman.js'
 import {createPixelsToTexture} from '/src/webgl/webgl.js'
-import {calcFontScale, calcFontPad, calcThickness, calcTopBarHeight, calcBottomBarHeight, calcLongest} from '/src/client/client-const.js'
+import {calcFontScale, calcThickness, calcTopBarHeight, calcBottomBarHeight} from '/src/editor/editor-util.js'
+import {renderDialogue} from '/src/client/client-util.js'
 
 function updatePixelsToTexture(gl, texture, width, height, pixels) {
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -65,7 +66,7 @@ export class PaintState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    let paint = new PaintEdit(client.width, client.height - client.top, client.scale, client.input)
+    let paint = new PaintEdit(this, client.width, client.height - client.top, client.scale, client.input)
     this.paint = paint
 
     let rows = paint.sheetRows
@@ -76,7 +77,9 @@ export class PaintState {
     this.texture = createPixelsToTexture(gl, columns, rows, pixels, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE).texture
   }
 
-  reset() {}
+  reset() {
+    this.paint.reset()
+  }
 
   resize(width, height, scale) {
     this.paint.resize(width, height, scale)
@@ -85,79 +88,7 @@ export class PaintState {
   keyEvent(code, down) {
     let paint = this.paint
     if (this.keys.has(code)) paint.input.set(this.keys.get(code), down)
-    if (down && code === 'Digit0') {
-      // local storage
-      let blob = paint.export()
-      localStorage.setItem('paint-edit', blob)
-      console.info('saved to local storage!')
-    } else if (down && code === 'Digit6') {
-      // compressed text
-      let blob = compress(paint.export())
-      let download = document.createElement('a')
-      download.href = window.URL.createObjectURL(new Blob([blob], {type: 'application/octet-stream'}))
-      download.download = 'sheet' + paint.sheetIndex + '.huff'
-      download.click()
-    } else if (down && code === 'Digit8') {
-      // plain text
-      let blob = paint.export()
-      let download = document.createElement('a')
-      download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
-      download.download = 'sheet' + paint.sheetIndex + '.txt'
-      download.click()
-    } else if (down && code === 'Digit9') {
-      // png
-      let canvas = document.createElement('canvas')
-      let context = canvas.getContext('2d')
-      canvas.width = paint.sheetColumns
-      canvas.height = paint.sheetRows
-      let data = context.createImageData(canvas.width, canvas.height)
-      exportSheetToCanvas(paint, paint.sheetIndex, data.data)
-      context.putImageData(data, 0, 0)
-      let blob = canvas.toDataURL('image/png')
-      let download = document.createElement('a')
-      download.href = blob
-      download.download = 'sheet' + paint.sheetIndex + '.png'
-      download.click()
-    } else if (down && code === 'Digit7') {
-      // import
-      let button = document.createElement('input')
-      button.type = 'file'
-      button.onchange = (e) => {
-        let file = e.target.files[0]
-        console.info(file)
-        let reader = new FileReader()
-        if (file.type === 'image/png') {
-          reader.readAsDataURL(file)
-          reader.onload = (event) => {
-            let content = event.target.result
-            let image = new Image()
-            image.src = content
-            image.onload = () => {
-              content = convertImageToText(paint.palette, image)
-              this.paint.read(content, 0)
-              this.updateTexture()
-            }
-          }
-        } else if (file.name.endsWith('.huff')) {
-          reader.readAsArrayBuffer(file)
-          reader.onload = (event) => {
-            let content = new Uint8Array(event.target.result)
-            this.paint.read(decompress(content), 0)
-            this.updateTexture()
-          }
-        } else {
-          reader.readAsText(file, 'UTF-8')
-          reader.onload = (event) => {
-            let content = event.target.result
-            this.paint.read(content, 0)
-            this.updateTexture()
-          }
-        }
-      }
-      button.click()
-    } else if (down && code === 'Digit1') {
-      this.client.openState('dashboard')
-    }
+    paint.immediateInput()
   }
 
   mouseEvent(left, down) {
@@ -171,6 +102,99 @@ export class PaintState {
   async initialize(file) {
     await this.paint.load(file)
     this.updateTexture()
+  }
+
+  eventCall(id, event) {
+    if (id === 'export') {
+      if (event === 'plain text') this.exportPlain()
+      else if (event === 'png') this.exportPng()
+      else if (event === 'huffman') this.exportHuffman()
+    } else {
+      if (event === 'new') this.importSheet()
+      else if (event === 'open') this.importSheet()
+      else if (event === 'save') this.saveSheet()
+      else if (event === 'exit') this.returnToDashboard()
+    }
+  }
+
+  returnToDashboard() {
+    this.client.openState('dashboard')
+  }
+
+  importSheet() {
+    let button = document.createElement('input')
+    button.type = 'file'
+    button.onchange = (e) => {
+      let file = e.target.files[0]
+      console.info(file)
+      let reader = new FileReader()
+      if (file.type === 'image/png') {
+        reader.readAsDataURL(file)
+        reader.onload = (event) => {
+          let content = event.target.result
+          let image = new Image()
+          image.src = content
+          image.onload = () => {
+            content = convertImageToText(this.paint.palette, image)
+            this.paint.read(content, 0)
+            this.updateTexture()
+          }
+        }
+      } else if (file.name.endsWith('.huff')) {
+        reader.readAsArrayBuffer(file)
+        reader.onload = (event) => {
+          let content = new Uint8Array(event.target.result)
+          this.paint.read(decompress(content), 0)
+          this.updateTexture()
+        }
+      } else {
+        reader.readAsText(file, 'UTF-8')
+        reader.onload = (event) => {
+          let content = event.target.result
+          this.paint.read(content, 0)
+          this.updateTexture()
+        }
+      }
+    }
+    button.click()
+  }
+
+  saveSheet() {
+    let blob = this.paint.export()
+    localStorage.setItem('paint-edit', blob)
+    console.info('saved to local storage!')
+  }
+
+  exportPlain() {
+    let blob = this.paint.export()
+    let download = document.createElement('a')
+    download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
+    download.download = 'sheet' + this.paint.sheetIndex + '.txt'
+    download.click()
+  }
+
+  exportHuffman() {
+    let blob = compress(this.paint.export())
+    let download = document.createElement('a')
+    download.href = window.URL.createObjectURL(new Blob([blob], {type: 'application/octet-stream'}))
+    download.download = 'sheet' + this.paint.sheetIndex + '.huff'
+    download.click()
+  }
+
+  exportPng() {
+    let paint = this.paint
+    let canvas = document.createElement('canvas')
+    let context = canvas.getContext('2d')
+    canvas.width = paint.sheetColumns
+    canvas.height = paint.sheetRows
+    let data = context.createImageData(canvas.width, canvas.height)
+    exportSheetToCanvas(paint, paint.sheetIndex, data.data)
+    context.putImageData(data, 0, 0)
+    let blob = canvas.toDataURL('image/png')
+    let download = document.createElement('a')
+    download.href = blob
+    download.download = 'sheet' + paint.sheetIndex + '.png'
+    download.click()
   }
 
   updateTexture() {
@@ -210,8 +234,8 @@ export class PaintState {
     const thickness = calcThickness(scale)
     const doubleThick = 2 * thickness
 
-    let canvasWidth = client.width
-    let canvasHeight = client.height - client.top
+    const canvasWidth = client.width
+    const canvasHeight = client.height - client.top
 
     let brushSize = paint.brushSize
     let canvasZoom = paint.canvasZoom
@@ -473,46 +497,8 @@ export class PaintState {
     rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
     rendering.updateAndDraw(client.bufferGUI)
 
-    if (paint.startMenu) {
-      rendering.setProgram(0)
-      rendering.setView(0, client.top, canvasWidth, canvasHeight)
-      rendering.updateUniformMatrix('u_mvp', projection)
+    // dialogue box
 
-      // start menu
-
-      const fontPad = calcFontPad(fontHeight)
-      const fontHeightAndPad = fontHeight + fontPad
-
-      client.bufferColor.zero()
-
-      const options = paint.startMenuOptions
-      let startMenuWidth = (calcLongest(options) + 2) * fontWidth
-      let startMenuHeight = (options.length + 2) * fontHeightAndPad
-      x = Math.floor(0.5 * (canvasWidth - startMenuWidth))
-      y = Math.floor(0.5 * (canvasHeight - startMenuHeight)) // canvasHeight - topBarHeight - startMenuHeight - doubleThick
-      drawRectangle(client.bufferColor, x, y, startMenuWidth + doubleThick, startMenuHeight + doubleThick, darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
-
-      drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, startMenuWidth, startMenuHeight, thickness, lightpeachf(0), lightpeachf(1), lightpeachf(2), 1.0)
-
-      rendering.updateAndDraw(client.bufferColor)
-
-      rendering.setProgram(4)
-      rendering.setView(0, client.top, canvasWidth, canvasHeight)
-      rendering.updateUniformMatrix('u_mvp', projection)
-
-      client.bufferGUI.zero()
-
-      y += startMenuHeight - 2 * fontHeightAndPad // + startMenuHeight // canvasHeight - topBarHeight - 2 * fontHeightAndPad
-
-      for (let i = 0; i < options.length; i++) {
-        let option = options[i]
-        let xx = x + fontWidth
-        if (i === paint.startMenuAt) option = '>' + option
-        drawText(client.bufferGUI, xx, y - i * fontHeightAndPad, option, fontScale, white0, white1, white2, 1.0)
-      }
-
-      rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
-      rendering.updateAndDraw(client.bufferGUI)
-    }
+    if (paint.dialogue != null) renderDialogue(this, scale, paint.dialogue)
   }
 }

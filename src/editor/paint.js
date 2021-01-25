@@ -2,6 +2,7 @@ import {fetchText} from '/src/client/net.js'
 import {newPalette, newPaletteFloat, describeColor} from '/src/editor/palette.js'
 import {flexBox, flexSolve, flexSize} from '/src/flex/flex.js'
 import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
+import {calcFontScale, Dialogue} from '/src/editor/editor-util.js'
 
 // TODO: Fullscreen mode (show the sprite sheet in full view)
 // TODO: Need a sprite mode, selection rectangle + name = sprite
@@ -14,7 +15,8 @@ const INPUT_RATE = 128
 const HISTORY_LIMIT = 50
 
 export class PaintEdit {
-  constructor(width, height, scale, input) {
+  constructor(parent, width, height, scale, input) {
+    this.parent = parent
     this.width = width
     this.height = height
     this.scale = scale
@@ -62,12 +64,45 @@ export class PaintEdit {
     this.toolBox = null
     this.paletteBox = null
 
-    this.startMenu = false
-    this.startMenuAt = 0
-    this.startMenuOptions = ['new', 'open', 'save', 'export', 'exit']
-    this.fileMenuOptions = ['open', 'save', 'export']
+    this.dialogue = null
+
+    const self = this
+
+    this.startMenuDialogue = new Dialogue(
+      'start',
+      null,
+      ['new', 'open', 'save', 'export', 'exit'],
+      [
+        null,
+        null,
+        null,
+        () => {
+          self.dialogue = self.exportDialogue
+        },
+        null,
+      ]
+    )
+
+    this.exportDialogue = new Dialogue(
+      'export',
+      null,
+      ['plain text', 'png', 'huffman', 'back'],
+      [
+        null,
+        null,
+        null,
+        () => {
+          self.dialogue = self.startMenuDialogue
+        },
+      ]
+    )
 
     this.resize(width, height, scale)
+  }
+
+  reset() {
+    this.startMenuDialogue.reset()
+    this.exportDialogue.reset()
   }
 
   resize(width, height, scale) {
@@ -90,7 +125,7 @@ export class PaintEdit {
     const paletteRows = this.paletteRows
     const paletteColumns = this.paletteColumns
     const toolColumns = this.toolColumns
-    const fontScale = Math.floor(1.5 * scale)
+    const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
 
@@ -183,7 +218,7 @@ export class PaintEdit {
   }
 
   leftStatusBar() {
-    if (this.startMenu) return 'START MENU'
+    if (this.dialogue !== null) return null
     let input = this.input
     if (input.x()) return 'COLOR: ' + describeColor(this.paletteC + this.paletteR * this.paletteColumns).toUpperCase()
     else if (input.y()) {
@@ -196,13 +231,28 @@ export class PaintEdit {
   }
 
   rightStatusBar() {
-    if (this.startMenu) return 'A/OK B/CLOSE'
+    if (this.dialogue !== null) return 'A/OK B/CANCEL'
     let input = this.input
     if (input.x()) return 'X/OK'
     else if (input.y()) return 'Y/OK'
     else if (input.b()) return 'B/OK'
     else if (input.select()) return 'SELECT/OK'
     else return 'X/COLOR Y/TOOL B/MOVE A/DRAW'
+  }
+
+  immediateInput() {
+    if (this.dialogue === null) return
+    let input = this.input
+    // TODO: Reset nothingOn() so doPaint is true after update
+    if (input.pressB()) this.dialogue = null
+    if (input.pressA() || input.pressStart()) {
+      let call = this.dialogue.callbacks[this.dialogue.pos]
+      if (call !== null) call()
+      else {
+        this.parent.eventCall(this.dialogue.id, this.dialogue.options[this.dialogue.pos])
+        this.dialogue = null
+      }
+    }
   }
 
   update(timestamp) {
@@ -216,16 +266,14 @@ export class PaintEdit {
 
     let input = this.input
 
-    if (this.startMenu) {
+    if (this.dialogue !== null) {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
-        if (this.startMenuAt > 0) this.startMenuAt--
+        if (this.dialogue.pos > 0) this.dialogue.pos--
       }
 
       if (input.timerStickDown(timestamp, INPUT_RATE)) {
-        if (this.startMenuAt < this.startMenuOptions.length - 1) this.startMenuAt++
+        if (this.dialogue.pos < this.dialogue.options.length - 1) this.dialogue.pos++
       }
-
-      if (input.pressB()) this.startMenu = false
 
       return
     }
@@ -353,11 +401,7 @@ export class PaintEdit {
     if (input.a()) this.action()
     if (input.pressLeftTrigger()) this.undo()
     if (input.pressRightTrigger()) this.redo()
-
-    if (input.pressStart()) {
-      this.startMenu = true
-      this.startMenuAt = 0
-    }
+    if (input.pressStart()) this.dialogue = this.startMenuDialogue
 
     if (input.mouseMoved()) {
       input.mouseMoveOff()

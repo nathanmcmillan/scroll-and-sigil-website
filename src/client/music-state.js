@@ -6,6 +6,7 @@ import {identity, multiply} from '/src/math/matrix.js'
 import {whitef, redf, darkpurplef, darkgreyf} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress} from '/src/compress/huffman.js'
+import {calcFontScale} from '/src/editor/editor-util.js'
 import * as In from '/src/input/input.js'
 
 export class MusicState {
@@ -89,7 +90,7 @@ export class MusicState {
     let buffer = client.bufferColor
     buffer.zero()
 
-    const fontScale = Math.floor(1.5 * scale)
+    const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * FONT_WIDTH
     const fontHeight = fontScale * FONT_HEIGHT
 
