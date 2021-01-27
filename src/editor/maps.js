@@ -6,6 +6,7 @@ import {WORLD_SCALE} from '/src/world/world.js'
 import {computeSectors} from '/src/editor/map-edit-sectors.js'
 import {sectorLineNeighbors, sectorInsideOutside} from '/src/map/sector.js'
 import {sectorTriangulateForEditor} from '/src/map/triangulate.js'
+import {Dialog} from '/src/editor/editor-util.js'
 import * as In from '/src/input/input.js'
 
 // Input
@@ -149,6 +150,8 @@ DESCRIBE_OPTIONS[OPTION_SECTOR_MODE_DEFAULT] = SECTOR_MODE_OPTIONS
 
 export const DESCRIBE_MENU = ['Open', 'Save', 'Quit']
 
+const INPUT_RATE = 128
+
 function texture(name) {
   if (name === 'none') return -1
   return textureIndexForName(name)
@@ -173,7 +176,8 @@ function referenceLinesFromVec(vec, lines) {
 }
 
 export class MapEdit {
-  constructor(width, height, scale, input, callbacks) {
+  constructor(parent, width, height, scale, input, callbacks) {
+    this.parent = parent
     this.width = width
     this.height = height
     this.scale = scale
@@ -181,6 +185,7 @@ export class MapEdit {
     this.callbacks = callbacks
     this.shadowInput = true
     this.doPaint = true
+    this.forcePaint = false
 
     this.camera = new Camera(0.0, 1.0, 0.0, 0.0, 0.0)
     this.mode = TOP_MODE
@@ -204,7 +209,6 @@ export class MapEdit {
     this.entitySet = new Set()
     this.defaultEntity = null
     this.menuActive = false
-    this.toolSelectionActive = false
 
     this.snapToGrid = false
     this.viewVecs = true
@@ -212,6 +216,43 @@ export class MapEdit {
     this.viewSectors = true
     this.viewThings = true
     this.viewLineNormals = true
+
+    this.dialog = null
+    this.dialogStack = []
+
+    this.startMenuDialog = new Dialog('start', null, ['new', 'open', 'save', 'export', 'exit'])
+    this.toolDialog = new Dialog('tool', null, ['draw mode', 'thing mode', 'sector mode'])
+    this.editThingDialog = new Dialog('thing', null, ['change entity', 'edit triggers', 'new entity type'])
+  }
+
+  reset() {
+    this.dialogResetAll()
+  }
+
+  handleDialog(event) {
+    console.debug('event :=', event, '|', this.dialogStack)
+    if (event === 'start-new' || event === 'start-open' || event === 'start-exit') {
+      this.parent.eventCall(event)
+      this.dialogEnd()
+    } else if (event.startsWith('tool-')) {
+      if (event === 'tool-draw mode') this.tool = 0
+      else if (event === 'tool-thing mode') this.tool = 1
+      else if (event === 'tool-sector mode') this.tool = 2
+      this.switchTool()
+      this.dialogEnd()
+    }
+  }
+
+  dialogResetAll() {
+    this.startMenuDialog.reset()
+    this.toolDialog.reset()
+  }
+
+  dialogEnd() {
+    this.dialogResetAll()
+    this.dialog = null
+    this.dialogStack.length = 0
+    this.forcePaint = true
   }
 
   resize(width, height, scale) {
@@ -476,29 +517,27 @@ export class MapEdit {
     this.selectedSecondVec = null
   }
 
-  top() {
+  top(timestamp) {
     const input = this.input
     const cursor = this.cursor
     const camera = this.camera
 
-    if (input.pressSelect()) {
-      this.toolSelectionActive = !this.toolSelectionActive
+    if (this.dialog !== null) {
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        if (this.dialog.pos > 0) this.dialog.pos--
+      } else if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        if (this.dialog.pos < this.dialog.options.length - 1) this.dialog.pos++
+      }
+      return
     }
 
-    if (this.toolSelectionActive) {
-      if (input.pressA()) {
-        this.toolSelectionActive = false
-      } else if (input.pressStickUp()) {
-        if (this.tool > 0) {
-          this.tool--
-          this.switchTool()
-        }
-      } else if (input.pressStickDown()) {
-        if (this.tool + 1 < TOOL_COUNT) {
-          this.tool++
-          this.switchTool()
-        }
-      }
+    if (input.pressSelect()) {
+      this.dialog = this.toolDialog
+      return
+    }
+
+    if (input.pressStart()) {
+      this.dialog = this.startMenuDialog
       return
     }
 
@@ -937,16 +976,34 @@ export class MapEdit {
     }
   }
 
-  update() {
-    this.doPaint = false
+  immediateInput() {
+    if (this.dialog === null) return
+    let input = this.input
+    if (input.pressB()) {
+      this.dialog = null
+      this.dialogStack.length = 0
+      this.forcePaint = true
+    }
+    if (input.pressA() || input.pressStart()) {
+      let id = this.dialog.id
+      let option = this.dialog.options[this.dialog.pos]
+      this.handleDialog(id + '-' + option)
+    }
+  }
+
+  update(timestamp) {
+    if (this.forcePaint) {
+      this.doPaint = true
+      this.forcePaint = false
+    } else this.doPaint = false
     if (this.input.nothingOn()) {
       if (this.shadowInput) this.shadowInput = false
       else return
     } else this.shadowInput = true
     this.doPaint = true
 
-    if (this.mode === TOP_MODE) this.top()
-    else this.view()
+    if (this.mode === TOP_MODE) this.top(timestamp)
+    else this.view(timestamp)
   }
 
   export() {

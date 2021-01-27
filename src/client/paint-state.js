@@ -9,7 +9,7 @@ import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {compress, decompress} from '/src/compress/huffman.js'
 import {createPixelsToTexture} from '/src/webgl/webgl.js'
 import {calcFontScale, calcThickness, calcTopBarHeight, calcBottomBarHeight} from '/src/editor/editor-util.js'
-import {renderDialogue} from '/src/client/client-util.js'
+import {renderDialogBox} from '/src/client/client-util.js'
 
 function updatePixelsToTexture(gl, texture, width, height, pixels) {
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -87,8 +87,10 @@ export class PaintState {
 
   keyEvent(code, down) {
     let paint = this.paint
-    if (this.keys.has(code)) paint.input.set(this.keys.get(code), down)
-    paint.immediateInput()
+    if (this.keys.has(code)) {
+      paint.input.set(this.keys.get(code), down)
+      paint.immediateInput()
+    }
   }
 
   mouseEvent(left, down) {
@@ -104,17 +106,14 @@ export class PaintState {
     this.updateTexture()
   }
 
-  eventCall(id, event) {
-    if (id === 'export') {
-      if (event === 'plain text') this.exportPlain()
-      else if (event === 'png') this.exportPng()
-      else if (event === 'huffman') this.exportHuffman()
-    } else {
-      if (event === 'new') this.importSheet()
-      else if (event === 'open') this.importSheet()
-      else if (event === 'save') this.saveSheet()
-      else if (event === 'exit') this.returnToDashboard()
-    }
+  eventCall(event) {
+    if (event === 'export-plain text') this.exportPlain()
+    else if (event === 'export-png') this.exportPng()
+    else if (event === 'export-huffman') this.exportHuffman()
+    else if (event === 'save-save') this.saveSheet()
+    else if (event === 'start-open') this.importSheet()
+    else if (event === 'start-save') this.saveSheet()
+    else if (event === 'start-exit') this.returnToDashboard()
   }
 
   returnToDashboard() {
@@ -497,8 +496,8 @@ export class PaintState {
     rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
     rendering.updateAndDraw(client.bufferGUI)
 
-    // dialogue box
+    // dialog box
 
-    if (paint.dialogue != null) renderDialogue(this, scale, paint.dialogue)
+    if (paint.dialog != null) renderDialogBox(this, scale, paint.dialog)
   }
 }

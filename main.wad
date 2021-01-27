@@ -11,8 +11,8 @@ x-image: test
 package: default
 open: sfx
 open: music
-open: maps
 open: dashboard
 open: game
 open: home
 open: paint
+open: maps

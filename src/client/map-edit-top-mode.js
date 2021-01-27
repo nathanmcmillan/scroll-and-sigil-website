@@ -5,6 +5,7 @@ import {vectorSize, thingSize, DESCRIBE_MENU, DESCRIBE_TOOL, DESCRIBE_ACTION, DE
 import {darkpurplef, darkgreyf, yellowf, whitef, greenf, redf} from '/src/editor/palette.js'
 import {renderTouch} from '/src/client/render-touch.js'
 import {calcFontScale, calcTopBarHeight, calcBottomBarHeight} from '/src/editor/editor-util.js'
+import {renderDialogBox} from '/src/client/client-util.js'
 // import * as In from '/src/input/input.js'
 
 function mapX(x, zoom, camera) {
@@ -203,31 +204,10 @@ export function renderMapEditTopMode(state) {
     drawText(client.bufferGUI, x, height - topBarHeight, text, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
   }
 
-  // keys
-
-  // let startKey = state.keys.reversed(In.BUTTON_START)
-  // if (startKey.startsWith('Key')) startKey = startKey.substring(3)
-
-  // let selectKey = state.keys.reversed(In.BUTTON_SELECT)
-  // if (selectKey.startsWith('Key')) selectKey = selectKey.substring(3)
-
-  // let buttonA = state.keys.reversed(In.BUTTON_A)
-  // if (buttonA.startsWith('Key')) buttonA = buttonA.substring(3)
-
-  // let buttonB = state.keys.reversed(In.BUTTON_B)
-  // if (buttonB.startsWith('Key')) buttonB = buttonB.substring(3)
-
-  // let buttonX = state.keys.reversed(In.BUTTON_X)
-  // if (buttonX.startsWith('Key')) buttonX = buttonX.substring(3)
-
-  // let buttonY = state.keys.reversed(In.BUTTON_Y)
-  // if (buttonY.startsWith('Key')) buttonY = buttonY.substring(3)
-
-  // let infoText = '(' + buttonY + ')Options '
-  // infoText += '(' + selectKey + ')Edit track  '
-  // infoText += '(' + startKey + ')Menu '
-  // drawTextSpecial(client.bufferGUI, 10, height - fontHeight - 10, infoText, fontScale, whitef(0), whitef(1), whitef(2))
-
   rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
   rendering.updateAndDraw(client.bufferGUI)
+
+  // dialog box
+
+  if (maps.dialog != null) renderDialogBox(state, scale, maps.dialog)
 }

@@ -17,23 +17,23 @@ export class MapState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.maps = new MapEdit(client.width, client.height - client.top, client.scale, client.input, callbacks)
+    this.maps = new MapEdit(this, client.width, client.height - client.top, client.scale, client.input, callbacks)
     this.loading = true
   }
 
-  reset() {}
+  reset() {
+    this.maps.reset()
+  }
 
   resize(width, height, scale) {
     this.maps.resize(width, height, scale)
   }
 
   keyEvent(code, down) {
+    let maps = this.maps
     if (this.keys.has(code)) {
-      this.maps.input.set(this.keys.get(code), down)
-    } else if (down && code === 'Digit1') {
-      this.client.openState('dashboard')
-    } else if (down && code === 'Digit0') {
-      console.log(this.maps.export())
+      maps.input.set(this.keys.get(code), down)
+      maps.immediateInput()
     }
   }
 
@@ -46,13 +46,22 @@ export class MapState {
     this.loading = false
   }
 
+  eventCall(event) {
+    if (event === 'start-save') console.log(this.maps.export())
+    else if (event === 'start-exit') this.returnToDashboard()
+  }
+
+  returnToDashboard() {
+    this.client.openState('dashboard')
+  }
+
   switchMode() {
     if (this.maps.mode === VIEW_MODE) updateMapEditViewSectorBuffer(this)
   }
 
-  update() {
+  update(timestamp) {
     if (this.loading) return
-    this.maps.update()
+    this.maps.update(timestamp)
   }
 
   render() {
