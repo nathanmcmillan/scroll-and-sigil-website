@@ -14,9 +14,12 @@ export const BUTTON_B = 9
 export const LEFT_TRIGGER = 10
 export const RIGHT_TRIGGER = 11
 
+const DOUBLE_RATE = 64
+
 export class Input {
   constructor() {
     this.in = new Array(12).fill(false)
+    this.ghost = new Array(12).fill(0)
     this.timers = new Array(12).fill(0)
     this.mouseLeftDown = false
     this.mouseRightDown = false
@@ -27,18 +30,6 @@ export class Input {
 
   set(index, down) {
     this.in[index] = down
-  }
-
-  setStart() {
-    this.in[BUTTON_START] = true
-  }
-
-  setSelect() {
-    this.in[BUTTON_SELECT] = true
-  }
-
-  setA() {
-    this.in[BUTTON_A] = true
   }
 
   mouseEvent(left, down) {
@@ -97,10 +88,19 @@ export class Input {
 
   timer(now, rate, key) {
     let previous = this.timers[key]
-    if (now - rate < previous) return
+    if (now - rate < previous) return false
     let down = this.in[key]
     if (down) this.timers[key] = now
     return down
+  }
+
+  double(now, key) {
+    // fixme: broken
+    let down = this.in[key]
+    let decide = down && now - DOUBLE_RATE < this.timers[key] && now - DOUBLE_RATE > this.ghost[key]
+    if (down) this.timers[key] = now
+    if (!down) this.ghost[key] = now
+    return decide
   }
 
   press(key) {
@@ -251,5 +251,9 @@ export class Input {
 
   timerRightTrigger(now, rate) {
     return this.timer(now, rate, RIGHT_TRIGGER)
+  }
+
+  doubleRightTrigger(now) {
+    return this.double(now, RIGHT_TRIGGER)
   }
 }

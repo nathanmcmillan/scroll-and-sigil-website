@@ -36,9 +36,9 @@ export class LineReference {
     this.minus = null
     this.a = a
     this.b = b
-    this.top = top >= 0 ? new WallReference(this, top) : null
-    this.middle = middle >= 0 ? new WallReference(this, middle) : null
-    this.bottom = bottom >= 0 ? new WallReference(this, bottom) : null
+    this.top = new WallReference(this, top)
+    this.middle = new WallReference(this, middle)
+    this.bottom = new WallReference(this, bottom)
     this.index = 0
   }
 
@@ -51,7 +51,7 @@ export class LineReference {
     let uv = 0.0
     let st = uv + Math.sqrt(x * x + y * y) * scale
 
-    if (this.top) {
+    if (this.top.inUse()) {
       let flip = false
       let a = this.a
       let b = this.b
@@ -79,7 +79,7 @@ export class LineReference {
       this.top.update(ceiling, top, uv, ceiling * scale, st, top * scale, a, b)
     }
 
-    if (this.middle) {
+    if (this.middle.inUse()) {
       let flip = false
       let a = this.a
       let b = this.b
@@ -107,7 +107,7 @@ export class LineReference {
       this.middle.update(floor, ceiling, uv, floor * scale, st, ceiling * scale, a, b)
     }
 
-    if (this.bottom) {
+    if (this.bottom.inUse()) {
       let flip = false
       let a = this.a
       let b = this.b
@@ -147,11 +147,38 @@ export class LineReference {
     return null
   }
 
+  topTextureName() {
+    return this.top.textureName()
+  }
+
+  middleTextureName() {
+    return this.middle.textureName()
+  }
+
+  bottomTextureName() {
+    return this.bottom.textureName()
+  }
+
+  topOffset() {
+    return this.top.offset
+  }
+
+  middleOffset() {
+    return this.middle.offset
+  }
+
+  bottomOffset() {
+    return this.bottom.offset
+  }
+
   export() {
     let content = `${this.a.index} ${this.b.index}`
-    content += ` ${this.top ? textureNameFromIndex(this.top.texture) : 'none'}`
-    content += ` ${this.middle ? textureNameFromIndex(this.middle.texture) : 'none'}`
-    content += ` ${this.bottom ? textureNameFromIndex(this.bottom.texture) : 'none'}`
+    content += ` ${this.topTextureName()}`
+    content += ` ${this.middleTextureName()}`
+    content += ` ${this.bottomTextureName()}`
+    content += ` ${this.topOffset()}`
+    content += ` ${this.middleOffset()}`
+    content += ` ${this.bottomOffset()}`
     return content
   }
 
@@ -160,9 +187,9 @@ export class LineReference {
     let middle = line.middle ? line.middle.texture : -1
     let bottom = line.bottom ? line.bottom.texture : -1
     let copy = new LineReference(top, middle, bottom, line.a, line.b)
-    if (line.top) WallReference.transfer(line.top, copy.top)
-    if (line.middle) WallReference.transfer(line.middle, copy.middle)
-    if (line.bottom) WallReference.transfer(line.bottom, copy.bottom)
+    WallReference.transfer(line.top, copy.top)
+    WallReference.transfer(line.middle, copy.middle)
+    WallReference.transfer(line.bottom, copy.bottom)
     return copy
   }
 }
@@ -174,12 +201,17 @@ export class WallReference {
     this.b = null
     this.normal = null
     this.texture = texture
+    this.offset = 0
     this.floor = 0.0
     this.ceiling = 0.0
     this.u = 0.0
     this.v = 0.0
     this.s = 0.0
     this.t = 0.0
+  }
+
+  inUse() {
+    return this.texture >= 0
   }
 
   update(floor, ceiling, u, v, s, t, a, b) {
@@ -192,6 +224,10 @@ export class WallReference {
     this.a = a
     this.b = b
     this.normal = a.normal(b)
+  }
+
+  textureName() {
+    return this.inUse() ? textureNameFromIndex(this.texture) : 'none'
   }
 
   static transfer(src, dest) {
@@ -266,10 +302,34 @@ export class SectorReference {
     }
   }
 
+  floorTextureName() {
+    return this.hasFloor() ? textureNameFromIndex(this.floorTexture) : 'none'
+  }
+
+  ceilingTextureName() {
+    return this.hasCeiling() ? textureNameFromIndex(this.ceilingTexture) : 'none'
+  }
+
+  refreshFloorTexture() {
+    for (const triangle of this.triangles) {
+      if (Float.eq(triangle.height, this.floor)) {
+        triangle.texture = this.floorTexture
+      }
+    }
+  }
+
+  refreshCeilingTexture() {
+    for (const triangle of this.triangles) {
+      if (Float.eq(triangle.height, this.ceiling)) {
+        triangle.texture = this.ceilingTexture
+      }
+    }
+  }
+
   export() {
     let content = `${this.bottom} ${this.floor} ${this.ceiling} ${this.top}`
-    content += ` ${this.hasFloor() ? textureNameFromIndex(this.floorTexture) : 'none'}`
-    content += ` ${this.hasCeiling() ? textureNameFromIndex(this.ceilingTexture) : 'none'}`
+    content += ` ${this.floorTextureName()}`
+    content += ` ${this.ceilingTextureName()}`
     content += ` ${this.vecs.length}`
     for (const vec of this.vecs) content += ` ${vec.index}`
     content += ` ${this.lines.length}`
@@ -283,6 +343,11 @@ export class ThingReference {
     this.x = x
     this.y = 0.0
     this.z = z
+    this.entity = null
+    this.setEntity(entity)
+  }
+
+  setEntity(entity) {
     this.box = entity.box()
     this.height = entity.height()
     this.texture = textureIndexForName(entity.get('sprite'))

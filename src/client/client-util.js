@@ -1,6 +1,6 @@
 import {textureByName} from '/src/assets/assets.js'
 import {drawText, drawRectangle, drawHollowRectangle, FONT_WIDTH, FONT_HEIGHT_BASE} from '/src/render/render.js'
-import {whitef, lightpeachf, darkgreyf} from '/src/editor/palette.js'
+import {whitef, lightpeachf, orangef, darkgreyf} from '/src/editor/palette.js'
 import {calcFontScale, calcThickness, calcFontPad, calcLongest} from '/src/editor/editor-util.js'
 
 export function renderDialogBox(state, scale, dialog) {
@@ -68,8 +68,8 @@ export function renderDialogBox(state, scale, dialog) {
   for (let i = 0; i < options.length; i++) {
     let option = options[i]
     let xx = x + fontWidth
-    if (i === dialog.pos) option = '>' + option
-    drawText(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, whitef(0), whitef(1), whitef(2), 1.0)
+    if (i === dialog.pos) drawText(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, orangef(0), orangef(1), orangef(2), 1.0)
+    else drawText(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, whitef(0), whitef(1), whitef(2), 1.0)
   }
 
   if (title !== null) {

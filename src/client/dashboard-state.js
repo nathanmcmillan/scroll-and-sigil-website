@@ -6,6 +6,7 @@ import {darkgreyf, whitef} from '/src/editor/palette.js'
 import {flexBox, flexSolve} from '/src/flex/flex.js'
 import {Dashboard, PACKAGE_MENU} from '/src/menu/dashboard.js'
 import {calcFontScale, calcFontPad} from '/src/editor/editor-util.js'
+import {Tape} from '/src/game/tape.js'
 
 export class DashboardState {
   constructor(client) {
@@ -15,7 +16,7 @@ export class DashboardState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.dashboard = new Dashboard(client.width, client.height - client.top, client.scale, client.input)
+    this.dashboard = new Dashboard(this, client.width, client.height - client.top, client.scale, client.input)
   }
 
   reset() {
@@ -27,7 +28,19 @@ export class DashboardState {
   }
 
   keyEvent(code, down) {
-    if (this.keys.has(code)) this.dashboard.input.set(this.keys.get(code), down)
+    let dashboard = this.dashboard
+    if (this.keys.has(code)) {
+      dashboard.input.set(this.keys.get(code), down)
+      dashboard.immediateInput()
+      if (dashboard.yes) {
+        if (dashboard.programRow === 0) this.client.openState('maps')
+        else if (dashboard.programRow === 1) this.client.openState('paint')
+        else if (dashboard.programRow === 2) this.client.openState('music')
+        else if (dashboard.programRow === 3) this.client.openState('sfx')
+      } else if (dashboard.back) {
+        this.client.openState('home')
+      }
+    }
   }
 
   mouseEvent() {}
@@ -36,17 +49,12 @@ export class DashboardState {
 
   async initialize() {}
 
+  eventCall(event) {
+    if (event === 'export') console.log(new Tape().export())
+  }
+
   update(timestamp) {
-    let dashboard = this.dashboard
-    dashboard.update(timestamp)
-    if (dashboard.yes) {
-      if (dashboard.programRow === 0) this.client.openState('maps')
-      else if (dashboard.programRow === 1) this.client.openState('paint')
-      else if (dashboard.programRow === 2) this.client.openState('music')
-      else if (dashboard.programRow === 3) this.client.openState('sfx')
-    } else if (dashboard.back) {
-      this.client.openState('home')
-    }
+    this.dashboard.update(timestamp)
   }
 
   render() {

@@ -1,22 +1,24 @@
-import {drawSprite, drawText} from '/src/render/render.js'
+import {drawSprite, drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
 import {identity, multiply, rotateX, rotateY, translate} from '/src/math/matrix.js'
 import {textureByName, textureByIndex} from '/src/assets/assets.js'
 import {drawWall, drawFloorCeil} from '/src/client/render-sector.js'
 import {renderTouch} from '/src/client/render-touch.js'
+import {redf} from '/src/editor/palette.js'
+import {renderDialogBox} from '/src/client/client-util.js'
 
 function lineRender(client, line) {
   let wall = line.top
-  if (wall) {
+  if (wall.inUse()) {
     let buffer = client.getSectorBuffer(wall.texture)
     drawWall(buffer, wall)
   }
   wall = line.middle
-  if (wall) {
+  if (wall.inUse()) {
     let buffer = client.getSectorBuffer(wall.texture)
     drawWall(buffer, wall)
   }
   wall = line.bottom
-  if (wall) {
+  if (wall.inUse()) {
     let buffer = client.getSectorBuffer(wall.texture)
     drawWall(buffer, wall)
   }
@@ -24,7 +26,9 @@ function lineRender(client, line) {
 
 function floorCeilRender(client, sector) {
   for (const triangle of sector.triangles) {
-    let buffer = client.getSectorBuffer(triangle.texture)
+    let texture = triangle.texture
+    if (texture < 0) continue
+    let buffer = client.getSectorBuffer(texture)
     drawFloorCeil(buffer, triangle)
   }
 }
@@ -48,6 +52,7 @@ export function renderMapEditViewMode(state) {
   const camera = maps.camera
   const view = state.view
   const projection = state.projection
+  const scale = maps.scale
   const width = client.width
   const height = client.height - client.top
 
@@ -114,6 +119,7 @@ export function renderMapEditViewMode(state) {
   }
 
   // text
+
   rendering.setProgram(4)
   rendering.setView(0, client.top, width, height)
 
@@ -124,10 +130,17 @@ export function renderMapEditViewMode(state) {
   multiply(projection, client.orthographic, view)
   rendering.updateUniformMatrix('u_mvp', projection)
 
+  const fontScale = scale
+  const fontWidth = fontScale * FONT_WIDTH
+  const fontHeight = fontScale * FONT_HEIGHT
+
   client.bufferGUI.zero()
-  let text = 'Paint Mode'
-  drawText(client.bufferGUI, 12.0, 8.0, text, 2.0, 0.0, 0.0, 0.0, 1.0)
-  drawText(client.bufferGUI, 10.0, 10.0, text, 2.0, 1.0, 0.0, 0.0, 1.0)
+  let text = 'x:' + camera.x.toFixed(2) + ' y:' + camera.y.toFixed(2) + ' z:' + camera.z.toFixed(2)
+  drawTextSpecial(client.bufferGUI, fontWidth, fontHeight, text, fontScale, redf(0), redf(1), redf(2))
   rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
   rendering.updateAndDraw(client.bufferGUI)
+
+  // dialog box
+
+  if (maps.dialog != null) renderDialogBox(state, scale, maps.dialog)
 }

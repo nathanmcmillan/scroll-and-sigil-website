@@ -301,3 +301,44 @@ export function describeColor(i) {
       return 'light peach'
   }
 }
+
+export function color(c, i) {
+  switch (c) {
+    case 0:
+      return black(i)
+    case 1:
+      return darkblue(i)
+    case 2:
+      return darkpurple(i)
+    case 3:
+      return darkgreen(i)
+    case 4:
+      return brown(i)
+    case 5:
+      return darkgrey(i)
+    case 6:
+      return lightgrey(i)
+    case 7:
+      return white(i)
+    case 8:
+      return red(i)
+    case 9:
+      return orange(i)
+    case 10:
+      return yellow(i)
+    case 11:
+      return green(i)
+    case 12:
+      return blue(i)
+    case 13:
+      return lavender(i)
+    case 14:
+      return pink(i)
+    case 15:
+      return lightpeach(i)
+  }
+}
+
+export function colorf(c, i) {
+  return color(c, i) / 255.0
+}

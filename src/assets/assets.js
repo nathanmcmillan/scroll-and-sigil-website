@@ -39,6 +39,10 @@ export function textureList() {
   return Array.from(TEXTURE_NAME_TO_INDEX.keys())
 }
 
+export function textureCount() {
+  return TEXTURES.length
+}
+
 const TILES = []
 
 export function saveTile(name, texture) {
@@ -48,6 +52,10 @@ export function saveTile(name, texture) {
 
 export function tileList() {
   return TILES
+}
+
+export function tileCount() {
+  return TILES.length
 }
 
 const SPRITE_IMAGES = new Map()

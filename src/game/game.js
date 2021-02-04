@@ -151,22 +151,6 @@ export class Game {
     let camera = this.camera
 
     if (!this.cinema) {
-      // if (input.rightLeft()) {
-      //   camera.ry -= 0.05
-      //   if (camera.ry < 0.0) camera.ry += 2.0 * Math.PI
-      // }
-      // if (input.rightRight()) {
-      //   camera.ry += 0.05
-      //   if (camera.ry >= 2.0 * Math.PI) camera.ry -= 2.0 * Math.PI
-      // }
-      // if (input.rightUp()) {
-      //   camera.rx -= 0.05
-      //   if (camera.rx < -0.5 * Math.PI) camera.rx = -0.5 * Math.PI
-      // }
-      // if (input.rightDown()) {
-      //   camera.rx += 0.05
-      //   if (camera.rx > 0.5 * Math.PI) camera.rx = 0.5 * Math.PI
-      // }
       if (input.y()) {
         camera.ry -= 0.05
         if (camera.ry < 0.0) camera.ry += 2.0 * Math.PI
@@ -175,6 +159,14 @@ export class Game {
         camera.ry += 0.05
         if (camera.ry >= 2.0 * Math.PI) camera.ry -= 2.0 * Math.PI
       }
+      // if (input.rightUp()) {
+      //   camera.rx -= 0.05
+      //   if (camera.rx < -0.5 * Math.PI) camera.rx = -0.5 * Math.PI
+      // }
+      // if (input.rightDown()) {
+      //   camera.rx += 0.05
+      //   if (camera.rx > 0.5 * Math.PI) camera.rx = 0.5 * Math.PI
+      // }
       camera.target.rotation = camera.ry - 0.5 * Math.PI
     }
 
