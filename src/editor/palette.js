@@ -1,159 +1,287 @@
+export const black0 = 0
+export const black1 = 0
+export const black2 = 0
+export const darkblue0 = 29
+export const darkblue1 = 43
+export const darkblue2 = 83
+export const darkpurple0 = 126
+export const darkpurple1 = 37
+export const darkpurple2 = 83
+export const darkgreen0 = 0
+export const darkgreen1 = 135
+export const darkgreen2 = 81
+export const brown0 = 171
+export const brown1 = 82
+export const brown2 = 54
+export const darkgrey0 = 95
+export const darkgrey1 = 87
+export const darkgrey2 = 79
+export const lightgrey0 = 194
+export const lightgrey1 = 195
+export const lightgrey2 = 199
+export const white0 = 255
+export const white1 = 241
+export const white2 = 232
+export const red0 = 255
+export const red1 = 0
+export const red2 = 77
+export const orange0 = 255
+export const orange1 = 163
+export const orange2 = 0
+export const yellow0 = 255
+export const yellow1 = 236
+export const yellow2 = 39
+export const green0 = 0
+export const green1 = 228
+export const green2 = 54
+export const blue0 = 41
+export const blue1 = 173
+export const blue2 = 255
+export const lavender0 = 131
+export const lavender1 = 118
+export const lavender2 = 156
+export const pink0 = 255
+export const pink1 = 119
+export const pink2 = 168
+export const lightpeach0 = 255
+export const lightpeach1 = 204
+export const lightpeach2 = 170
+
+export const black0f = black0 / 255.0
+export const black1f = black1 / 255.0
+export const black2f = black2 / 255.0
+export const darkblue0f = darkblue0 / 255.0
+export const darkblue1f = darkblue1 / 255.0
+export const darkblue2f = darkblue2 / 255.0
+export const darkpurple0f = darkpurple0 / 255.0
+export const darkpurple1f = darkpurple1 / 255.0
+export const darkpurple2f = darkpurple2 / 255.0
+export const darkgreen0f = darkgreen0 / 255.0
+export const darkgreen1f = darkgreen1 / 255.0
+export const darkgreen2f = darkgreen2 / 255.0
+export const brown0f = brown0 / 255.0
+export const brown1f = brown1 / 255.0
+export const brown2f = brown2 / 255.0
+export const darkgrey0f = darkgrey0 / 255.0
+export const darkgrey1f = darkgrey1 / 255.0
+export const darkgrey2f = darkgrey2 / 255.0
+export const lightgrey0f = lightgrey0 / 255.0
+export const lightgrey1f = lightgrey1 / 255.0
+export const lightgrey2f = lightgrey2 / 255.0
+export const white0f = white0 / 255.0
+export const white1f = white1 / 255.0
+export const white2f = white2 / 255.0
+export const red0f = red0 / 255.0
+export const red1f = red1 / 255.0
+export const red2f = red2 / 255.0
+export const orange0f = orange0 / 255.0
+export const orange1f = orange1 / 255.0
+export const orange2f = orange2 / 255.0
+export const yellow0f = yellow0 / 255.0
+export const yellow1f = yellow1 / 255.0
+export const yellow2f = yellow2 / 255.0
+export const green0f = green0 / 255.0
+export const green1f = green1 / 255.0
+export const green2f = green2 / 255.0
+export const blue0f = blue0 / 255.0
+export const blue1f = blue1 / 255.0
+export const blue2f = blue2 / 255.0
+export const lavender0f = lavender0 / 255.0
+export const lavender1f = lavender1 / 255.0
+export const lavender2f = lavender2 / 255.0
+export const pink0f = pink0 / 255.0
+export const pink1f = pink1 / 255.0
+export const pink2f = pink2 / 255.0
+export const lightpeach0f = lightpeach0 / 255.0
+export const lightpeach1f = lightpeach1 / 255.0
+export const lightpeach2f = lightpeach2 / 255.0
+
 export function black() {
-  return 0
+  return black0
 }
 
 export function blackf() {
-  return 0.0
+  return black0f
 }
 
 export function darkblue(i) {
-  if (i === 0) return 29
-  if (i === 1) return 43
-  return 83
+  if (i === 0) return darkblue0
+  if (i === 1) return darkblue1
+  return darkblue2
 }
 
 export function darkbluef(i) {
-  return darkblue(i) / 255.0
+  if (i === 0) return darkblue0f
+  if (i === 1) return darkblue1f
+  return darkblue2f
 }
 
 export function darkpurple(i) {
-  if (i === 0) return 126
-  if (i === 1) return 37
-  return 83
+  if (i === 0) return darkpurple0
+  if (i === 1) return darkpurple1
+  return darkpurple2
 }
 
 export function darkpurplef(i) {
-  return darkpurple(i) / 255.0
+  if (i === 0) return darkpurple0f
+  if (i === 1) return darkpurple1f
+  return darkpurple2f
 }
 
 export function darkgreen(i) {
-  if (i === 0) return 0
-  if (i === 1) return 135
-  return 81
+  if (i === 0) return darkgreen0
+  if (i === 1) return darkgreen1
+  return darkgreen2
 }
 
 export function darkgreenf(i) {
-  return darkgreen(i) / 255.0
+  if (i === 0) return darkgreen0f
+  if (i === 1) return darkgreen1f
+  return darkgreen2f
 }
 
 export function brown(i) {
-  if (i === 0) return 171
-  if (i === 1) return 82
-  return 54
+  if (i === 0) return brown0
+  if (i === 1) return brown1
+  return brown2
 }
 
 export function brownf(i) {
-  return brown(i) / 255.0
+  if (i === 0) return brown0f
+  if (i === 1) return brown1f
+  return brown2f
 }
 
 export function darkgrey(i) {
-  if (i === 0) return 95
-  if (i === 1) return 87
-  return 79
+  if (i === 0) return darkgrey0
+  if (i === 1) return darkgrey1
+  return darkgrey2
 }
 
 export function darkgreyf(i) {
-  return darkgrey(i) / 255.0
+  if (i === 0) return darkgrey0f
+  if (i === 1) return darkgrey1f
+  return darkgrey2f
 }
 
 export function lightgrey(i) {
-  if (i === 0) return 194
-  if (i === 1) return 195
-  return 199
+  if (i === 0) return lightgrey0
+  if (i === 1) return lightgrey1
+  return lightgrey2
 }
 
 export function lightgreyf(i) {
-  return lightgrey(i) / 255.0
+  if (i === 0) return lightgrey0f
+  if (i === 1) return lightgrey1f
+  return lightgrey2f
 }
 
 export function white(i) {
-  if (i === 0) return 255
-  if (i === 1) return 241
-  return 232
+  if (i === 0) return white0
+  if (i === 1) return white1
+  return white2
 }
 
 export function whitef(i) {
-  return white(i) / 255.0
+  if (i === 0) return white0f
+  if (i === 1) return white1f
+  return white2f
 }
 
 export function red(i) {
-  if (i === 0) return 255
-  if (i === 1) return 0
-  return 77
+  if (i === 0) return red0
+  if (i === 1) return red1
+  return red2
 }
 
 export function redf(i) {
-  return red(i) / 255.0
+  if (i === 0) return red0f
+  if (i === 1) return red1f
+  return red2f
 }
 
 export function orange(i) {
-  if (i === 0) return 255
-  if (i === 1) return 163
-  return 0
+  if (i === 0) return orange0
+  if (i === 1) return orange1
+  return orange2
 }
 
 export function orangef(i) {
-  return orange(i) / 255.0
+  if (i === 0) return orange0f
+  if (i === 1) return orange1f
+  return orange2f
 }
 
 export function yellow(i) {
-  if (i === 0) return 255
-  if (i === 1) return 236
-  return 39
+  if (i === 0) return yellow0
+  if (i === 1) return yellow1
+  return yellow2
 }
 
 export function yellowf(i) {
-  return yellow(i) / 255.0
+  if (i === 0) return yellow0f
+  if (i === 1) return yellow1f
+  return yellow2f
 }
 
 export function green(i) {
-  if (i === 0) return 0
-  if (i === 1) return 228
-  return 54
+  if (i === 0) return green0
+  if (i === 1) return green1
+  return green2
 }
 
 export function greenf(i) {
-  return green(i) / 255.0
+  if (i === 0) return green0f
+  if (i === 1) return green1f
+  return green2f
 }
 
 export function blue(i) {
-  if (i === 0) return 41
-  if (i === 1) return 173
-  return 255
+  if (i === 0) return blue0
+  if (i === 1) return blue1
+  return blue2
 }
 
 export function bluef(i) {
-  return blue(i) / 255.0
+  if (i === 0) return blue0f
+  if (i === 1) return blue1f
+  return blue2f
 }
 
 export function lavender(i) {
-  if (i === 0) return 131
-  if (i === 1) return 118
-  return 156
+  if (i === 0) return lavender0
+  if (i === 1) return lavender1
+  return lavender2
 }
 
 export function lavenderf(i) {
-  return lavender(i) / 255.0
+  if (i === 0) return lavender0f
+  if (i === 1) return lavender1f
+  return lavender2f
 }
 
 export function pink(i) {
-  if (i === 0) return 255
-  if (i === 1) return 119
-  return 168
+  if (i === 0) return pink0
+  if (i === 1) return pink1
+  return pink2
 }
 
 export function pinkf(i) {
-  return pink(i) / 255.0
+  if (i === 0) return pink0f
+  if (i === 1) return pink1f
+  return pink2f
 }
 
 export function lightpeach(i) {
-  if (i === 0) return 255
-  if (i === 1) return 204
-  return 170
+  if (i === 0) return lightpeach0
+  if (i === 1) return lightpeach1
+  return lightpeach2
 }
 
 export function lightpeachf(i) {
-  return lightpeach(i) / 255.0
+  if (i === 0) return lightpeach0f
+  if (i === 1) return lightpeach1f
+  return lightpeach2f
 }
 
 export function luminosity(red, green, blue) {
@@ -176,84 +304,84 @@ export function newPalette() {
   let palette = new Uint8Array(4 * 4 * 3)
   let index = 0
 
-  palette[index] = black()
-  palette[index + 1] = black()
-  palette[index + 2] = black()
+  palette[index] = black0
+  palette[index + 1] = black1
+  palette[index + 2] = black2
   index += 3
 
-  palette[index] = darkblue(0)
-  palette[index + 1] = darkblue(1)
-  palette[index + 2] = darkblue(2)
+  palette[index] = darkblue0
+  palette[index + 1] = darkblue1
+  palette[index + 2] = darkblue2
   index += 3
 
-  palette[index] = darkpurple(0)
-  palette[index + 1] = darkpurple(1)
-  palette[index + 2] = darkpurple(2)
+  palette[index] = darkpurple0
+  palette[index + 1] = darkpurple1
+  palette[index + 2] = darkpurple2
   index += 3
 
-  palette[index] = darkgreen(0)
-  palette[index + 1] = darkgreen(1)
-  palette[index + 2] = darkgreen(2)
+  palette[index] = darkgreen0
+  palette[index + 1] = darkgreen1
+  palette[index + 2] = darkgreen2
   index += 3
 
-  palette[index] = brown(0)
-  palette[index + 1] = brown(1)
-  palette[index + 2] = brown(2)
+  palette[index] = brown0
+  palette[index + 1] = brown1
+  palette[index + 2] = brown2
   index += 3
 
-  palette[index] = darkgrey(0)
-  palette[index + 1] = darkgrey(1)
-  palette[index + 2] = darkgrey(2)
+  palette[index] = darkgrey0
+  palette[index + 1] = darkgrey1
+  palette[index + 2] = darkgrey2
   index += 3
 
-  palette[index] = lightgrey(0)
-  palette[index + 1] = lightgrey(1)
-  palette[index + 2] = lightgrey(2)
+  palette[index] = lightgrey0
+  palette[index + 1] = lightgrey1
+  palette[index + 2] = lightgrey2
   index += 3
 
-  palette[index] = white(0)
-  palette[index + 1] = white(1)
-  palette[index + 2] = white(2)
+  palette[index] = white0
+  palette[index + 1] = white1
+  palette[index + 2] = white2
   index += 3
 
-  palette[index] = red(0)
-  palette[index + 1] = red(1)
-  palette[index + 2] = red(2)
+  palette[index] = red0
+  palette[index + 1] = red1
+  palette[index + 2] = red2
   index += 3
 
-  palette[index] = orange(0)
-  palette[index + 1] = orange(1)
-  palette[index + 2] = orange(2)
+  palette[index] = orange0
+  palette[index + 1] = orange1
+  palette[index + 2] = orange2
   index += 3
 
-  palette[index] = yellow(0)
-  palette[index + 1] = yellow(1)
-  palette[index + 2] = yellow(2)
+  palette[index] = yellow0
+  palette[index + 1] = yellow1
+  palette[index + 2] = yellow2
   index += 3
 
-  palette[index] = green(0)
-  palette[index + 1] = green(1)
-  palette[index + 2] = green(2)
+  palette[index] = green0
+  palette[index + 1] = green1
+  palette[index + 2] = green2
   index += 3
 
-  palette[index] = blue(0)
-  palette[index + 1] = blue(1)
-  palette[index + 2] = blue(2)
+  palette[index] = blue0
+  palette[index + 1] = blue1
+  palette[index + 2] = blue2
   index += 3
 
-  palette[index] = lavender(0)
-  palette[index + 1] = lavender(1)
-  palette[index + 2] = lavender(2)
+  palette[index] = lavender0
+  palette[index + 1] = lavender1
+  palette[index + 2] = lavender2
   index += 3
 
-  palette[index] = pink(0)
-  palette[index + 1] = pink(1)
-  palette[index + 2] = pink(2)
+  palette[index] = pink0
+  palette[index + 1] = pink1
+  palette[index + 2] = pink2
   index += 3
 
-  palette[index] = lightpeach(0)
-  palette[index + 1] = lightpeach(1)
-  palette[index + 2] = lightpeach(2)
+  palette[index] = lightpeach0
+  palette[index + 1] = lightpeach1
+  palette[index + 2] = lightpeach2
 
   return palette
 }

@@ -1,11 +1,11 @@
-import {textureByName} from '/src/assets/assets.js'
-import {drawTextSpecial} from '/src/render/render.js'
-import {identity, multiply} from '/src/math/matrix.js'
-import {whitef, darkgreyf} from '/src/editor/palette.js'
-import {compress} from '/src/compress/huffman.js'
-import {SfxEdit} from '/src/editor/sfx.js'
-import {calcFontScale} from '/src/editor/editor-util.js'
-import * as In from '/src/input/input.js'
+import {textureByName} from '../assets/assets.js'
+import {drawTextSpecial} from '../render/render.js'
+import {identity, multiply} from '../math/matrix.js'
+import {whitef, darkgreyf} from '../editor/palette.js'
+import {compress} from '../compress/huffman.js'
+import {SfxEdit} from '../editor/sfx.js'
+import {calcFontScale} from '../editor/editor-util.js'
+import * as In from '../input/input.js'
 
 export class SfxState {
   constructor(client) {
@@ -33,7 +33,7 @@ export class SfxState {
     } else if (down && code === 'Digit0') {
       // local storage
       let blob = sfx.export()
-      localStorage.setItem('music-edit', blob)
+      localStorage.setItem('sfx.txt', blob)
       console.info('saved to local storage!')
       console.info(blob)
     } else if (down && code === 'Digit6') {

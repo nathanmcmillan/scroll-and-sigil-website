@@ -1,4 +1,4 @@
-import {Wall} from '/src/map/wall.js'
+import {Wall} from '../map/wall.js'
 
 export function lineNullSectors(lines) {
   for (const line of lines) {

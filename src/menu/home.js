@@ -1,18 +1,20 @@
-import {flexText, flexSolve} from '/src/flex/flex.js'
-import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {playSound} from '/src/assets/sounds.js'
-import {calcFontScale, calcFontPad} from '/src/editor/editor-util.js'
+import {flexText, flexSolve} from '../gui/flex.js'
+import {FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
+import {playSound} from '../assets/sounds.js'
+import {calcFontScale, calcFontPad} from '../editor/editor-util.js'
 
 const INPUT_RATE = 128
 
 export class Home {
-  constructor(width, height, scale, input) {
+  constructor(parent, width, height, scale, input) {
+    this.parent = parent
     this.width = width
     this.height = height
     this.scale = scale
     this.input = input
     this.shadowInput = true
     this.doPaint = true
+    this.forcePaint = false
 
     this.row = 0
     this.yes = false
@@ -30,6 +32,7 @@ export class Home {
   reset() {
     this.row = 0
     this.yes = false
+    this.forcePaint = true
   }
 
   resize(width, height, scale) {
@@ -109,15 +112,23 @@ export class Home {
     flexSolve(width, height, titleBox, continueGameBox, newGameBox, editorBox, optionsBox, creditsBox)
   }
 
+  immediateInput() {
+    const input = this.input
+    if (input.pressA() || input.pressStart()) this.parent.eventCall('ok')
+  }
+
   update(timestamp) {
-    this.doPaint = false
+    if (this.forcePaint) {
+      this.doPaint = true
+      this.forcePaint = false
+    } else this.doPaint = false
     if (this.input.nothingOn()) {
       if (this.shadowInput) this.shadowInput = false
       else return
     } else this.shadowInput = true
     this.doPaint = true
 
-    let input = this.input
+    const input = this.input
 
     if (input.timerStickUp(timestamp, INPUT_RATE)) {
       if (this.row > 0) {
@@ -130,7 +141,5 @@ export class Home {
         playSound('baron-pain')
       }
     }
-
-    if (input.pressA() || input.pressStart()) this.yes = true
   }
 }

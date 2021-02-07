@@ -1,8 +1,8 @@
-import {lineNullSectors} from '/src/map/line.js'
-import {WORLD_SCALE} from '/src/world/world.js'
-import {sectorLineNeighbors, sectorInsideOutside} from '/src/map/sector.js'
-import {sectorTriangulateForEditor} from '/src/map/triangulate.js'
-import {SectorReference} from '/src/editor/map-edit-references.js'
+import {lineNullSectors} from '../map/line.js'
+import {WORLD_SCALE} from '../world/world.js'
+import {sectorLineNeighbors, sectorInsideOutside} from '../map/sector.js'
+import {sectorTriangulateForEditor} from '../map/triangulate.js'
+import {SectorReference} from '../editor/map-edit-references.js'
 
 function copy(src, dest) {
   dest.bottom = src.bottom

@@ -1,4 +1,4 @@
-import {WORLD_CELL_SHIFT} from '/src/world/world.js'
+import {WORLD_CELL_SHIFT} from '../world/world.js'
 
 export class Missile {
   constructor() {

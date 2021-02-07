@@ -1,12 +1,12 @@
-import {textureByName} from '/src/assets/assets.js'
-import {drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {renderTouch} from '/src/client/render-touch.js'
-import {identity, multiply} from '/src/math/matrix.js'
-import {darkgreyf, whitef} from '/src/editor/palette.js'
-import {flexBox, flexSolve} from '/src/flex/flex.js'
-import {Dashboard, PACKAGE_MENU} from '/src/menu/dashboard.js'
-import {calcFontScale, calcFontPad} from '/src/editor/editor-util.js'
-import {Tape} from '/src/game/tape.js'
+import {textureByName} from '../assets/assets.js'
+import {drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
+import {renderTouch} from '../client/render-touch.js'
+import {identity, multiply} from '../math/matrix.js'
+import {darkgrey0f, darkgrey1f, darkgrey2f, white0f, white1f, white2f} from '../editor/palette.js'
+import {flexBox, flexSolve} from '../gui/flex.js'
+import {calcFontScale, calcFontPad} from '../editor/editor-util.js'
+import {Dashboard, TAPE_MENU, PROGRAM_MENU, EDIT_NAME} from '../menu/dashboard.js'
+import {renderTextBox, textBoxWidth, textBoxHeight} from './client-util.js'
 
 export class DashboardState {
   constructor(client) {
@@ -17,6 +17,7 @@ export class DashboardState {
     this.projection = new Float32Array(16)
 
     this.dashboard = new Dashboard(this, client.width, client.height - client.top, client.scale, client.input)
+    this.dashboard.tape = client.tape
   }
 
   reset() {
@@ -32,14 +33,6 @@ export class DashboardState {
     if (this.keys.has(code)) {
       dashboard.input.set(this.keys.get(code), down)
       dashboard.immediateInput()
-      if (dashboard.yes) {
-        if (dashboard.programRow === 0) this.client.openState('maps')
-        else if (dashboard.programRow === 1) this.client.openState('paint')
-        else if (dashboard.programRow === 2) this.client.openState('music')
-        else if (dashboard.programRow === 3) this.client.openState('sfx')
-      } else if (dashboard.back) {
-        this.client.openState('home')
-      }
     }
   }
 
@@ -50,7 +43,20 @@ export class DashboardState {
   async initialize() {}
 
   eventCall(event) {
-    if (event === 'export') console.log(new Tape().export())
+    const dashboard = this.dashboard
+    if (event === 'export') {
+      const blob = dashboard.tape.export()
+      console.info(blob)
+      const download = document.createElement('a')
+      download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
+      download.download = dashboard.tape.name + '.txt'
+      download.click()
+    } else if (event === 'open') {
+      if (dashboard.programRow === 0) this.client.openState('maps')
+      else if (dashboard.programRow === 1) this.client.openState('paint')
+      else if (dashboard.programRow === 2) this.client.openState('music')
+      else if (dashboard.programRow === 3) this.client.openState('sfx')
+    } else if (event === 'back') this.client.openState('home')
   }
 
   update(timestamp) {
@@ -80,16 +86,12 @@ export class DashboardState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
-    let white0 = whitef(0)
-    let white1 = whitef(1)
-    let white2 = whitef(2)
-
     // text
     rendering.setProgram(4)
     rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
-    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
+    gl.clearColor(darkgrey0f, darkgrey1f, darkgrey2f, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     gl.disable(gl.CULL_FACE)
@@ -99,43 +101,63 @@ export class DashboardState {
 
     let text = 'Scroll and Sigil Editor'
     let mainMenu = flexBox(fontWidth * text.length, fontHeight)
-    mainMenu.bottomSpace = 4 * fontHeight
+    mainMenu.bottomSpace = 3 * fontHeight
     mainMenu.funX = 'center'
     mainMenu.funY = '%'
     mainMenu.argY = 75
     flexSolve(width, height, mainMenu)
-    drawTextSpecial(client.bufferGUI, mainMenu.x, mainMenu.y, text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, mainMenu.x, mainMenu.y, text, fontScale, white0f, white1f, white2f)
 
-    if (dashboard.menu === PACKAGE_MENU) {
-      text = 'Open'
-      let optionOpen = flexBox(fontWidth * text.length, fontHeight)
-      optionOpen.bottomSpace = fontPad
-      optionOpen.funX = 'center'
-      optionOpen.fromX = mainMenu
-      optionOpen.funY = 'below'
-      optionOpen.fromY = mainMenu
-      flexSolve(width, height, optionOpen)
-      drawTextSpecial(client.bufferGUI, optionOpen.x, optionOpen.y, text, fontScale, white0, white1, white2)
+    text = dashboard.tape.name
+    let tapeName = flexBox(fontWidth * text.length, fontHeight)
+    tapeName.bottomSpace = 2 * fontHeight
+    tapeName.funX = 'center'
+    tapeName.fromX = mainMenu
+    tapeName.funY = 'below'
+    tapeName.fromY = mainMenu
+    flexSolve(width, height, tapeName)
+    drawTextSpecial(client.bufferGUI, tapeName.x, tapeName.y, text, fontScale, white0f, white1f, white2f)
+
+    if (dashboard.menu === TAPE_MENU) {
+      text = 'Edit'
+      let optionEdit = flexBox(fontWidth * text.length, fontHeight)
+      optionEdit.bottomSpace = fontPad
+      optionEdit.funX = 'center'
+      optionEdit.fromX = tapeName
+      optionEdit.funY = 'below'
+      optionEdit.fromY = tapeName
+      flexSolve(width, height, optionEdit)
+      drawTextSpecial(client.bufferGUI, optionEdit.x, optionEdit.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Export'
       let optionExport = flexBox(fontWidth * text.length, fontHeight)
       optionExport.bottomSpace = fontPad
       optionExport.funX = 'align-left'
-      optionExport.fromX = optionOpen
+      optionExport.fromX = optionEdit
       optionExport.funY = 'below'
-      optionExport.fromY = optionOpen
+      optionExport.fromY = optionEdit
       flexSolve(width, height, optionExport)
-      drawTextSpecial(client.bufferGUI, optionExport.x, optionExport.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionExport.x, optionExport.y, text, fontScale, white0f, white1f, white2f)
+
+      text = 'Name'
+      let optionName = flexBox(fontWidth * text.length, fontHeight)
+      optionName.bottomSpace = fontPad
+      optionName.funX = 'align-left'
+      optionName.fromX = optionExport
+      optionName.funY = 'below'
+      optionName.fromY = optionExport
+      flexSolve(width, height, optionName)
+      drawTextSpecial(client.bufferGUI, optionName.x, optionName.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'New'
       let optionNew = flexBox(fontWidth * text.length, fontHeight)
       optionNew.bottomSpace = fontPad
       optionNew.funX = 'align-left'
-      optionNew.fromX = optionExport
+      optionNew.fromX = optionName
       optionNew.funY = 'below'
-      optionNew.fromY = optionExport
+      optionNew.fromY = optionName
       flexSolve(width, height, optionNew)
-      drawTextSpecial(client.bufferGUI, optionNew.x, optionNew.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionNew.x, optionNew.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Copy'
       let optionCopy = flexBox(fontWidth * text.length, fontHeight)
@@ -145,7 +167,7 @@ export class DashboardState {
       optionCopy.funY = 'below'
       optionCopy.fromY = optionNew
       flexSolve(width, height, optionCopy)
-      drawTextSpecial(client.bufferGUI, optionCopy.x, optionCopy.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionCopy.x, optionCopy.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Back'
       let optionBack = flexBox(fontWidth * text.length, fontHeight)
@@ -155,49 +177,53 @@ export class DashboardState {
       optionBack.funY = 'below'
       optionBack.fromY = optionCopy
       flexSolve(width, height, optionBack)
-      drawTextSpecial(client.bufferGUI, optionBack.x, optionBack.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionBack.x, optionBack.y, text, fontScale, white0f, white1f, white2f)
 
       text = '>'
       let indicator = flexBox(fontWidth * text.length, fontHeight)
       indicator.funX = 'left-of'
       indicator.funY = 'center'
-      switch (dashboard.packageRow) {
+      switch (dashboard.tapeRow) {
         case 0:
-          indicator.fromX = optionOpen
-          indicator.fromY = optionOpen
+          indicator.fromX = optionEdit
+          indicator.fromY = optionEdit
           break
         case 1:
           indicator.fromX = optionExport
           indicator.fromY = optionExport
           break
         case 2:
+          indicator.fromX = optionName
+          indicator.fromY = optionName
+          break
+        case 3:
           indicator.fromX = optionNew
           indicator.fromY = optionNew
           break
-        case 3:
+        case 4:
           indicator.fromX = optionCopy
           indicator.fromY = optionCopy
           break
-        case 4:
+        case 5:
           indicator.fromX = optionBack
           indicator.fromY = optionBack
           break
       }
       flexSolve(width, height, indicator)
-      drawTextSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0f, white1f, white2f)
 
       rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
       rendering.updateAndDraw(client.bufferGUI)
-    } else {
+    } else if (dashboard.menu === PROGRAM_MENU) {
       text = 'Maps'
       let optionMaps = flexBox(fontWidth * text.length, fontHeight)
       optionMaps.bottomSpace = fontPad
       optionMaps.funX = 'center'
-      optionMaps.fromX = mainMenu
+      optionMaps.fromX = tapeName
       optionMaps.funY = 'below'
-      optionMaps.fromY = mainMenu
+      optionMaps.fromY = tapeName
       flexSolve(width, height, optionMaps)
-      drawTextSpecial(client.bufferGUI, optionMaps.x, optionMaps.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionMaps.x, optionMaps.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Paint'
       let optionPaint = flexBox(fontWidth * text.length, fontHeight)
@@ -207,7 +233,7 @@ export class DashboardState {
       optionPaint.funY = 'below'
       optionPaint.fromY = optionMaps
       flexSolve(width, height, optionPaint)
-      drawTextSpecial(client.bufferGUI, optionPaint.x, optionPaint.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionPaint.x, optionPaint.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Music'
       let optionMusic = flexBox(fontWidth * text.length, fontHeight)
@@ -217,7 +243,7 @@ export class DashboardState {
       optionMusic.funY = 'below'
       optionMusic.fromY = optionPaint
       flexSolve(width, height, optionMusic)
-      drawTextSpecial(client.bufferGUI, optionMusic.x, optionMusic.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionMusic.x, optionMusic.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Sound'
       let optionSound = flexBox(fontWidth * text.length, fontHeight)
@@ -227,7 +253,7 @@ export class DashboardState {
       optionSound.funY = 'below'
       optionSound.fromY = optionMusic
       flexSolve(width, height, optionSound)
-      drawTextSpecial(client.bufferGUI, optionSound.x, optionSound.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionSound.x, optionSound.y, text, fontScale, white0f, white1f, white2f)
 
       text = 'Back'
       let optionBack = flexBox(fontWidth * text.length, fontHeight)
@@ -237,7 +263,7 @@ export class DashboardState {
       optionBack.funY = 'below'
       optionBack.fromY = optionSound
       flexSolve(width, height, optionBack)
-      drawTextSpecial(client.bufferGUI, optionBack.x, optionBack.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, optionBack.x, optionBack.y, text, fontScale, white0f, white1f, white2f)
 
       text = '>'
       let indicator = flexBox(fontWidth * text.length, fontHeight)
@@ -266,10 +292,30 @@ export class DashboardState {
           break
       }
       flexSolve(width, height, indicator)
-      drawTextSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0, white1, white2)
+      drawTextSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0f, white1f, white2f)
 
       rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
       rendering.updateAndDraw(client.bufferGUI)
+    } else if (dashboard.menu === EDIT_NAME) {
+      const box = dashboard.textBox
+
+      rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+      rendering.updateAndDraw(client.bufferGUI)
+
+      const fontHeightAndPad = fontHeight + 3 * fontPad
+
+      const boxWidth = textBoxWidth(fontWidth, box)
+      const boxHeight = textBoxHeight(fontHeightAndPad, box)
+
+      const boxFlex = flexBox(boxWidth, boxHeight)
+      boxFlex.bottomSpace = fontPad
+      boxFlex.funX = 'center'
+      boxFlex.fromX = tapeName
+      boxFlex.funY = 'below'
+      boxFlex.fromY = tapeName
+      flexSolve(width, height, boxFlex)
+
+      renderTextBox(this, scale, box, boxFlex.x, boxFlex.y)
     }
   }
 }

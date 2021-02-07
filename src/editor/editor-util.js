@@ -1,4 +1,4 @@
-import {FONT_HEIGHT_BASE} from '/src/render/render.js'
+import {FONT_HEIGHT_BASE} from '../render/render.js'
 
 export function calcFontScale(scale) {
   return Math.floor(2 * scale)
@@ -13,7 +13,6 @@ export function calcThickness(scale) {
 }
 
 export function calcTopBarHeight(scale) {
-  //   return 16 * scale
   return (FONT_HEIGHT_BASE + 2) * calcFontScale(scale)
 }
 
@@ -28,17 +27,4 @@ export function calcLongest(list) {
     if (len > high) high = len
   }
   return high
-}
-
-export class Dialog {
-  constructor(id, title, options) {
-    this.id = id
-    this.title = title
-    this.options = options
-    this.pos = 0
-  }
-
-  reset() {
-    this.pos = 0
-  }
 }

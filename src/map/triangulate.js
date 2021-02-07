@@ -1,5 +1,5 @@
-import {Float} from '/src/math/vector.js'
-import {Triangle} from '/src/map/triangle.js'
+import {Float} from '../math/vector.js'
+import {Triangle} from '../map/triangle.js'
 
 const debug = false
 

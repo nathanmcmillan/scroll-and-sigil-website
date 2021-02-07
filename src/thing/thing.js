@@ -1,5 +1,5 @@
-import {lineIntersect, Float} from '/src/math/vector.js'
-import {toCell, toFloatCell, WORLD_CELL_SHIFT, GRAVITY, RESISTANCE, ANIMATION_RATE, ANIMATION_NOT_DONE, ANIMATION_ALMOST_DONE, ANIMATION_DONE} from '/src/world/world.js'
+import {lineIntersect, Float} from '../math/vector.js'
+import {toCell, toFloatCell, WORLD_CELL_SHIFT, GRAVITY, RESISTANCE, ANIMATION_RATE, ANIMATION_NOT_DONE, ANIMATION_ALMOST_DONE, ANIMATION_DONE} from '../world/world.js'
 
 let collided = new Set()
 let collisions = new Set()

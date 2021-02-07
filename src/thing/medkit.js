@@ -1,5 +1,5 @@
-import {thingSetup, Thing} from '/src/thing/thing.js'
-import {textureIndexForName, spritesByName} from '/src/assets/assets.js'
+import {thingSetup, Thing} from '../thing/thing.js'
+import {textureIndexForName, spritesByName} from '../assets/assets.js'
 
 export class Medkit extends Thing {
   constructor(world, entity, x, z) {

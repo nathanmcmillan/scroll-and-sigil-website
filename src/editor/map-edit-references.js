@@ -1,5 +1,5 @@
-import {textureNameFromIndex, textureIndexForName} from '/src/assets/assets.js'
-import {Float} from '/src/math/vector.js'
+import {textureNameFromIndex, textureIndexForName} from '../assets/assets.js'
+import {Float} from '../math/vector.js'
 
 export class VectorReference {
   constructor(x, y) {

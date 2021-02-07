@@ -1,10 +1,10 @@
-import {Float} from '/src/math/vector.js'
-import {Cell} from '/src/world/cell.js'
-import {decalInitialize, Decal} from '/src/world/decal.js'
-import {particleInitialize, Particle} from '/src/particle/particle.js'
-import {missileInitialize, Missile} from '/src/missile/missile.js'
-import {sectorInsideOutside, sectorLineNeighbors} from '/src/map/sector.js'
-import {sectorTriangulate} from '/src/map/triangulate.js'
+import {Float} from '../math/vector.js'
+import {Cell} from '../world/cell.js'
+import {decalInitialize, Decal} from '../world/decal.js'
+import {particleInitialize, Particle} from '../particle/particle.js'
+import {missileInitialize, Missile} from '../missile/missile.js'
+import {sectorInsideOutside, sectorLineNeighbors} from '../map/sector.js'
+import {sectorTriangulate} from '../map/triangulate.js'
 
 export const WORLD_SCALE = 0.25
 export const WORLD_CELL_SHIFT = 5

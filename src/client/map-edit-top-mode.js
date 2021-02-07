@@ -1,12 +1,12 @@
-import {drawText, drawRectangle, drawLine, drawTriangle, FONT_WIDTH} from '/src/render/render.js'
-import {spr} from '/src/render/pico.js'
-import {identity, multiply} from '/src/math/matrix.js'
-import {textureByName} from '/src/assets/assets.js'
-import {vectorSize, thingSize, SECTOR_TOOL, DESCRIBE_TOOL, DESCRIBE_ACTION, DESCRIBE_OPTIONS, OPTION_END_LINE, OPTION_END_LINE_NEW_VECTOR} from '/src/editor/maps.js'
-import {colorf, blackf, darkpurplef, darkgreyf, yellowf, whitef, greenf, redf} from '/src/editor/palette.js'
-import {renderTouch} from '/src/client/render-touch.js'
-import {calcFontScale, calcTopBarHeight, calcBottomBarHeight} from '/src/editor/editor-util.js'
-import {renderDialogBox} from '/src/client/client-util.js'
+import {drawText, drawRectangle, drawLine, drawTriangle, FONT_WIDTH} from '../render/render.js'
+import {spr} from '../render/pico.js'
+import {identity, multiply} from '../math/matrix.js'
+import {textureByName} from '../assets/assets.js'
+import {vectorSize, thingSize, SECTOR_TOOL, DESCRIBE_TOOL, DESCRIBE_ACTION, DESCRIBE_OPTIONS, OPTION_END_LINE, OPTION_END_LINE_NEW_VECTOR} from '../editor/maps.js'
+import {colorf, blackf, darkpurplef, darkgreyf, yellowf, whitef, greenf, redf} from '../editor/palette.js'
+import {renderTouch} from '../client/render-touch.js'
+import {calcFontScale, calcTopBarHeight, calcBottomBarHeight} from '../editor/editor-util.js'
+import {renderDialogBox} from '../client/client-util.js'
 
 function mapX(x, zoom, camera) {
   return zoom * (x - camera.x)

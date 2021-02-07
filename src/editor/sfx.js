@@ -1,4 +1,4 @@
-import {sawtooth} from '/src/sound/synth.js'
+import {sawtooth} from '../sound/synth.js'
 
 // TODO: Every sound effect needs to be chainable e.g. (noise for 1s + sine for 1s + etc)
 

@@ -1,4 +1,4 @@
-import {index3, index4} from '/src/render/render.js'
+import {index3, index4} from '../render/render.js'
 
 export function drawWall(b, wall) {
   let pos = b.vertexPosition

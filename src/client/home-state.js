@@ -1,13 +1,13 @@
-import {Game} from '/src/game/game.js'
-import {renderLoadingInProgress} from '/src/client/render-loading.js'
-import {renderTouch} from '/src/client/render-touch.js'
-import {textureByName, textureByIndex} from '/src/assets/assets.js'
-import {drawSprite, drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {identity, multiply, rotateX, rotateY, translate} from '/src/math/matrix.js'
-import {whitef} from '/src/editor/palette.js'
-import {flexText, flexSolve} from '/src/flex/flex.js'
-import {Home} from '/src/menu/home.js'
-import {calcFontScale} from '/src/editor/editor-util.js'
+import {Game} from '../game/game.js'
+import {renderLoadingInProgress} from '../client/render-loading.js'
+import {renderTouch} from '../client/render-touch.js'
+import {textureByName, textureByIndex} from '../assets/assets.js'
+import {drawSprite, drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
+import {identity, multiply, rotateX, rotateY, translate} from '../math/matrix.js'
+import {white0f, white1f, white2f} from '../editor/palette.js'
+import {flexText, flexSolve} from '../gui/flex.js'
+import {Home} from '../menu/home.js'
+import {calcFontScale} from '../editor/editor-util.js'
 
 export class HomeState {
   constructor(client) {
@@ -17,7 +17,7 @@ export class HomeState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    this.home = new Home(client.width, client.height - client.top, client.scale, client.input)
+    this.home = new Home(this, client.width, client.height - client.top, client.scale, client.input)
     this.game = new Game(this, client.input)
     this.loading = true
   }
@@ -32,7 +32,11 @@ export class HomeState {
   }
 
   keyEvent(code, down) {
-    if (this.keys.has(code)) this.home.input.set(this.keys.get(code), down)
+    const home = this.home
+    if (this.keys.has(code)) {
+      home.input.set(this.keys.get(code), down)
+      home.immediateInput()
+    }
   }
 
   mouseEvent() {}
@@ -58,25 +62,19 @@ export class HomeState {
     this.game.update()
   }
 
+  eventCall(event) {
+    if (event === 'ok') {
+      const home = this.home
+      const client = this.client
+      if (home.row === 0) client.openState('game')
+      else if (home.row === 1) client.openState('game')
+      else if (home.row === 2) client.openState('dashboard')
+    }
+  }
+
   update(timestamp) {
     if (this.loading) return
-
-    let home = this.home
-    home.update(timestamp)
-    if (home.yes) {
-      let client = this.client
-      if (home.row === 0) {
-        client.openState('game')
-      } else if (home.row === 1) {
-        client.openState('game')
-      } else if (home.row === 2) {
-        client.openState('dashboard')
-      } else if (home.row === 3) {
-        client.openState('game')
-      } else if (home.row === 4) {
-        client.openState('game')
-      }
-    }
+    this.home.update(timestamp)
   }
 
   render() {
@@ -177,32 +175,28 @@ export class HomeState {
 
     client.bufferGUI.zero()
 
-    let white0 = whitef(0)
-    let white1 = whitef(1)
-    let white2 = whitef(2)
-
     // text
     rendering.setProgram(4)
     rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     let titleBox = home.titleBox
-    drawTextSpecial(client.bufferGUI, titleBox.x, titleBox.y, titleBox.text, 2 * scale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, titleBox.x, titleBox.y, titleBox.text, 2 * scale, white0f, white1f, white2f)
 
     let continueGameBox = home.continueGameBox
-    drawTextSpecial(client.bufferGUI, continueGameBox.x, continueGameBox.y, continueGameBox.text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, continueGameBox.x, continueGameBox.y, continueGameBox.text, fontScale, white0f, white1f, white2f)
 
     let newGameBox = home.newGameBox
-    drawTextSpecial(client.bufferGUI, newGameBox.x, newGameBox.y, newGameBox.text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, newGameBox.x, newGameBox.y, newGameBox.text, fontScale, white0f, white1f, white2f)
 
     let editorBox = home.editorBox
-    drawTextSpecial(client.bufferGUI, editorBox.x, editorBox.y, editorBox.text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, editorBox.x, editorBox.y, editorBox.text, fontScale, white0f, white1f, white2f)
 
     let optionsBox = home.optionsBox
-    drawTextSpecial(client.bufferGUI, optionsBox.x, optionsBox.y, optionsBox.text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, optionsBox.x, optionsBox.y, optionsBox.text, fontScale, white0f, white1f, white2f)
 
     let creditsBox = home.creditsBox
-    drawTextSpecial(client.bufferGUI, creditsBox.x, creditsBox.y, creditsBox.text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, creditsBox.x, creditsBox.y, creditsBox.text, fontScale, white0f, white1f, white2f)
 
     let text = '>'
     let indicatorBox = flexText(text, fontWidth * text.length, fontHeight)
@@ -226,7 +220,7 @@ export class HomeState {
     }
     flexSolve(width, height, indicatorBox)
 
-    drawTextSpecial(client.bufferGUI, indicatorBox.x, indicatorBox.y, indicatorBox.text, fontScale, white0, white1, white2)
+    drawTextSpecial(client.bufferGUI, indicatorBox.x, indicatorBox.y, indicatorBox.text, fontScale, white0f, white1f, white2f)
 
     rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
     rendering.updateAndDraw(client.bufferGUI)

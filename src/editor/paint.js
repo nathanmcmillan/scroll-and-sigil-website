@@ -1,8 +1,9 @@
-import {fetchText} from '/src/client/net.js'
-import {newPalette, newPaletteFloat, describeColor} from '/src/editor/palette.js'
-import {flexBox, flexSolve, flexSize} from '/src/flex/flex.js'
-import {FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {calcFontScale, Dialog} from '/src/editor/editor-util.js'
+import {fetchText} from '../client/net.js'
+import {newPalette, newPaletteFloat, describeColor} from '../editor/palette.js'
+import {flexBox, flexSolve, flexSize} from '../gui/flex.js'
+import {FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
+import {calcFontScale} from '../editor/editor-util.js'
+import {Dialog} from '../gui/dialog.js'
 
 // TODO: Fullscreen mode (show the sprite sheet in full view)
 // TODO: Need a sprite mode, selection rectangle + name = sprite
@@ -81,7 +82,6 @@ export class PaintEdit {
   }
 
   handleDialog(event) {
-    console.debug('event :=', event, '|', this.dialogStack)
     const poll = this.dialogStack[0]
     if (event === 'save-ok-ok') {
       if (poll === 'start-exit') this.parent.eventCall(poll)
@@ -110,7 +110,7 @@ export class PaintEdit {
       this.parent.eventCall(event)
       this.dialogEnd()
     } else if (event === 'start-save') {
-      this.parent.eventCall('start-save')
+      this.parent.eventCall(event)
       this.dialogStack.push(event)
       this.dialog = this.saveOk
       this.forcePaint = true
@@ -216,8 +216,17 @@ export class PaintEdit {
     flexSolve(width, height, ...collection)
   }
 
+  clear() {
+    let i = this.sheet.length
+    while (i--) this.sheet[i] = 0
+
+    return null
+  }
+
   read(content, into) {
-    let image = content.split('\n')
+    this.clear()
+
+    const image = content.split('\n')
     let index = 0
 
     let dimensions = image[index].split(' ')
@@ -245,11 +254,11 @@ export class PaintEdit {
   }
 
   async load(file) {
-    let image = null
-    if (file === null) image = localStorage.getItem('paint-sheet')
-    else image = await fetchText(file)
-    if (image === null || image === undefined) return
-    this.read(image, 0)
+    let content = null
+    if (file === null) content = localStorage.getItem('paint.txt')
+    else content = await fetchText(file)
+    if (content === null || content === undefined) return this.clear()
+    this.read(content, 0)
   }
 
   leftStatusBar() {

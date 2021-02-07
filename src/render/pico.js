@@ -1,4 +1,4 @@
-import {drawImage} from '/src/render/render.js'
+import {drawImage} from '../render/render.js'
 
 const SW = 8
 const SH = 8

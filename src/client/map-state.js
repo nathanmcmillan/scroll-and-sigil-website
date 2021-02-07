@@ -1,7 +1,7 @@
-import {renderMapEditTopMode} from '/src/client/map-edit-top-mode.js'
-import {renderMapEditViewMode, updateMapEditViewSectorBuffer} from '/src/client/map-edit-view-mode.js'
-import {renderLoadingInProgress} from '/src/client/render-loading.js'
-import {MapEdit, TOP_MODE, VIEW_MODE, SWITCH_MODE_CALLBACK} from '/src/editor/maps.js'
+import {renderMapEditTopMode} from '../client/map-edit-top-mode.js'
+import {renderMapEditViewMode, updateMapEditViewSectorBuffer} from '../client/map-edit-view-mode.js'
+import {renderLoadingInProgress} from '../client/render-loading.js'
+import {MapEdit, TOP_MODE, VIEW_MODE, SWITCH_MODE_CALLBACK} from '../editor/maps.js'
 
 export class MapState {
   constructor(client) {
@@ -47,12 +47,45 @@ export class MapState {
   }
 
   eventCall(event) {
-    if (event === 'start-save') console.log(this.maps.export())
+    if (event === 'start-save') this.saveMap()
+    else if (event === 'start-open') this.importMap()
+    else if (event === 'start-export') this.exportPlain()
     else if (event === 'start-exit') this.returnToDashboard()
   }
 
   returnToDashboard() {
     this.client.openState('dashboard')
+  }
+
+  importMap() {
+    let button = document.createElement('input')
+    button.type = 'file'
+    button.onchange = (e) => {
+      let file = e.target.files[0]
+      console.info(file)
+      let reader = new FileReader()
+      reader.readAsText(file, 'UTF-8')
+      reader.onload = (event) => {
+        let content = event.target.result
+        this.maps.read(content, 0)
+      }
+    }
+    button.click()
+  }
+
+  saveMap() {
+    let blob = this.maps.export()
+    localStorage.setItem('map.txt', blob)
+    console.info(blob)
+    console.info('saved to local storage!')
+  }
+
+  exportPlain() {
+    let blob = this.maps.export()
+    let download = document.createElement('a')
+    download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
+    download.download = 'map.txt'
+    download.click()
   }
 
   switchMode() {

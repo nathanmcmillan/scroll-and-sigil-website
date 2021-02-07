@@ -1,24 +1,25 @@
-import {fetchText, fetchImage} from '/src/client/net.js'
-import {Buffer} from '/src/webgl/buffer.js'
-import {createTexture, createPixelsToTexture, compileProgram} from '/src/webgl/webgl.js'
-import {Renderer} from '/src/webgl/renderer.js'
-import {drawSkyBox} from '/src/render/render.js'
-import {drawWall, drawFloorCeil} from '/src/client/render-sector.js'
-import {orthographic, perspective} from '/src/math/matrix.js'
-import {saveSound, saveMusic, pauseMusic, resumeMusic} from '/src/assets/sounds.js'
-import {newPalette} from '/src/editor/palette.js'
-import {saveEntity, saveTile, saveTexture, waitForResources, createNewTexturesAndSpriteSheets} from '/src/assets/assets.js'
-import {PaintState} from '/src/client/paint-state.js'
-import {SfxState} from '/src/client/sfx-state.js'
-import {MusicState} from '/src/client/music-state.js'
-import {MapState} from '/src/client/map-state.js'
-import {DashboardState} from '/src/client/dashboard-state.js'
-import {GameState} from '/src/client/game-state.js'
-import {HomeState} from '/src/client/home-state.js'
-import {TwoWayMap} from '/src/util/collections.js'
-import {TouchRender, touchRenderEvent, touchRenderResize} from '/src/client/render-touch.js'
-import * as Wad from '/src/wad/wad.js'
-import * as In from '/src/input/input.js'
+import {fetchText, fetchImage} from '../client/net.js'
+import {Buffer} from '../webgl/buffer.js'
+import {createTexture, createPixelsToTexture, compileProgram} from '../webgl/webgl.js'
+import {Renderer} from '../webgl/renderer.js'
+import {drawSkyBox} from '../render/render.js'
+import {drawWall, drawFloorCeil} from '../client/render-sector.js'
+import {orthographic, perspective} from '../math/matrix.js'
+import {saveSound, saveMusic, pauseMusic, resumeMusic} from '../assets/sounds.js'
+import {newPalette} from '../editor/palette.js'
+import {saveEntity, saveTile, saveTexture, waitForResources, createNewTexturesAndSpriteSheets} from '../assets/assets.js'
+import {PaintState} from '../client/paint-state.js'
+import {SfxState} from '../client/sfx-state.js'
+import {MusicState} from '../client/music-state.js'
+import {MapState} from '../client/map-state.js'
+import {DashboardState} from '../client/dashboard-state.js'
+import {GameState} from '../client/game-state.js'
+import {HomeState} from '../client/home-state.js'
+import {TwoWayMap} from '../util/collections.js'
+import {TouchRender, touchRenderEvent, touchRenderResize} from '../client/render-touch.js'
+import {Tape} from '../game/tape.js'
+import * as Wad from '../wad/wad.js'
+import * as In from '../input/input.js'
 
 export class Client {
   constructor(canvas, gl) {
@@ -187,16 +188,19 @@ export class Client {
   async initialize() {
     const gl = this.gl
 
-    let main = Wad.parse(await fetchText('main.wad'))
-    let pack = main.get('package')
-    let directory = '/pack/' + pack
-    let contents = Wad.parse(await fetchText(directory + '/' + pack + '.wad'))
+    const main = Wad.parse(await fetchText('main.wad'))
+    const pack = main.get('package')
+    const directory = '/pack/' + pack
+    const contents = Wad.parse(await fetchText(directory + '/' + pack + '.wad'))
+    const tape = new Tape('tape-1')
 
     this.boot = main
     this.pack = pack
+    this.tape = tape
 
     for (const entity of contents.get('entities')) {
       saveEntity(entity, directory, '/entities/' + entity + '.wad')
+      tape.entities.push(entity)
     }
 
     gl.enable(gl.SCISSOR_TEST)
@@ -209,6 +213,7 @@ export class Client {
       if (dot === -1) throw 'Extension missing: ' + music
       let name = music.substring(0, dot)
       saveMusic(name, directory + '/music/' + music)
+      tape.music.push(music)
     }
 
     for (const sound of contents.get('sounds')) saveSound(sound, directory + '/sounds/' + sound + '.wav')
@@ -228,6 +233,7 @@ export class Client {
           return {name: tile, image: image}
         })
       )
+      tape.tiles.push(tile)
     }
 
     for (const texture of contents.get('textures')) {
@@ -272,6 +278,7 @@ export class Client {
           })
         )
       }
+      tape.textures.push(name)
     }
 
     await waitForResources()
@@ -358,7 +365,6 @@ export class Client {
         if (this.paint === null) this.paint = new PaintState(this)
         else this.paint.reset()
         this.state = this.paint
-        if (boot.has('image')) file = '/pack/' + this.pack + '/textures/' + boot.get('image') + '.image'
         break
       case 'sfx':
         if (this.sfx === null) this.sfx = new SfxState(this)
@@ -374,7 +380,6 @@ export class Client {
         if (this.maps === null) this.maps = new MapState(this)
         else this.maps.reset()
         this.state = this.maps
-        if (boot.has('map')) file = '/pack/' + this.pack + '/maps/' + boot.get('map') + '.map'
         break
       case 'dashboard':
         if (this.dashboard === null) this.dashboard = new DashboardState(this)

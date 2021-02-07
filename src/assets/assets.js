@@ -1,7 +1,7 @@
-import {Entity} from '/src/entity/entity.js'
-import {fetchText, fetchImage} from '/src/client/net.js'
-import {createSpriteSheet} from '/src/assets/sprite-sheet.js'
-import * as Wad from '/src/wad/wad.js'
+import {Entity} from '../entity/entity.js'
+import {fetchText, fetchImage} from '../client/net.js'
+import {createSpriteSheet} from '../assets/sprite-sheet.js'
+import * as Wad from '../wad/wad.js'
 
 const PROMISES = []
 

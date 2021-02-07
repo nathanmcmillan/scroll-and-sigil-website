@@ -1,12 +1,12 @@
-import {thingSetup, thingY, thingApproximateDistance, thingCheckSight, thingSetAnimation, thingUpdateSprite, thingUpdateAnimation, Thing} from '/src/thing/thing.js'
-import {thingMove} from '/src/thing/npc.js'
-import {randomInt} from '/src/math/random.js'
-import {ANIMATION_DONE} from '/src/world/world.js'
-import {newPlasma} from '/src/missile/plasma.js'
-import {playSound} from '/src/assets/sounds.js'
-import {textureIndexForName, entityByName} from '/src/assets/assets.js'
-import {redBloodTowards, redBloodExplode} from '/src/thing/thing-util.js'
-import {sin, cos, atan2} from '/src/math/approximate.js'
+import {thingSetup, thingY, thingApproximateDistance, thingCheckSight, thingSetAnimation, thingUpdateSprite, thingUpdateAnimation, Thing} from '../thing/thing.js'
+import {thingMove} from '../thing/npc.js'
+import {randomInt} from '../math/random.js'
+import {ANIMATION_DONE} from '../world/world.js'
+import {newPlasma} from '../missile/plasma.js'
+import {playSound} from '../assets/sounds.js'
+import {textureIndexForName, entityByName} from '../assets/assets.js'
+import {redBloodTowards, redBloodExplode} from '../thing/thing-util.js'
+import {sin, cos, atan2} from '../math/approximate.js'
 
 const STATUS_LOOK = 0
 const STATUS_CHASE = 1

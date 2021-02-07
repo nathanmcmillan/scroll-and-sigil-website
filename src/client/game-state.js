@@ -1,12 +1,12 @@
-import {Game} from '/src/game/game.js'
-import {drawDecal} from '/src/client/render-sector.js'
-import {renderLoadingInProgress} from '/src/client/render-loading.js'
-import {renderTouch} from '/src/client/render-touch.js'
-import {drawRectangle, drawSprite, drawText, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {identity, multiply, rotateX, rotateY, translate, multiplyVector3} from '/src/math/matrix.js'
-import {textureByName, textureByIndex} from '/src/assets/assets.js'
-import {speech} from '/src/sound/speech.js'
-import {animal} from '/src/sound/animal.js'
+import {Game} from '../game/game.js'
+import {drawDecal} from '../client/render-sector.js'
+import {renderLoadingInProgress} from '../client/render-loading.js'
+import {renderTouch} from '../client/render-touch.js'
+import {drawRectangle, drawSprite, drawText, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
+import {identity, multiply, rotateX, rotateY, translate, multiplyVector3} from '../math/matrix.js'
+import {textureByName, textureByIndex} from '../assets/assets.js'
+import {speech} from '../sound/speech.js'
+import {animal} from '../sound/animal.js'
 
 function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
   drawText(b, x + scale, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)

@@ -1,4 +1,4 @@
-import {spritesByName} from '/src/assets/assets.js'
+import {spritesByName} from '../assets/assets.js'
 
 export class Entity {
   constructor(wad) {

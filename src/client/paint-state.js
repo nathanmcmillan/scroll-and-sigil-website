@@ -1,15 +1,30 @@
-import {exportSheetPixels, exportSheetToCanvas, PaintEdit} from '/src/editor/paint.js'
-import {textureByName} from '/src/assets/assets.js'
-import {drawText, drawRectangle, drawHollowRectangle, drawImage, FONT_WIDTH, FONT_HEIGHT_BASE} from '/src/render/render.js'
-import {renderTouch} from '/src/client/render-touch.js'
-import {spr, sprcol} from '/src/render/pico.js'
-import {identity, multiply} from '/src/math/matrix.js'
-import {blackf, whitef, lightgreyf, lavenderf, lightpeachf, redf, darkpurplef, darkgreyf, luminosity, luminosityTable} from '/src/editor/palette.js'
-import {flexBox, flexSolve} from '/src/flex/flex.js'
-import {compress, decompress} from '/src/compress/huffman.js'
-import {createPixelsToTexture} from '/src/webgl/webgl.js'
-import {calcFontScale, calcThickness, calcTopBarHeight, calcBottomBarHeight} from '/src/editor/editor-util.js'
-import {renderDialogBox} from '/src/client/client-util.js'
+import {exportSheetPixels, exportSheetToCanvas, PaintEdit} from '../editor/paint.js'
+import {textureByName} from '../assets/assets.js'
+import {drawText, drawRectangle, drawHollowRectangle, drawImage, FONT_WIDTH, FONT_HEIGHT_BASE} from '../render/render.js'
+import {renderTouch} from '../client/render-touch.js'
+import {spr, sprcol} from '../render/pico.js'
+import {identity, multiply} from '../math/matrix.js'
+import {flexBox, flexSolve} from '../gui/flex.js'
+import {compress, decompress} from '../compress/huffman.js'
+import {createPixelsToTexture} from '../webgl/webgl.js'
+import {calcFontScale, calcThickness, calcTopBarHeight, calcBottomBarHeight} from '../editor/editor-util.js'
+import {renderDialogBox} from '../client/client-util.js'
+import {
+  black0f,
+  black1f,
+  black2f,
+  white0f,
+  white1f,
+  white2f,
+  lightgreyf,
+  lavenderf,
+  lightpeachf,
+  redf,
+  darkpurplef,
+  darkgreyf,
+  luminosity,
+  luminosityTable,
+} from '../editor/palette.js'
 
 function updatePixelsToTexture(gl, texture, width, height, pixels) {
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -160,7 +175,8 @@ export class PaintState {
 
   saveSheet() {
     let blob = this.paint.export()
-    localStorage.setItem('paint-edit', blob)
+    localStorage.setItem('paint.txt', blob)
+    console.info(blob)
     console.info('saved to local storage!')
   }
 
@@ -257,14 +273,6 @@ export class PaintState {
 
     let magnify, top, left, width, height, box, x, y
 
-    let black0 = blackf()
-    let black1 = blackf()
-    let black2 = blackf()
-
-    let white0 = whitef(0)
-    let white1 = whitef(1)
-    let white2 = whitef(2)
-
     rendering.setProgram(1)
     rendering.setView(0, client.top, canvasWidth, canvasHeight)
     rendering.updateUniformMatrix('u_mvp', projection)
@@ -332,15 +340,15 @@ export class PaintState {
 
     client.bufferColor.zero()
 
-    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0f, black1f, black2f, 1.0)
 
     // focus box around view
 
     x = left + posC * magnify
     y = top + height - posR * magnify
     box = magnify * brushSize
-    drawHollowRectangle(client.bufferColor, x, y - box, box, box, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
+    drawHollowRectangle(client.bufferColor, x, y - box, box, box, thickness, black0f, black1f, black2f, 1.0)
+    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0f, white1f, white2f, 1.0)
 
     // sheet
 
@@ -352,14 +360,14 @@ export class PaintState {
 
     // box around sheet
 
-    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0f, black1f, black2f, 1.0)
 
     // focus box around sheet
 
     x = left + posOffsetC * magnify
     y = top + height - posOffsetR * magnify
     box = canvasZoom * magnify
-    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0, white1, white2, 1.0)
+    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0f, white1f, white2f, 1.0)
 
     // pallete
 
@@ -382,14 +390,14 @@ export class PaintState {
 
     // box around palette
 
-    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0, black1, black2, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0f, black1f, black2f, 1.0)
 
     // focus box around palette
 
     x = left + paint.paletteC * magnify
     y = top + height - (paint.paletteR + 1) * magnify
-    drawHollowRectangle(client.bufferColor, x, y, magnify, magnify, thickness, black0, black1, black2, 1.0)
-    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, white0, white1, white2, 1.0)
+    drawHollowRectangle(client.bufferColor, x, y, magnify, magnify, thickness, black0f, black1f, black2f, 1.0)
+    drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, white0f, white1f, white2f, 1.0)
 
     // top and bottom bar
 

@@ -1,4 +1,4 @@
-import {Client} from '/src/client/client.js'
+import {Client} from './client/client.js'
 
 function newCanvas(width, height) {
   let canvas = document.getElementById('canvas')

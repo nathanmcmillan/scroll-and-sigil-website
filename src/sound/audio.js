@@ -1,5 +1,5 @@
-import {zzfxm} from '/src/external/zzfxm.js'
-import {zzfxb, zzfxt} from '/src/external/zzfx.js'
+import {zzfxm} from '../external/zzfxm.js'
+import {zzfxb, zzfxt} from '../external/zzfx.js'
 
 export function parse(str) {
   let music = []

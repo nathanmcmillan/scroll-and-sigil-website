@@ -1,7 +1,7 @@
-import {WORLD_CELL_SHIFT} from '/src/world/world.js'
-import {textureIndexForName, spritesByName} from '/src/assets/assets.js'
-import {randomInt} from '/src/math/random.js'
-import {particleSetup, particleUpdateSector} from '/src/particle/particle.js'
+import {WORLD_CELL_SHIFT} from '../world/world.js'
+import {textureIndexForName, spritesByName} from '../assets/assets.js'
+import {randomInt} from '../math/random.js'
+import {particleSetup, particleUpdateSector} from '../particle/particle.js'
 
 function bloodHitFloor(self) {
   let sector = self.sector

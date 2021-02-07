@@ -1,6 +1,6 @@
-import {ANIMATION_DONE} from '/src/world/world.js'
-import {textureIndexForName} from '/src/assets/assets.js'
-import {particleSetup, particleUpdateAnimation} from '/src/particle/particle.js'
+import {ANIMATION_DONE} from '../world/world.js'
+import {textureIndexForName} from '../assets/assets.js'
+import {particleSetup, particleUpdateAnimation} from '../particle/particle.js'
 
 function plasmaExplosionUpdate() {
   if (particleUpdateAnimation(this) === ANIMATION_DONE) return true

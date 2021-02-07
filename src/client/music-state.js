@@ -1,13 +1,13 @@
-import {semitoneName, lengthName, MusicEdit, SEMITONES} from '/src/editor/music.js'
-import {textureByName} from '/src/assets/assets.js'
-import {drawText, drawTextSpecial, drawRectangle, FONT_WIDTH, FONT_HEIGHT} from '/src/render/render.js'
-import {spr, sprcol} from '/src/render/pico.js'
-import {identity, multiply} from '/src/math/matrix.js'
-import {whitef, redf, darkpurplef, darkgreyf} from '/src/editor/palette.js'
-import {flexBox, flexSolve} from '/src/flex/flex.js'
-import {compress} from '/src/compress/huffman.js'
-import {calcFontScale} from '/src/editor/editor-util.js'
-import * as In from '/src/input/input.js'
+import {semitoneName, lengthName, MusicEdit, SEMITONES} from '../editor/music.js'
+import {textureByName} from '../assets/assets.js'
+import {drawText, drawTextSpecial, drawRectangle, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
+import {spr, sprcol} from '../render/pico.js'
+import {identity, multiply} from '../math/matrix.js'
+import {whitef, redf, darkpurplef, darkgreyf} from '../editor/palette.js'
+import {flexBox, flexSolve} from '../gui/flex.js'
+import {compress} from '../compress/huffman.js'
+import {calcFontScale} from '../editor/editor-util.js'
+import * as In from '../input/input.js'
 
 export class MusicState {
   constructor(client) {
@@ -35,7 +35,7 @@ export class MusicState {
     } else if (down && code === 'Digit0') {
       // local storage
       let blob = music.export()
-      localStorage.setItem('music-edit', blob)
+      localStorage.setItem('music.txt', blob)
       console.info('saved to local storage!')
       console.info(blob)
     } else if (down && code === 'Digit6') {

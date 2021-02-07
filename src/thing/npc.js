@@ -1,9 +1,9 @@
-import {thingSetup, thingIntegrate, thingUpdateSprite, thingUpdateAnimation, thingPushToCells, thingRemoveFromCells, thingFindSector, Thing} from '/src/thing/thing.js'
-import {playSound} from '/src/assets/sounds.js'
-import {textureIndexForName} from '/src/assets/assets.js'
-import {redBloodTowards, redBloodExplode} from '/src/thing/thing-util.js'
-import {WORLD_CELL_SHIFT} from '/src/world/world.js'
-import {sin, cos} from '/src/math/approximate.js'
+import {thingSetup, thingIntegrate, thingUpdateSprite, thingUpdateAnimation, thingPushToCells, thingRemoveFromCells, thingFindSector, Thing} from '../thing/thing.js'
+import {playSound} from '../assets/sounds.js'
+import {textureIndexForName} from '../assets/assets.js'
+import {redBloodTowards, redBloodExplode} from '../thing/thing-util.js'
+import {WORLD_CELL_SHIFT} from '../world/world.js'
+import {sin, cos} from '../math/approximate.js'
 
 const STATUS_STAND = 0
 const STATUS_DEAD = 1

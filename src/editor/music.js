@@ -1,4 +1,4 @@
-import {noise, sine, square, pulse, triangle, sawtooth, synthTime} from '/src/sound/synth.js'
+import {noise, sine, square, pulse, triangle, sawtooth, synthTime} from '../sound/synth.js'
 
 export const SEMITONES = 49
 

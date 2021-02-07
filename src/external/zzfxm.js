@@ -1,6 +1,6 @@
 // ZzFXM (v2.0.3) | (C) Keith Clark | MIT | https://github.com/keithclark/ZzFXM
 
-import {zzfxr, zzfxg} from '/src/external/zzfx.js'
+import {zzfxr, zzfxg} from '../external/zzfx.js'
 
 export function zzfxm(instruments, patterns, sequence, BPM = 125) {
   let instrumentParameters

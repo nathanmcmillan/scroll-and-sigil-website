@@ -1,6 +1,6 @@
-import {newBlood} from '/src/particle/blood.js'
-import {entityByName} from '/src/assets/assets.js'
-import {sin, cos, atan2} from '/src/math/approximate.js'
+import {newBlood} from '../particle/blood.js'
+import {entityByName} from '../assets/assets.js'
+import {sin, cos, atan2} from '../math/approximate.js'
 
 export function redBloodTowards(thing, other) {
   const tau = 2.0 * Math.PI

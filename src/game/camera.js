@@ -1,5 +1,5 @@
-import {lineIntersectAt, Float} from '/src/math/vector.js'
-import {WORLD_CELL_SHIFT} from '/src/world/world.js'
+import {lineIntersectAt, Float} from '../math/vector.js'
+import {WORLD_CELL_SHIFT} from '../world/world.js'
 
 const out = [0.0, 0.0]
 
