@@ -1,25 +1,25 @@
-import {fetchText, fetchImage} from '../client/net.js'
-import {Buffer} from '../webgl/buffer.js'
-import {createTexture, createPixelsToTexture, compileProgram} from '../webgl/webgl.js'
-import {Renderer} from '../webgl/renderer.js'
-import {drawSkyBox} from '../render/render.js'
-import {drawWall, drawFloorCeil} from '../client/render-sector.js'
-import {orthographic, perspective} from '../math/matrix.js'
-import {saveSound, saveMusic, pauseMusic, resumeMusic} from '../assets/sounds.js'
-import {newPalette} from '../editor/palette.js'
-import {saveEntity, saveTile, saveTexture, waitForResources, createNewTexturesAndSpriteSheets} from '../assets/assets.js'
-import {PaintState} from '../client/paint-state.js'
-import {SfxState} from '../client/sfx-state.js'
-import {MusicState} from '../client/music-state.js'
-import {MapState} from '../client/map-state.js'
-import {DashboardState} from '../client/dashboard-state.js'
-import {GameState} from '../client/game-state.js'
-import {HomeState} from '../client/home-state.js'
-import {TwoWayMap} from '../util/collections.js'
-import {TouchRender, touchRenderEvent, touchRenderResize} from '../client/render-touch.js'
-import {Tape} from '../game/tape.js'
-import * as Wad from '../wad/wad.js'
+import { createNewTexturesAndSpriteSheets, readPaintFile, saveEntity, saveTexture, saveTile, waitForResources } from '../assets/assets.js'
+import { pauseMusic, resumeMusic, saveMusic, saveSound } from '../assets/sounds.js'
+import { DashboardState } from '../client/dashboard-state.js'
+import { GameState } from '../client/game-state.js'
+import { HomeState } from '../client/home-state.js'
+import { MapState } from '../client/map-state.js'
+import { MusicState } from '../client/music-state.js'
+import { fetchImage, fetchText } from '../client/net.js'
+import { PaintState } from '../client/paint-state.js'
+import { drawFloorCeil, drawWall } from '../client/render-sector.js'
+import { TouchRender, touchRenderEvent, touchRenderResize } from '../client/render-touch.js'
+import { SfxState } from '../client/sfx-state.js'
+import { newPalette } from '../editor/palette.js'
+import { Tape } from '../game/tape.js'
 import * as In from '../input/input.js'
+import { orthographic, perspective } from '../math/matrix.js'
+import { drawSkyBox } from '../render/render.js'
+import { TwoWayMap } from '../util/collections.js'
+import * as Wad from '../wad/wad.js'
+import { Buffer } from '../webgl/buffer.js'
+import { Renderer } from '../webgl/renderer.js'
+import { compileProgram, createPixelsToTexture, createTexture } from '../webgl/webgl.js'
 
 export class Client {
   constructor(canvas, gl) {
@@ -81,17 +81,17 @@ export class Client {
   }
 
   touchStart(event) {
-    let input = touchRenderEvent(this.touchRender, event)
+    const input = touchRenderEvent(this.touchRender, event)
     if (input !== null) {
-      let code = this.keys.reversed(input)
+      const code = this.keys.reversed(input)
       this.state.keyEvent(code, true)
     }
   }
 
   touchEnd(event) {
-    let input = touchRenderEvent(this.touchRender, event)
+    const input = touchRenderEvent(this.touchRender, event)
     if (input !== null) {
-      let code = this.keys.reversed(input)
+      const code = this.keys.reversed(input)
       this.state.keyEvent(code, false)
     }
   }
@@ -127,13 +127,13 @@ export class Client {
 
     orthographic(this.orthographic, 0.0, width, 0.0, height, 0.0, 1.0)
 
-    let fov = 60.0
-    let near = 0.01
-    let far = 200.0
+    const fov = 60.0
+    const near = 0.01
+    const far = 200.0
     perspective(this.perspective, fov, near, far, ratio)
 
-    let x = Math.ceil(width / 800)
-    let y = Math.ceil(height / 600)
+    const x = Math.ceil(width / 800)
+    const y = Math.ceil(height / 600)
     this.scale = Math.min(x, y)
 
     if (this.touch) touchRenderResize(this.touchRender)
@@ -143,7 +143,7 @@ export class Client {
 
   getSectorBuffer(texture) {
     let buffer = this.sectorBuffers.get(texture)
-    if (buffer == null) {
+    if (buffer === undefined) {
       buffer = new Buffer(3, 0, 2, 3, 4 * 800, 36 * 800)
       this.rendering.makeVAO(buffer)
       this.sectorBuffers.set(texture, buffer)
@@ -153,7 +153,7 @@ export class Client {
 
   getSpriteBuffer(texture) {
     let buffer = this.spriteBuffers.get(texture)
-    if (buffer == null) {
+    if (buffer === undefined) {
       buffer = new Buffer(3, 0, 2, 3, 4 * 800, 36 * 800)
       this.rendering.makeVAO(buffer)
       this.spriteBuffers.set(texture, buffer)
@@ -165,22 +165,22 @@ export class Client {
     for (const line of sector.lines) {
       let wall = line.top
       if (wall) {
-        let buffer = this.getSectorBuffer(wall.texture)
+        const buffer = this.getSectorBuffer(wall.texture)
         drawWall(buffer, wall)
       }
       wall = line.middle
       if (wall) {
-        let buffer = this.getSectorBuffer(wall.texture)
+        const buffer = this.getSectorBuffer(wall.texture)
         drawWall(buffer, wall)
       }
       wall = line.bottom
       if (wall) {
-        let buffer = this.getSectorBuffer(wall.texture)
+        const buffer = this.getSectorBuffer(wall.texture)
         drawWall(buffer, wall)
       }
     }
     for (const triangle of sector.triangles) {
-      let buffer = this.getSectorBuffer(triangle.texture)
+      const buffer = this.getSectorBuffer(triangle.texture)
       drawFloorCeil(buffer, triangle)
     }
   }
@@ -188,9 +188,11 @@ export class Client {
   async initialize() {
     const gl = this.gl
 
-    const main = Wad.parse(await fetchText('main.wad'))
+    // for (let i = 0; i < localStorage.length; i++) console.debug(localStorage.key(i))
+
+    const main = Wad.parse(await fetchText('start.wad'))
     const pack = main.get('package')
-    const directory = '/pack/' + pack
+    const directory = './pack/' + pack
     const contents = Wad.parse(await fetchText(directory + '/' + pack + '.wad'))
     const tape = new Tape('tape-1')
 
@@ -209,94 +211,85 @@ export class Client {
     gl.disable(gl.BLEND)
 
     for (const music of contents.get('music')) {
-      let dot = music.lastIndexOf('.')
+      const dot = music.lastIndexOf('.')
       if (dot === -1) throw 'Extension missing: ' + music
-      let name = music.substring(0, dot)
+      const name = music.substring(0, dot)
       saveMusic(name, directory + '/music/' + music)
       tape.music.push(music)
     }
 
-    for (const sound of contents.get('sounds')) saveSound(sound, directory + '/sounds/' + sound + '.wav')
-
-    let color2d = fetchText('/shaders/color2d.glsl')
-    let texture2d = fetchText('/shaders/texture2d.glsl')
-    let texture3d = fetchText('/shaders/texture3d.glsl')
-    let texture2drgb = fetchText('/shaders/texture2d-rgb.glsl')
-    let texture2dignore = fetchText('/shaders/texture2d-ignore.glsl')
-
-    let tiles = []
-    let textures = []
-
-    for (const tile of contents.get('tiles')) {
-      tiles.push(
-        fetchImage(directory + '/tiles/' + tile + '.png').then((image) => {
-          return {name: tile, image: image}
-        })
-      )
-      tape.tiles.push(tile)
+    for (const sound of contents.get('sounds')) {
+      saveSound(sound, directory + '/sounds/')
+      tape.sounds.push(sound)
     }
 
-    for (const texture of contents.get('textures')) {
-      let name = texture.get('name')
-      let wrap = texture.get('wrap')
-      if (name.endsWith('.txt')) {
+    let color2d = fetchText('./shaders/color2d.glsl')
+    let texture2d = fetchText('./shaders/texture2d.glsl')
+    let texture3d = fetchText('./shaders/texture3d.glsl')
+    let texture2d_rgb = fetchText('./shaders/texture2d-rgb.glsl')
+    let texture2d_font = fetchText('./shaders/texture2d-font.glsl')
+    let texture3d_rgb = fetchText('./shaders/texture3d-rgb.glsl')
+
+    const textures = []
+    const palette = newPalette()
+
+    for (const texture of contents.get('sprites')) {
+      if (texture.endsWith('.txt')) {
         textures.push(
-          fetchText(directory + '/textures/' + name).then((text) => {
-            name = name.substring(0, name.length - 4)
-
-            let image = text.split('\n')
-            let index = 0
-
-            let dimensions = image[index].split(' ')
-            let width = parseInt(dimensions[0])
-            let height = parseInt(dimensions[1])
-            index++
-
-            let palette = newPalette()
-            let pixels = new Uint8Array(width * height * 3)
-
-            for (let h = 0; h < height; h++) {
-              let row = image[index].split(' ')
-              for (let c = 0; c < width; c++) {
-                let i = (c + h * width) * 3
-                let p = parseInt(row[c]) * 3
-
-                pixels[i] = palette[p]
-                pixels[i + 1] = palette[p + 1]
-                pixels[i + 2] = palette[p + 2]
-              }
-              index++
-            }
-
-            return {name: name, wrap: wrap, width: width, height: height, pixels: pixels}
+          fetchText(directory + '/sprites/' + texture).then((text) => {
+            return readPaintFile(text, palette)
           })
         )
       } else {
+        const name = texture.substring(0, texture.length - 4)
         textures.push(
-          fetchImage(directory + '/textures/' + name + '.png').then((image) => {
-            return {name: name, wrap: wrap, image: image}
+          fetchImage(directory + '/sprites/' + texture).then((image) => {
+            return { name: name, wrap: 'clamp', image: image }
           })
         )
       }
-      tape.textures.push(name)
+      tape.textures.push(texture)
     }
 
     await waitForResources()
 
-    createNewTexturesAndSpriteSheets((image) => {
-      return createTexture(gl, image, gl.NEAREST, gl.CLAMP_TO_EDGE)
+    createNewTexturesAndSpriteSheets(palette, (image) => {
+      return createPixelsToTexture(gl, image.width, image.height, image.pixels, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE)
     })
-
-    for (let tile of tiles) {
-      tile = await tile
-      saveTile(tile.name, createTexture(gl, tile.image, gl.NEAREST, gl.REPEAT))
-    }
 
     for (let texture of textures) {
       texture = await texture
-      let wrap = texture.wrap === 'repeat' ? gl.REPEAT : gl.CLAMP_TO_EDGE
-      if (texture.pixels) saveTexture(texture.name, createPixelsToTexture(gl, texture.width, texture.height, texture.pixels, gl.RGB, gl.NEAREST, wrap))
-      else saveTexture(texture.name, createTexture(gl, texture.image, gl.NEAREST, wrap))
+      const wrap = texture.wrap === 'repeat' ? gl.REPEAT : gl.CLAMP_TO_EDGE
+      if (texture.pixels) {
+        saveTexture(texture.name, createPixelsToTexture(gl, texture.width, texture.height, texture.pixels, gl.RGB, gl.NEAREST, wrap))
+        if (texture.sprites) {
+          for (const sprite of texture.sprites) {
+            if (sprite.length < 6 || sprite[5] !== 'tile') continue
+            const left = parseInt(sprite[1])
+            const top = parseInt(sprite[2])
+            const right = parseInt(sprite[3])
+            const bottom = parseInt(sprite[4])
+            const width = right - left
+            const height = bottom - top
+            const source = texture.pixels
+            const srcwid = texture.width
+            const pixels = new Uint8Array(width * height * 3)
+            for (let h = 0; h < height; h++) {
+              const row = top + h
+              for (let c = 0; c < width; c++) {
+                const s = (left + c + row * srcwid) * 3
+                const d = (c + h * width) * 3
+                pixels[d] = source[s]
+                pixels[d + 1] = source[s + 1]
+                pixels[d + 2] = source[s + 2]
+              }
+            }
+            saveTile(sprite[0], createPixelsToTexture(gl, width, height, pixels, gl.RGB, gl.NEAREST, gl.REPEAT))
+          }
+        }
+      } else {
+        saveTexture(texture.name, createTexture(gl, texture.image, gl.NEAREST, wrap))
+      }
     }
 
     this.rendering = new Renderer(gl)
@@ -306,19 +299,21 @@ export class Client {
 
     drawSkyBox(this.bufferSky)
 
-    let rendering = this.rendering
+    const rendering = this.rendering
 
     color2d = await color2d
     texture2d = await texture2d
     texture3d = await texture3d
-    texture2drgb = await texture2drgb
-    texture2dignore = await texture2dignore
+    texture2d_rgb = await texture2d_rgb
+    texture2d_font = await texture2d_font
+    texture3d_rgb = await texture3d_rgb
 
-    rendering.insertProgram(0, compileProgram(gl, color2d))
-    rendering.insertProgram(1, compileProgram(gl, texture2d))
-    rendering.insertProgram(2, compileProgram(gl, texture3d))
-    rendering.insertProgram(3, compileProgram(gl, texture2drgb))
-    rendering.insertProgram(4, compileProgram(gl, texture2dignore))
+    rendering.insertProgram('color2d', compileProgram(gl, color2d))
+    rendering.insertProgram('texture2d', compileProgram(gl, texture2d))
+    rendering.insertProgram('texture3d', compileProgram(gl, texture3d))
+    rendering.insertProgram('texture2d-rgb', compileProgram(gl, texture2d_rgb))
+    rendering.insertProgram('texture2d-font', compileProgram(gl, texture2d_font))
+    rendering.insertProgram('texture3d-rgb', compileProgram(gl, texture3d_rgb))
 
     rendering.makeVAO(this.bufferGUI)
     rendering.makeVAO(this.bufferColor)
@@ -326,7 +321,7 @@ export class Client {
 
     rendering.updateVAO(this.bufferSky, gl.STATIC_DRAW)
 
-    let keys = new TwoWayMap()
+    const keys = new TwoWayMap()
 
     keys.set('Enter', In.BUTTON_START)
     keys.set('Space', In.BUTTON_SELECT)
@@ -358,7 +353,7 @@ export class Client {
   }
 
   async openState(open) {
-    let boot = this.boot
+    const boot = this.boot
     let file = null
     switch (open) {
       case 'paint':
@@ -390,7 +385,7 @@ export class Client {
         if (this.game === null) this.game = new GameState(this)
         else this.game.reset()
         this.state = this.game
-        if (boot.has('map')) file = '/pack/' + this.pack + '/maps/' + boot.get('map') + '.map'
+        if (boot.has('map')) file = './pack/' + this.pack + '/maps/' + boot.get('map') + '.txt'
         break
       default:
         if (this.home === null) this.home = new HomeState(this)

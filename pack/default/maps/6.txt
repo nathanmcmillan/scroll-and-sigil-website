@@ -1,0 +1,21 @@
+map untitled
+vectors
+44.7500 58.9000
+53.7500 54.4000
+36.7500 38.9000
+44.7500 38.9000
+36.7500 30.4000
+53.7500 30.4000
+end vectors
+lines
+0 3 none grass none 0 0 0
+1 0 none grass none 0 0 0
+2 4 none grass none 0 0 0
+3 2 none grass none 0 0 0
+4 5 none grass none 0 0 0
+5 1 none grass none 0 0 0
+end lines
+sectors
+0 0 5 6 none none 6 3 0 1 5 4 2 6 0 1 5 4 2 3
+end sectors
+end map

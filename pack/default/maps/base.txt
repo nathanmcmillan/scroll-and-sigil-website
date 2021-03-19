@@ -1,0 +1,90 @@
+map base
+vectors
+0.0000 127.0000
+127.0000 127.0000
+38.0500 82.5000
+46.0500 82.5000
+54.0500 82.5000
+62.0500 82.5000
+40.0500 80.5000
+46.0500 80.5000
+54.0500 80.5000
+60.0500 80.5000
+40.0500 60.5000
+60.0500 60.5000
+38.0500 58.5000
+62.0500 58.5000
+16.0500 31.5000
+26.0500 31.5000
+36.0500 31.5000
+44.0500 31.5000
+18.0500 29.5000
+26.0500 29.5000
+36.0500 29.5000
+42.0500 29.5000
+18.0500 11.5000
+42.0500 11.5000
+16.0500 9.5000
+44.0500 9.5000
+0.0000 0.0000
+127.0000 0.0000
+end vectors
+lines
+0 26 none none none 0 0 0
+1 0 none none none 0 0 0
+2 12 none plank none 0 0 0
+3 2 none plank none 0 0 0
+4 3 none none none 0 0 0
+4 8 none stone-floor none 0 0 0
+5 4 none plank none 0 0 0
+6 7 none stone-floor none 0 0 0
+7 3 none stone-floor none 0 0 0
+8 9 none stone-floor none 0 0 0
+9 11 none stone-floor none 0 0 0
+10 6 none stone-floor none 0 0 0
+11 10 none stone-floor none 0 0 0
+12 13 none plank none 0 0 0
+13 5 none plank none 0 0 0
+14 24 none stone stone-floor 0 0 0
+15 14 none stone stone-floor 0 0 0
+16 15 stone-floor none plank-floor 0 0 0
+16 20 none plank none 0 0 0
+17 16 none stone stone-floor 0 0 0
+18 19 none plank none 0 0 0 flags not-physical end
+19 15 none plank none 0 0 0
+20 21 none plank none 0 0 0 trigger enter cinema end
+21 23 none plank none 0 0 0 trigger attack goto base entrance end
+22 18 none plank none 0 0 0 flags physical end
+23 22 none plank none 0 0 0 trigger interact teleport 100 80 is end
+24 25 none stone stone-floor 0 0 0
+25 17 none stone stone-floor 0 0 0
+26 27 none none none 0 0 0
+27 1 none none none 0 0 0
+end lines
+sectors
+0 0 10 10 none none 12 12 2 3 7 6 10 11 9 8 4 5 13 12 2 3 8 7 11 12 10 9 5 6 14 13
+0 1 10 12 none none 12 24 14 15 19 18 22 23 21 20 16 17 25 12 15 16 21 20 24 25 23 22 18 19 27 26
+0 0 10 10 plank-floor plank 8 3 4 8 9 11 10 6 7 8 4 5 9 10 12 11 7 8 flags not-pysical blink end trigger enter teleport 100 80 and spawn baron 10 100 gte health 2 or eq group human end
+0 1 10 12 stone-floor stone 8 15 16 20 21 23 22 18 19 8 17 18 22 23 25 24 20 21 flags lava end trigger enter sound beep end
+0 0 20 22 grass none 4 26 0 1 27 4 0 1 29 28
+end sectors
+things
+50 70 baron
+20 50 zombie
+14 42 tree
+18 42 medkit
+10 40 hero
+30 40 merchant
+60 42 armor
+80 42 peasant
+end things
+triggers
+every 30 seconds spawn zombie 10 100
+end triggers
+meta
+music vampire-killer
+background night-sky
+new-game 10 40
+entrance-x 100 60
+end meta
+end map

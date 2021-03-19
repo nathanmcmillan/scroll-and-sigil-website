@@ -1,0 +1,26 @@
+map untitled
+vectors
+22.4000 67.9000
+104.2000 63.6000
+79.3000 51.1000
+52.0000 49.0000
+52.0000 31.6000
+79.3000 31.6000
+26.8000 13.8000
+104.8000 13.8000
+end vectors
+lines
+0 1 none grass none 0 0 0
+0 6 none plank none 0 0 0
+2 5 none grass none 0 0 0
+3 2 none grass none 0 0 0
+4 3 none grass none 0 0 0
+5 4 none grass none 0 0 0
+6 7 none grass none 0 0 0
+7 1 none grass none 0 0 0
+end lines
+sectors
+0 0 5 6 plank-floor plank 4 3 2 5 4 4 3 2 5 4
+0 0 5 6 stone-floor stone 4 6 0 1 7 4 1 0 7 6
+end sectors
+end map

@@ -1,30 +1,33 @@
-import {exportSheetPixels, exportSheetToCanvas, PaintEdit} from '../editor/paint.js'
-import {textureByName} from '../assets/assets.js'
-import {drawText, drawRectangle, drawHollowRectangle, drawImage, FONT_WIDTH, FONT_HEIGHT_BASE} from '../render/render.js'
-import {renderTouch} from '../client/render-touch.js'
-import {spr, sprcol} from '../render/pico.js'
-import {identity, multiply} from '../math/matrix.js'
-import {flexBox, flexSolve} from '../gui/flex.js'
-import {compress, decompress} from '../compress/huffman.js'
-import {createPixelsToTexture} from '../webgl/webgl.js'
-import {calcFontScale, calcThickness, calcTopBarHeight, calcBottomBarHeight} from '../editor/editor-util.js'
-import {renderDialogBox} from '../client/client-util.js'
+import { textureByName } from '../assets/assets.js'
+import { renderDialogBox, renderStatus, renderTextBox } from '../client/client-util.js'
+import { renderTouch } from '../client/render-touch.js'
+import { compress, decompress } from '../compress/huffman.js'
+import { calcBottomBarHeight, calcFontScale, calcThickness, calcTopBarHeight, defaultFont } from '../editor/editor-util.js'
+import { PaintEdit, SPRITE_TOOL, exportPixels, exportToCanvas } from '../editor/paint.js'
 import {
   black0f,
   black1f,
   black2f,
+  closestInPalette,
+  lavender0f,
+  lavender1f,
+  lavender2f,
+  lavenderf,
+  red0f,
+  red1f,
+  red2f,
+  redf,
+  silverf,
+  slatef,
   white0f,
   white1f,
   white2f,
-  lightgreyf,
-  lavenderf,
-  lightpeachf,
-  redf,
-  darkpurplef,
-  darkgreyf,
-  luminosity,
-  luminosityTable,
 } from '../editor/palette.js'
+import { flexBox, flexSolve } from '../gui/flex.js'
+import { identity, multiply } from '../math/matrix.js'
+import { spr, sprcol } from '../render/pico.js'
+import { drawHollowRectangle, drawImage, drawRectangle, drawTextFont, drawTextFontSpecial } from '../render/render.js'
+import { createPixelsToTexture } from '../webgl/webgl.js'
 
 function updatePixelsToTexture(gl, texture, width, height, pixels) {
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -33,43 +36,29 @@ function updatePixelsToTexture(gl, texture, width, height, pixels) {
   return texture
 }
 
-function guessColor(table, red, green, blue) {
-  let lumin = luminosity(red, green, blue)
-  for (let i = 0; i < table.length - 1; i++) {
-    let c = table[i][0]
-    let n = table[i + 1][0]
-    if (lumin >= c && lumin <= n) {
-      if (lumin - c < n - lumin) return table[i][1]
-      else return table[i + 1][1]
-    }
-  }
-  return table[table.length - 1][1]
-}
-
-function convertImageToText(palette, image) {
+function convertImageToText(palette, image, name) {
   const width = image.width
   const height = image.height
 
-  let canvas = document.createElement('canvas')
-  let context = canvas.getContext('2d')
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
   canvas.width = width
   canvas.height = height
   context.drawImage(image, 0, 0)
-  let pixels = context.getImageData(0, 0, width, height).data
+  const pixels = context.getImageData(0, 0, width, height).data
 
-  let table = luminosityTable(palette)
-
-  let text = width + ' ' + height
+  let text = `paint ${name} ${width} ${height}`
   for (let h = 0; h < height; h++) {
     text += '\n'
     for (let c = 0; c < width; c++) {
-      let index = (c + h * width) * 4
-      let red = pixels[index]
-      let green = pixels[index + 1]
-      let blue = pixels[index + 2]
-      text += guessColor(table, red, green, blue) + ' '
+      const index = (c + h * width) * 4
+      const red = pixels[index]
+      const green = pixels[index + 1]
+      const blue = pixels[index + 2]
+      text += closestInPalette(palette, red, green, blue) + ' '
     }
   }
+  text += '\nend paint'
   return text
 }
 
@@ -81,14 +70,14 @@ export class PaintState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    let paint = new PaintEdit(this, client.width, client.height - client.top, client.scale, client.input)
+    const paint = new PaintEdit(this, client.width, client.height - client.top, client.scale, client.input)
     this.paint = paint
 
-    let rows = paint.sheetRows
-    let columns = paint.sheetColumns
-    let pixels = exportSheetPixels(paint, 0)
+    const rows = paint.sheetRows
+    const columns = paint.sheetColumns
+    const pixels = exportPixels(paint)
 
-    let gl = client.gl
+    const gl = client.gl
     this.texture = createPixelsToTexture(gl, columns, rows, pixels, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE).texture
   }
 
@@ -101,7 +90,7 @@ export class PaintState {
   }
 
   keyEvent(code, down) {
-    let paint = this.paint
+    const paint = this.paint
     if (this.keys.has(code)) {
       paint.input.set(this.keys.get(code), down)
       paint.immediateInput()
@@ -136,36 +125,38 @@ export class PaintState {
   }
 
   importSheet() {
-    let button = document.createElement('input')
+    const button = document.createElement('input')
     button.type = 'file'
     button.onchange = (e) => {
-      let file = e.target.files[0]
+      const file = e.target.files[0]
       console.info(file)
-      let reader = new FileReader()
+      const reader = new FileReader()
       if (file.type === 'image/png') {
         reader.readAsDataURL(file)
         reader.onload = (event) => {
           let content = event.target.result
-          let image = new Image()
+          const image = new Image()
           image.src = content
           image.onload = () => {
-            content = convertImageToText(this.paint.palette, image)
-            this.paint.read(content, 0)
+            const dot = file.name.indexOf('.')
+            const name = dot <= 0 ? file.name : file.name.substring(0, dot)
+            content = convertImageToText(this.paint.palette, image, name)
+            this.paint.read(content)
             this.updateTexture()
           }
         }
       } else if (file.name.endsWith('.huff')) {
         reader.readAsArrayBuffer(file)
         reader.onload = (event) => {
-          let content = new Uint8Array(event.target.result)
-          this.paint.read(decompress(content), 0)
+          const content = new Uint8Array(event.target.result)
+          this.paint.read(decompress(content))
           this.updateTexture()
         }
       } else {
-        reader.readAsText(file, 'UTF-8')
+        reader.readAsText(file, 'utf-8')
         reader.onload = (event) => {
-          let content = event.target.result
-          this.paint.read(content, 0)
+          const content = event.target.result
+          this.paint.read(content)
           this.updateTexture()
         }
       }
@@ -174,54 +165,54 @@ export class PaintState {
   }
 
   saveSheet() {
-    let blob = this.paint.export()
+    const blob = this.paint.export()
     localStorage.setItem('paint.txt', blob)
     console.info(blob)
     console.info('saved to local storage!')
   }
 
   exportPlain() {
-    let blob = this.paint.export()
-    let download = document.createElement('a')
+    const blob = this.paint.export()
+    const download = document.createElement('a')
     download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
-    download.download = 'sheet' + this.paint.sheetIndex + '.txt'
+    download.download = this.paint.name + '.txt'
     download.click()
   }
 
   exportHuffman() {
-    let blob = compress(this.paint.export())
-    let download = document.createElement('a')
-    download.href = window.URL.createObjectURL(new Blob([blob], {type: 'application/octet-stream'}))
-    download.download = 'sheet' + this.paint.sheetIndex + '.huff'
+    const blob = compress(this.paint.export())
+    const download = document.createElement('a')
+    download.href = window.URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }))
+    download.download = this.paint.name + '.huff'
     download.click()
   }
 
   exportPng() {
-    let paint = this.paint
-    let canvas = document.createElement('canvas')
-    let context = canvas.getContext('2d')
+    const paint = this.paint
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
     canvas.width = paint.sheetColumns
     canvas.height = paint.sheetRows
-    let data = context.createImageData(canvas.width, canvas.height)
-    exportSheetToCanvas(paint, paint.sheetIndex, data.data)
+    const data = context.createImageData(canvas.width, canvas.height)
+    exportToCanvas(paint, data.data)
     context.putImageData(data, 0, 0)
-    let blob = canvas.toDataURL('image/png')
-    let download = document.createElement('a')
+    const blob = canvas.toDataURL('image/png')
+    const download = document.createElement('a')
     download.href = blob
-    download.download = 'sheet' + paint.sheetIndex + '.png'
+    download.download = this.paint.name + '.png'
     download.click()
   }
 
   updateTexture() {
-    let paint = this.paint
-    let rows = paint.sheetRows
-    let columns = paint.sheetColumns
-    let pixels = exportSheetPixels(paint, 0)
+    const paint = this.paint
+    const rows = paint.sheetRows
+    const columns = paint.sheetColumns
+    const pixels = exportPixels(paint)
     updatePixelsToTexture(this.client.gl, this.texture, columns, rows, pixels)
   }
 
   update(timestamp) {
-    let paint = this.paint
+    const paint = this.paint
     paint.update(timestamp)
     if (paint.hasUpdates) this.updateTexture()
   }
@@ -242,42 +233,42 @@ export class PaintState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
+    const font = defaultFont()
     const fontScale = calcFontScale(scale)
-    const fontWidth = fontScale * FONT_WIDTH
-    const fontHeight = fontScale * FONT_HEIGHT_BASE
+    const fontWidth = fontScale * font.width
+    const fontHeight = fontScale * font.base
 
     const thickness = calcThickness(scale)
     const doubleThick = 2 * thickness
 
-    const canvasWidth = client.width
-    const canvasHeight = client.height - client.top
+    const width = client.width
+    const height = client.height - client.top
 
-    let brushSize = paint.brushSize
-    let canvasZoom = paint.canvasZoom
+    const brushSize = paint.brushSize
+    const canvasZoom = paint.canvasZoom
 
-    let posOffsetC = paint.positionOffsetC
-    let posOffsetR = paint.positionOffsetR
+    const posOffsetC = paint.positionOffsetC
+    const posOffsetR = paint.positionOffsetR
 
-    let posC = paint.positionC
-    let posR = paint.positionR
+    const posC = paint.positionC
+    const posR = paint.positionR
 
-    let paletteRows = paint.paletteRows
-    let paletteColumns = paint.paletteColumns
-    let palette = paint.paletteFloat
+    const paletteRows = paint.paletteRows
+    const paletteColumns = paint.paletteColumns
+    const palette = paint.paletteFloat
 
-    let sheetRows = paint.sheetRows
-    let sheetColumns = paint.sheetColumns
-    let sheetIndex = paint.sheetIndex
+    const sheetRows = paint.sheetRows
+    const sheetColumns = paint.sheetColumns
 
-    let toolColumns = paint.toolColumns
+    const toolColumns = paint.toolColumns
 
-    let magnify, top, left, width, height, box, x, y
+    let magnify, top, left, boxWidth, boxHeight, box, x, y
 
-    rendering.setProgram(1)
-    rendering.setView(0, client.top, canvasWidth, canvasHeight)
+    rendering.setProgram('texture2d')
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
-    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
+    gl.clearColor(slatef(0), slatef(1), slatef(2), 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     gl.disable(gl.CULL_FACE)
@@ -285,34 +276,30 @@ export class PaintState {
 
     client.bufferGUI.zero()
 
-    let sheetBox = paint.sheetBox
-    let viewBox = paint.viewBox
-    let toolBox = paint.toolBox
-    let paletteBox = paint.paletteBox
+    const sheetBox = paint.sheetBox
+    const viewBox = paint.viewBox
+    const miniBox = paint.miniBox
+    const toolBox = paint.toolBox
+    const paletteBox = paint.paletteBox
 
     // sheet
 
     magnify = 2 * scale
     left = sheetBox.x
     top = sheetBox.y
-    width = sheetBox.width
-    height = sheetBox.height
+    boxWidth = sheetBox.width
+    boxHeight = sheetBox.height
 
-    drawImage(client.bufferGUI, left, top, width, height, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0)
+    drawImage(client.bufferGUI, left, top, boxWidth, boxHeight, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0)
 
     // mini view
 
-    let sl = posOffsetC / sheetColumns
-    let st = posOffsetR / sheetRows
-    let sr = (posOffsetC + canvasZoom) / sheetColumns
-    let sb = (posOffsetR + canvasZoom) / sheetRows
+    const sl = posOffsetC / sheetColumns
+    const st = posOffsetR / sheetRows
+    const sr = (posOffsetC + canvasZoom) / sheetColumns
+    const sb = (posOffsetR + canvasZoom) / sheetRows
 
-    width = 16 * scale
-    height = 16 * scale
-    left = viewBox.x
-    top = toolBox.y
-
-    drawImage(client.bufferGUI, left, top, width, height, 1.0, 1.0, 1.0, 1.0, sl, st, sr, sb)
+    drawImage(client.bufferGUI, miniBox.x, miniBox.y, miniBox.width, miniBox.height, 1.0, 1.0, 1.0, 1.0, sl, st, sr, sb)
 
     // view
 
@@ -324,107 +311,192 @@ export class PaintState {
 
     left = viewBox.x
     top = viewBox.y
-    width = viewBox.width
-    height = viewBox.height
+    boxWidth = viewBox.width
+    boxHeight = viewBox.height
 
-    drawImage(client.bufferGUI, left, top, width, height, 1.0, 1.0, 1.0, 1.0, sl, st, sr, sb)
+    drawImage(client.bufferGUI, left, top, boxWidth, boxHeight, 1.0, 1.0, 1.0, 1.0, sl, st, sr, sb)
 
     rendering.bindTexture(gl.TEXTURE0, this.texture)
     rendering.updateAndDraw(client.bufferGUI)
 
-    rendering.setProgram(0)
-    rendering.setView(0, client.top, canvasWidth, canvasHeight)
+    rendering.setProgram('color2d')
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     // box around view
 
     client.bufferColor.zero()
 
-    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0f, black1f, black2f, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, boxWidth + doubleThick, boxHeight + doubleThick, thickness, black0f, black1f, black2f, 1.0)
 
-    // focus box around view
+    // focus in view
 
     x = left + posC * magnify
-    y = top + height - posR * magnify
+    y = top + boxHeight - posR * magnify
     box = magnify * brushSize
     drawHollowRectangle(client.bufferColor, x, y - box, box, box, thickness, black0f, black1f, black2f, 1.0)
     drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0f, white1f, white2f, 1.0)
+
+    // selection in view
+
+    if (paint.selectL !== null) {
+      let selectX, selectY, selectWidth, selectHeight
+      if (paint.selectR === null) {
+        let l = paint.selectL
+        let t = paint.selectT
+        let r = posC + posOffsetC
+        let b = posR + posOffsetR
+        if (r < l) {
+          const temp = l
+          l = r
+          r = temp
+        }
+        if (b < t) {
+          const temp = t
+          t = b
+          b = temp
+        }
+        selectWidth = (r - l + 1) * magnify
+        selectHeight = (b - t + 1) * magnify
+        selectX = left + l * magnify
+        selectY = top + boxHeight - t * magnify - selectHeight
+      } else {
+        selectWidth = (paint.selectR - paint.selectL + 1) * magnify
+        selectHeight = (paint.selectB - paint.selectT + 1) * magnify
+        selectX = left + paint.selectL * magnify
+        selectY = top + boxHeight - paint.selectT * magnify - selectHeight
+      }
+      const rectWidth = selectWidth + doubleThick
+      const rectHeight = selectHeight + doubleThick
+      if (selectX < x + box && selectY < y + box) {
+        selectX -= thickness
+        selectY -= thickness
+        drawRectangle(client.bufferColor, selectX, selectY, rectWidth, thickness, red0f, red1f, red2f, 1.0)
+        drawRectangle(client.bufferColor, selectX, selectY, thickness, rectHeight, red0f, red1f, red2f, 1.0)
+        drawRectangle(client.bufferColor, selectX + rectWidth - thickness, selectY, thickness, rectHeight, red0f, red1f, red2f, 1.0)
+        drawRectangle(client.bufferColor, selectX, selectY + rectHeight - thickness, rectWidth, thickness, red0f, red1f, red2f, 1.0)
+      }
+    }
 
     // sheet
 
     magnify = 2 * scale
     left = sheetBox.x
     top = sheetBox.y
-    width = sheetBox.width
-    height = sheetBox.height
+    boxWidth = sheetBox.width
+    boxHeight = sheetBox.height
 
     // box around sheet
 
-    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0f, black1f, black2f, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, boxWidth + doubleThick, boxHeight + doubleThick, thickness, black0f, black1f, black2f, 1.0)
 
-    // focus box around sheet
+    // sprites in sheet
+
+    if (paint.tool === SPRITE_TOOL) {
+      for (const sprite of paint.sprites) {
+        const w = (sprite.r - sprite.l + 1) * magnify
+        const h = (sprite.b - sprite.t + 1) * magnify
+        x = left + sprite.l * magnify
+        y = top + boxHeight - sprite.t * magnify - h
+        drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, w + doubleThick, h + doubleThick, thickness, lavender0f, lavender1f, lavender2f, 1.0)
+      }
+    }
+
+    // focus in sheet
 
     x = left + posOffsetC * magnify
-    y = top + height - posOffsetR * magnify
+    y = top + boxHeight - posOffsetR * magnify
     box = canvasZoom * magnify
     drawHollowRectangle(client.bufferColor, x - thickness, y - thickness - box, box + doubleThick, box + doubleThick, thickness, white0f, white1f, white2f, 1.0)
+
+    // selection in sheet
+
+    if (paint.selectL !== null) {
+      let selectionWidth, selectionHeight
+      if (paint.selectR === null) {
+        let l = paint.selectL
+        let t = paint.selectT
+        let r = posC + posOffsetC
+        let b = posR + posOffsetR
+        if (r < l) {
+          const temp = l
+          l = r
+          r = temp
+        }
+        if (b < t) {
+          const temp = t
+          t = b
+          b = temp
+        }
+        selectionWidth = (r - l + 1) * magnify
+        selectionHeight = (b - t + 1) * magnify
+        x = left + l * magnify
+        y = top + boxHeight - t * magnify - selectionHeight
+      } else {
+        selectionWidth = (paint.selectR - paint.selectL + 1) * magnify
+        selectionHeight = (paint.selectB - paint.selectT + 1) * magnify
+        x = left + paint.selectL * magnify
+        y = top + boxHeight - paint.selectT * magnify - selectionHeight
+      }
+      drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, selectionWidth + doubleThick, selectionHeight + doubleThick, thickness, red0f, red1f, red2f, 1.0)
+    }
 
     // pallete
 
     magnify = 16 * scale
-    width = paletteBox.width
-    height = paletteBox.height
+    boxWidth = paletteBox.width
+    boxHeight = paletteBox.height
     left = paletteBox.x
     top = paletteBox.y
     for (let r = 0; r < paletteRows; r++) {
       for (let c = 0; c < paletteColumns; c++) {
-        let x = left + c * magnify
-        let y = top + height - (r + 1) * magnify
-        let index = (c + r * paletteColumns) * 3
-        let red = palette[index]
-        let green = palette[index + 1]
-        let blue = palette[index + 2]
+        const x = left + c * magnify
+        const y = top + boxHeight - (r + 1) * magnify
+        const index = (c + r * paletteColumns) * 3
+        const red = palette[index]
+        const green = palette[index + 1]
+        const blue = palette[index + 2]
         drawRectangle(client.bufferColor, x, y, magnify, magnify, red, green, blue, 1.0)
       }
     }
 
     // box around palette
 
-    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, width + doubleThick, height + doubleThick, thickness, black0f, black1f, black2f, 1.0)
+    drawHollowRectangle(client.bufferColor, left - thickness, top - thickness, boxWidth + doubleThick, boxHeight + doubleThick, thickness, black0f, black1f, black2f, 1.0)
 
-    // focus box around palette
+    // focus in palette
 
     x = left + paint.paletteC * magnify
-    y = top + height - (paint.paletteR + 1) * magnify
+    y = top + boxHeight - (paint.paletteR + 1) * magnify
     drawHollowRectangle(client.bufferColor, x, y, magnify, magnify, thickness, black0f, black1f, black2f, 1.0)
     drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, magnify + doubleThick, magnify + doubleThick, thickness, white0f, white1f, white2f, 1.0)
 
     // top and bottom bar
 
     const topBarHeight = calcTopBarHeight(scale)
-    drawRectangle(client.bufferColor, 0, canvasHeight - topBarHeight, canvasWidth, topBarHeight, redf(0), redf(1), redf(2), 1.0)
+    drawRectangle(client.bufferColor, 0, height - topBarHeight, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
     const bottomBarHeight = calcBottomBarHeight(scale)
-    drawRectangle(client.bufferColor, 0, 0, canvasWidth, bottomBarHeight, redf(0), redf(1), redf(2), 1.0)
+    drawRectangle(client.bufferColor, 0, 0, width, bottomBarHeight, redf(0), redf(1), redf(2), 1.0)
 
     rendering.updateAndDraw(client.bufferColor)
 
     // special textures
 
-    rendering.setProgram(3)
-    rendering.setView(0, client.top, canvasWidth, canvasHeight)
+    rendering.setProgram('texture2d-rgb')
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     client.bufferGUI.zero()
 
     // tools
 
-    let toolMagnify = 16 * scale
-    let toolLeft = toolBox.x
-    let toolTop = toolBox.y
+    const toolMagnify = 16 * scale
+    const toolLeft = toolBox.x
+    const toolTop = toolBox.y
     y = toolTop
     for (let c = 0; c < toolColumns; c++) {
-      let x = toolLeft + c * toolMagnify
+      const x = toolLeft + c * toolMagnify
       if (c === paint.tool) {
         spr(client.bufferGUI, c, 1.0, 1.0, x, y - 2 * scale, toolMagnify, toolMagnify)
       } else {
@@ -432,80 +504,66 @@ export class PaintState {
       }
     }
 
-    // right top bar
-
-    let spriteSize = 16 * scale
-    x = canvasWidth - fontWidth
-    y = canvasHeight - topBarHeight - Math.floor(0.2 * spriteSize)
-    for (let c = 17; c < 21; c++) {
-      if (c === 17) sprcol(client.bufferGUI, c, 1.0, 1.0, x - (21 - c) * spriteSize, y, spriteSize, spriteSize, lightpeachf(0), lightpeachf(1), lightpeachf(2), 1.0)
-      else sprcol(client.bufferGUI, c, 1.0, 1.0, x - (21 - c) * spriteSize, y, spriteSize, spriteSize, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
-    }
-
     rendering.bindTexture(gl.TEXTURE0, textureByName('editor-sprites').texture)
     rendering.updateAndDraw(client.bufferGUI)
 
     // text
 
-    rendering.setProgram(4)
-    rendering.setView(0, client.top, canvasWidth, canvasHeight)
+    rendering.setProgram('texture2d-font')
+    rendering.setView(0, client.top, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
     client.bufferGUI.zero()
 
-    let displayC = posC < 10 ? '0' + posC : '' + posC
-    let displayR = posR < 10 ? '0' + posR : '' + posR
-    let text = 'x:' + displayC + ' y:' + displayR
-    let posBox = flexBox(fontWidth * text.length, fontHeight)
+    let displayC = '' + (posC + posOffsetC)
+    let displayR = '' + (posR + posOffsetR)
+    while (displayC.length < 3) displayC = '0' + displayC
+    while (displayR.length < 3) displayR = '0' + displayR
+    const text = 'x:' + displayC + ' y:' + displayR
+    const posBox = flexBox(fontWidth * text.length, fontHeight)
     posBox.funX = 'center'
     posBox.fromX = viewBox
     posBox.funY = 'above'
     posBox.fromY = viewBox
     flexSolve(0, 0, posBox)
-    drawText(client.bufferGUI, posBox.x, posBox.y, text, fontScale, lightgreyf(0), lightgreyf(1), lightgreyf(2), 1.0)
+    drawTextFont(client.bufferGUI, posBox.x, posBox.y, text, fontScale, silverf(0), silverf(1), silverf(2), 1.0, font)
 
-    let displaySheet = 'sheet #' + (sheetIndex < 10 ? '00' + sheetIndex : sheetIndex < 100 ? '0' + sheetIndex : '' + sheetIndex)
-    let sheetNumBox = flexBox(fontWidth * displaySheet.length, fontHeight)
+    const displaySheet = paint.name
+    const sheetNumBox = flexBox(fontWidth * displaySheet.length, fontHeight)
     sheetNumBox.funX = 'align-left'
     sheetNumBox.fromX = sheetBox
     sheetNumBox.funY = 'above'
     sheetNumBox.fromY = sheetBox
     flexSolve(0, 0, sheetNumBox)
-    drawText(client.bufferGUI, sheetNumBox.x, sheetNumBox.y, displaySheet, fontScale, lightgreyf(0), lightgreyf(1), lightgreyf(2), 1.0)
+    drawTextFont(client.bufferGUI, sheetNumBox.x, sheetNumBox.y, displaySheet, fontScale, silverf(0), silverf(1), silverf(2), 1.0, font)
 
-    let spriteIndex = posOffsetC / 8 + 2 * posOffsetR
-    let displayIndex = ' index:' + (spriteIndex < 10 ? '00' + spriteIndex : spriteIndex < 100 ? '0' + spriteIndex : '' + spriteIndex)
-    let positionBox = flexBox(fontWidth * displayIndex.length, fontHeight)
+    const spriteIndex = posOffsetC / 8 + 2 * posOffsetR
+    const displayIndex = ' index:' + (spriteIndex < 10 ? '00' + spriteIndex : spriteIndex < 100 ? '0' + spriteIndex : '' + spriteIndex)
+    const positionBox = flexBox(fontWidth * displayIndex.length, fontHeight)
     positionBox.funX = 'align-right'
     positionBox.fromX = sheetBox
     positionBox.funY = 'above'
     positionBox.fromY = sheetBox
     flexSolve(0, 0, positionBox)
-    drawText(client.bufferGUI, positionBox.x, positionBox.y, displayIndex, fontScale, lightgreyf(0), lightgreyf(1), lightgreyf(2), 1.0)
+    drawTextFont(client.bufferGUI, positionBox.x, positionBox.y, displayIndex, fontScale, silverf(0), silverf(1), silverf(2), 1.0, font)
 
-    // left top bar text
+    //  status text
 
-    y = canvasHeight - topBarHeight // Math.floor(0.5 * (topBarHeight + fontHeight))
+    renderStatus(client, width, height, font, fontWidth, fontScale, topBarHeight, paint)
 
-    const leftTopBar = 'PAINT'
-    drawText(client.bufferGUI, fontWidth, y, leftTopBar, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
-
-    // bottom bar text
-
-    y = 0
-
-    const leftStatusBar = paint.leftStatusBar()
-    if (leftStatusBar) drawText(client.bufferGUI, fontWidth, y, leftStatusBar, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
-
-    const rightStatusBar = paint.rightStatusBar()
-    if (rightStatusBar)
-      drawText(client.bufferGUI, canvasWidth - (rightStatusBar.length + 1) * fontWidth, y, rightStatusBar, fontScale, darkpurplef(0), darkpurplef(1), darkpurplef(2), 1.0)
-
-    rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+    rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
     rendering.updateAndDraw(client.bufferGUI)
 
-    // dialog box
+    // dialog box or text box
 
-    if (paint.dialog != null) renderDialogBox(this, scale, paint.dialog)
+    if (paint.dialog !== null) renderDialogBox(this, scale, font, paint.dialog)
+    else if (paint.activeTextBox) {
+      const box = paint.textBox
+      renderTextBox(this, scale, font, box, 200, 200)
+
+      client.bufferGUI.zero()
+      drawTextFontSpecial(client.bufferGUI, 200, 500, box.text, fontScale, white0f, white1f, white2f, font)
+      rendering.updateAndDraw(client.bufferGUI)
+    }
   }
 }

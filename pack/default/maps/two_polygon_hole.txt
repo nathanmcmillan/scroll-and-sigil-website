@@ -1,0 +1,38 @@
+map untitled
+vectors
+43.3000 63.6000
+95.3000 63.6000
+55.3000 57.6000
+82.5000 57.6000
+63.3000 50.4000
+76.5000 50.4000
+50.9000 48.4000
+88.1000 47.2000
+69.3000 43.2000
+60.5000 26.4000
+80.5000 26.4000
+43.3000 20.8000
+94.5000 20.8000
+end vectors
+lines
+6 4 none none none 0 0 0
+4 8 none none none 0 0 0
+8 5 none none none 0 0 0
+5 7 none none none 0 0 0
+7 10 none none none 0 0 0
+10 9 none none none 0 0 0
+9 6 none none none 0 0 0
+6 2 none none none 0 0 0
+2 3 none none none 0 0 0
+3 7 none none none 0 0 0
+1 12 none none none 0 0 0
+12 11 none none none 0 0 0
+11 0 none none none 0 0 0
+0 1 none none none 0 0 0
+end lines
+sectors
+0 0 0 0 none none 7 6 4 8 5 7 10 9 7 0 1 2 3 4 5 6
+0 0 0 0 none none 7 6 2 3 7 5 8 4 7 7 8 9 3 2 1 0
+0 0 0 0 none none 4 11 0 1 12 4 12 13 10 11
+end sectors
+end map

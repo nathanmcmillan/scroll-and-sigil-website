@@ -1,8 +1,7 @@
-import {identity, multiply} from '../math/matrix.js'
-import {orthographic} from '../math/matrix.js'
-import {drawRectangle} from '../render/render.js'
-import {whitef, blackf} from '../editor/palette.js'
+import { blackf, whitef } from '../editor/palette.js'
 import * as In from '../input/input.js'
+import { identity, multiply, orthographic } from '../math/matrix.js'
+import { drawRectangle } from '../render/render.js'
 
 class TouchButton {
   constructor(input) {
@@ -53,17 +52,17 @@ export class TouchRender {
 }
 
 export function touchRenderEvent(touch, event) {
-  let x = event.pageX
-  let y = event.pageY
-  for (let button of touch.buttons) if (button.touched(x, y)) return button.input
+  const x = event.pageX
+  const y = event.pageY
+  for (const button of touch.buttons) if (button.touched(x, y)) return button.input
   return null
 }
 
 export function touchRenderResize(touch) {
   const client = touch.client
 
-  let width = client.width
-  let height = client.height - client.top
+  const width = client.width
+  const height = client.height - client.top
 
   touch.width = width
   touch.height = height
@@ -73,14 +72,14 @@ export function touchRenderResize(touch) {
   const size = 42
   const scale = client.scale
 
-  let bwidth = size * scale
-  let bheight = size * scale
+  const bwidth = size * scale
+  const bheight = size * scale
 
-  let xcenter = Math.floor(0.5 * width)
-  let ycenter = Math.floor(0.5 * height)
+  const xcenter = Math.floor(0.5 * width)
+  const ycenter = Math.floor(0.5 * height)
 
-  let xquarter = Math.floor(0.25 * width)
-  let yquarter = Math.floor(0.25 * height)
+  const xquarter = Math.floor(0.25 * width)
+  const yquarter = Math.floor(0.25 * height)
 
   touch.start.set(xcenter - 2 * bwidth - 10, yquarter, 2 * bwidth, bheight)
   touch.select.set(xcenter + 10, yquarter, 2 * bwidth, bheight)
@@ -108,7 +107,7 @@ export function renderTouch(touch) {
   const width = touch.width
   const height = touch.height
 
-  rendering.setProgram(0)
+  rendering.setProgram('color2d')
   rendering.setView(0, 0, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
@@ -124,7 +123,7 @@ export function renderTouch(touch) {
 
   client.bufferColor.zero()
 
-  for (let button of touch.buttons) {
+  for (const button of touch.buttons) {
     drawRectangle(client.bufferColor, button.x, button.y, button.width, button.height, whitef(0), whitef(1), whitef(2), 1.0)
   }
 

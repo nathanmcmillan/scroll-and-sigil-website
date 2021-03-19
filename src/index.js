@@ -1,4 +1,4 @@
-import {Client} from './client/client.js'
+import { Client } from './client/client.js'
 
 function newCanvas(width, height) {
   let canvas = document.getElementById('canvas')
@@ -28,7 +28,7 @@ let ongoingTouches = []
 function touchIndexById(identifier) {
   const touches = ongoingTouches
   for (let i = 0; i < touches.length; i++) {
-    if (touches[i].identifier == identifier) return i
+    if (touches[i].identifier === identifier) return i
   }
   return -1
 }
@@ -61,7 +61,7 @@ function tick(timestamp) {
 
 async function main() {
   let canvas = newCanvas(window.innerWidth, window.innerHeight)
-  let gl = canvas.getContext('webgl2')
+  let gl = canvas.getContext('webgl2', { antialias: false })
 
   client = new Client(canvas, gl)
 
@@ -100,7 +100,7 @@ async function main() {
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
-        let content = {identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY}
+        let content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
         ongoingTouches.push(content)
         client.touchStart(content)
       }
@@ -111,7 +111,7 @@ async function main() {
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
         let touch = touches[i]
-        let content = {identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY}
+        let content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
         client.touchMove(content)
       }
     }

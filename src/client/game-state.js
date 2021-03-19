@@ -1,12 +1,12 @@
-import {Game} from '../game/game.js'
-import {drawDecal} from '../client/render-sector.js'
-import {renderLoadingInProgress} from '../client/render-loading.js'
-import {renderTouch} from '../client/render-touch.js'
-import {drawRectangle, drawSprite, drawText, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
-import {identity, multiply, rotateX, rotateY, translate, multiplyVector3} from '../math/matrix.js'
-import {textureByName, textureByIndex} from '../assets/assets.js'
-import {speech} from '../sound/speech.js'
-import {animal} from '../sound/animal.js'
+import { textureByIndex, textureByName } from '../assets/assets.js'
+import { renderLoadingInProgress } from '../client/render-loading.js'
+import { drawDecal } from '../client/render-sector.js'
+import { renderTouch } from '../client/render-touch.js'
+import { Game } from '../game/game.js'
+import { identity, multiply, multiplyVector3, rotateX, rotateY, translate } from '../math/matrix.js'
+import { TIC_FONT_HEIGHT, TIC_FONT_WIDTH, drawRectangle, drawSprite, drawText } from '../render/render.js'
+import { animal } from '../sound/animal.js'
+import { speech } from '../sound/speech.js'
 
 function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
   drawText(b, x + scale, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
@@ -26,16 +26,16 @@ export class GameState {
     this.projection = new Float32Array(16)
 
     if (true) {
-      let text = 'scrol and sigil'
-      let base = 60
-      let speed = 1.5
+      const text = 'scrol and sigil'
+      const base = 60
+      const speed = 1.5
       speech(text, base, speed)
     }
 
     if (false) {
-      let text = 'scroll and sigil'
-      let pitch = 1.0
-      let shorten = false
+      const text = 'scroll and sigil'
+      const pitch = 1.0
+      const shorten = false
       animal(text, pitch, shorten)
     }
   }
@@ -69,12 +69,12 @@ export class GameState {
   }
 
   handle(event) {
-    let trigger = event[0]
-    let params = event[1]
+    const trigger = event[0]
+    const params = event[1]
     switch (trigger) {
       case 'hero-goto-map':
         this.loading = true
-        this.load('/pack/' + this.client.pack + '/maps/' + params + '.map')
+        this.load('./pack/' + this.client.pack + '/maps/' + params + '.txt')
         return
     }
   }
@@ -105,8 +105,8 @@ export class GameState {
     const world = game.world
     const camera = game.camera
 
-    const fontWidth = scale * FONT_WIDTH
-    const fontHeight = scale * FONT_HEIGHT
+    const fontWidth = scale * TIC_FONT_WIDTH
+    const fontHeight = scale * TIC_FONT_HEIGHT
 
     const pad = 10.0
 
@@ -114,7 +114,7 @@ export class GameState {
 
     // sky box
 
-    rendering.setProgram(2)
+    rendering.setProgram('texture3d-rgb')
     rendering.setView(0, client.top, width, height)
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -129,7 +129,7 @@ export class GameState {
     multiply(projection, client.perspective, view)
     rendering.updateUniformMatrix('u_mvp', projection)
 
-    let sky = textureByName('sky-box-1')
+    const sky = textureByName('sky-box-1')
     rendering.bindTexture(gl.TEXTURE0, sky.texture)
     rendering.bindAndDraw(client.bufferSky)
 
@@ -145,43 +145,41 @@ export class GameState {
     multiply(projection, client.perspective, view)
     rendering.updateUniformMatrix('u_mvp', projection)
 
-    let projection3d = projection.slice()
+    const projection3d = projection.slice()
 
     for (const [index, buffer] of client.sectorBuffers) {
       rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
       rendering.bindAndDraw(buffer)
     }
 
-    let buffers = client.spriteBuffers
-    for (const buffer of buffers.values()) {
-      buffer.zero()
-    }
+    const buffers = client.spriteBuffers
+    for (const buffer of buffers.values()) buffer.zero()
 
-    let sine = Math.sin(-camera.ry)
-    let cosine = Math.cos(-camera.ry)
+    const sine = Math.sin(-camera.ry)
+    const cosine = Math.cos(-camera.ry)
 
-    let things = world.things
+    const things = world.things
     let t = world.thingCount
     while (t--) {
-      let thing = things[t]
-      let buffer = client.getSpriteBuffer(thing.texture)
-      drawSprite(buffer, thing.x, thing.y, thing.z, thing.sprite, sine, cosine)
+      const thing = things[t]
+      const buffer = client.getSpriteBuffer(thing.stamp.texture)
+      drawSprite(buffer, thing.x, thing.y, thing.z, thing.stamp.sprite, sine, cosine)
     }
 
-    let missiles = world.missiles
+    const missiles = world.missiles
     let m = world.missileCount
     while (m--) {
-      let missile = missiles[m]
-      let buffer = client.getSpriteBuffer(missile.texture)
-      drawSprite(buffer, missile.x, missile.y, missile.z, missile.sprite, sine, cosine)
+      const missile = missiles[m]
+      const buffer = client.getSpriteBuffer(missile.stamp.texture)
+      drawSprite(buffer, missile.x, missile.y, missile.z, missile.stamp.sprite, sine, cosine)
     }
 
-    let particles = world.particles
+    const particles = world.particles
     let p = world.particleCount
     while (p--) {
-      let particle = particles[p]
-      let buffer = client.getSpriteBuffer(particle.texture)
-      drawSprite(buffer, particle.x, particle.y, particle.z, particle.sprite, sine, cosine)
+      const particle = particles[p]
+      const buffer = client.getSpriteBuffer(particle.stamp.texture)
+      drawSprite(buffer, particle.x, particle.y, particle.z, particle.stamp.sprite, sine, cosine)
     }
 
     for (const [index, buffer] of buffers) {
@@ -190,7 +188,7 @@ export class GameState {
       rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
     }
 
-    let decals = world.decals
+    const decals = world.decals
     let d = decals.length
     if (d > 0) {
       for (const buffer of buffers.values()) {
@@ -202,8 +200,8 @@ export class GameState {
       gl.polygonOffset(-1, -1)
 
       while (d--) {
-        let decal = decals[d]
-        let buffer = client.getSpriteBuffer(decal.texture)
+        const decal = decals[d]
+        const buffer = client.getSpriteBuffer(decal.texture)
         drawDecal(buffer, decal)
       }
 
@@ -217,7 +215,7 @@ export class GameState {
       gl.disable(gl.POLYGON_OFFSET_FILL)
     }
 
-    rendering.setProgram(1)
+    rendering.setProgram('texture2d-font')
     rendering.setView(0, client.top, width, height)
 
     gl.disable(gl.CULL_FACE)
@@ -235,7 +233,7 @@ export class GameState {
 
     if (game.cinema) {
       const black = 60.0
-      rendering.setProgram(0)
+      rendering.setProgram('color2d')
       rendering.setView(0, client.top, width, height)
       rendering.updateUniformMatrix('u_mvp', projection)
       client.bufferColor.zero()
@@ -243,8 +241,8 @@ export class GameState {
       drawRectangle(client.bufferColor, 0.0, height - black, width, black, 0.0, 0.0, 0.0, 1.0)
       rendering.updateAndDraw(client.bufferColor)
     } else if (hero.menu) {
-      let menu = hero.menu
-      let page = menu.page
+      const menu = hero.menu
+      const page = menu.page
       if (page === 'inventory') {
         let x = Math.floor(0.5 * width)
         let text = 'Outfit'
@@ -287,8 +285,8 @@ export class GameState {
       }
     } else {
       if (hero.interaction) {
-        let interaction = hero.interaction
-        let interactionWith = hero.interactionWith
+        const interaction = hero.interaction
+        const interactionWith = hero.interactionWith
         drawTextSpecial(client.bufferGUI, pad, height - pad - fontHeight, interactionWith.name, scale, 1.0, 0.0, 0.0)
         let y = Math.floor(0.5 * height)
         for (const option of interaction.keys()) {
@@ -297,10 +295,10 @@ export class GameState {
         }
       } else {
         if (hero.nearby) {
-          let thing = hero.nearby
-          let text = thing.isItem ? 'COLLECT' : 'SPEAK'
-          let vec = [thing.x, thing.y + thing.height, thing.z]
-          let position = []
+          const thing = hero.nearby
+          const text = thing.isItem ? 'COLLECT' : 'SPEAK'
+          const vec = [thing.x, thing.y + thing.height, thing.z]
+          const position = []
           multiplyVector3(position, projection3d, vec)
           position[0] /= position[2]
           position[1] /= position[2]
@@ -313,7 +311,7 @@ export class GameState {
         if (hero.combat) {
           let text = ''
           for (let i = 0; i < hero.health; i++) text += 'x'
-          let x = pad
+          const x = pad
           let y = pad
           drawTextSpecial(client.bufferGUI, x, y, text, scale, 1.0, 0.0, 0.0)
           text = ''

@@ -1,9 +1,8 @@
-import {thingSetup, thingIntegrate, thingUpdateSprite, thingUpdateAnimation, thingPushToCells, thingRemoveFromCells, thingFindSector, Thing} from '../thing/thing.js'
-import {playSound} from '../assets/sounds.js'
-import {textureIndexForName} from '../assets/assets.js'
-import {redBloodTowards, redBloodExplode} from '../thing/thing-util.js'
-import {WORLD_CELL_SHIFT} from '../world/world.js'
-import {sin, cos} from '../math/approximate.js'
+import { playSound } from '../assets/sounds.js'
+import { cos, sin } from '../math/approximate.js'
+import { redBloodExplode, redBloodTowards } from '../thing/thing-util.js'
+import { Thing, thingFindSector, thingIntegrate, thingPushToCells, thingRemoveFromCells, thingSetup, thingUpdateAnimation, thingUpdateSprite } from '../thing/thing.js'
+import { WORLD_CELL_SHIFT } from '../world/world.js'
 
 const STATUS_STAND = 0
 const STATUS_DEAD = 1
@@ -20,12 +19,11 @@ export class NonPlayerCharacter extends Thing {
     this.height = entity.height()
     this.name = entity.name()
     this.group = entity.group()
-    this.texture = textureIndexForName(entity.get('sprite'))
-    this.animations = entity.animations()
-    this.animation = this.animations.get('idle')
     this.health = entity.health()
     this.speed = entity.speed()
-    this.sprite = this.animation[0]
+    this.animations = entity.stamps()
+    this.animation = this.animations.get('idle')
+    this.stamp = this.animation[0]
     this.target = null
     this.moveCount = 0
     this.status = STATUS_STAND
@@ -38,7 +36,7 @@ export class NonPlayerCharacter extends Thing {
 }
 
 function npcDead(self) {
-  if (self.animationFrame == self.animation.length - 1) {
+  if (self.animationFrame === self.animation.length - 1) {
     self.isPhysical = false
     self.status = STATUS_FINAL
     return
@@ -76,9 +74,15 @@ function npcUpdate() {
   return false
 }
 
-function thingTryOverlap(x, z, box, thing) {
+function thingTryOverlap(self, x, z, box, thing) {
   box += thing.box
-  return Math.abs(x - thing.x) <= box && Math.abs(z - thing.z) <= box
+  const overlap = Math.abs(x - thing.x) <= box && Math.abs(z - thing.z) <= box
+  if (overlap) {
+    const previous = Math.abs(self.x - thing.x) <= box && Math.abs(self.z - thing.z) <= box
+    if (previous) return self.uid < thing.uid
+    return true
+  }
+  return false
 }
 
 function thingTryLineOverlap(self, x, z, line) {
@@ -98,21 +102,21 @@ function thingTryLineOverlap(self, x, z, line) {
       if (line.minus.ceiling < tempCeiling) tempCeiling = line.minus.ceiling
     }
     const step = 1.0
-    let min = self.y + step
-    let max = self.y + self.height
+    const min = self.y + step
+    const max = self.y + self.height
     if (line.plus && min > line.plus.floor && max < line.plus.ceiling) return false
     if (line.minus && min > line.minus.floor && max < line.minus.ceiling) return false
   }
-  let box = self.box
-  let vx = line.b.x - line.a.x
-  let vz = line.b.y - line.a.y
-  let wx = x - line.a.x
-  let wz = z - line.a.y
+  const box = self.box
+  const vx = line.b.x - line.a.x
+  const vz = line.b.y - line.a.y
+  const wx = x - line.a.x
+  const wz = z - line.a.y
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   if (t < 0.0) t = 0.0
   else if (t > 1.0) t = 1.0
-  let px = line.a.x + vx * t - x
-  let pz = line.a.y + vz * t - z
+  const px = line.a.x + vx * t - x
+  const pz = line.a.y + vz * t - z
   return px * px + pz * pz <= box * box
 }
 
@@ -120,22 +124,22 @@ function thingTryMove(self, x, z) {
   tempSector = null
   tempFloor = -Number.MAX_VALUE
   tempCeiling = Number.MAX_VALUE
-  let box = self.box
-  let minC = Math.floor(x - box) >> WORLD_CELL_SHIFT
-  let maxC = Math.floor(x + box) >> WORLD_CELL_SHIFT
-  let minR = Math.floor(z - box) >> WORLD_CELL_SHIFT
-  let maxR = Math.floor(z + box) >> WORLD_CELL_SHIFT
-  let world = self.world
-  let columns = world.columns
+  const box = self.box
+  const minC = Math.floor(x - box) >> WORLD_CELL_SHIFT
+  const maxC = Math.floor(x + box) >> WORLD_CELL_SHIFT
+  const minR = Math.floor(z - box) >> WORLD_CELL_SHIFT
+  const maxR = Math.floor(z + box) >> WORLD_CELL_SHIFT
+  const world = self.world
+  const columns = world.columns
   if (minC < 0 || minR < 0 || maxC >= columns || maxR >= world.rows) return false
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      let cell = world.cells[c + r * columns]
+      const cell = world.cells[c + r * columns]
       let i = cell.thingCount
       while (i--) {
-        let thing = cell.things[i]
+        const thing = cell.things[i]
         if (self === thing) continue
-        if (thingTryOverlap(x, z, box, thing)) return false
+        if (thingTryOverlap(self, x, z, box, thing)) return false
       }
       i = cell.lines.length
       while (i--) {
@@ -147,8 +151,8 @@ function thingTryMove(self, x, z) {
 }
 
 export function thingMove(self) {
-  let x = self.x + cos(self.rotation) * self.speed
-  let z = self.z + sin(self.rotation) * self.speed
+  const x = self.x + cos(self.rotation) * self.speed
+  const z = self.z + sin(self.rotation) * self.speed
   if (thingTryMove(self, x, z)) {
     thingRemoveFromCells(self)
     self.previousX = self.x

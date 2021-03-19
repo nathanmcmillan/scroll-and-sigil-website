@@ -1,25 +1,23 @@
-import {ANIMATION_DONE} from '../world/world.js'
-import {textureIndexForName} from '../assets/assets.js'
-import {particleSetup, particleUpdateAnimation} from '../particle/particle.js'
+import { particleSetup, particleUpdateAnimation } from '../particle/particle.js'
+import { ANIMATION_DONE, worldNewParticle } from '../world/world.js'
 
 function plasmaExplosionUpdate() {
   if (particleUpdateAnimation(this) === ANIMATION_DONE) return true
-  this.sprite = this.animation[this.animationFrame]
+  this.stamp = this.animation[this.animationFrame]
   return false
 }
 
-function plasmaExplosionInit(self, entity) {
-  self.update = plasmaExplosionUpdate
-  self.texture = textureIndexForName(entity.get('sprite'))
-  self.animation = entity.animations()
-  self.sprite = self.animation[0]
-  self.animationMod = 0
-  self.animationFrame = 0
-  particleSetup(self)
+function plasmaExplosionInit(particle, entity) {
+  particle.update = plasmaExplosionUpdate
+  particle.animation = entity.stamps()
+  particle.stamp = particle.animation[0]
+  particle.animationMod = 0
+  particle.animationFrame = 0
+  particleSetup(particle)
 }
 
 export function newPlasmaExplosion(world, entity, x, y, z) {
-  let particle = world.newParticle(x, y, z)
+  const particle = worldNewParticle(world, x, y, z)
   plasmaExplosionInit(particle, entity)
   return particle
 }

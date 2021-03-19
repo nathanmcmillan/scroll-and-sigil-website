@@ -1,4 +1,5 @@
-import {WORLD_CELL_SHIFT, ANIMATION_RATE, ANIMATION_NOT_DONE, ANIMATION_ALMOST_DONE, ANIMATION_DONE} from '../world/world.js'
+import { cellPushParticle, cellRemoveParticle } from '../world/cell.js'
+import { ANIMATION_ALMOST_DONE, ANIMATION_DONE, ANIMATION_NOT_DONE, ANIMATION_RATE, worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'
 
 export class Particle {
   constructor() {
@@ -14,7 +15,7 @@ export class Particle {
     this.height = 0.0
     this.ground = false
     this.texture = 0
-    this.sprite = null
+    this.stamp = null
     this.minC = 0
     this.maxC = 0
     this.minR = 0
@@ -36,14 +37,14 @@ export function particleSetup(self) {
 }
 
 export function particlePushToCells(self) {
-  let box = self.box
+  const box = self.box
   let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
   let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
   let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
   let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
 
-  let world = self.world
-  let columns = world.columns
+  const world = self.world
+  const columns = world.columns
 
   if (minC < 0) minC = 0
   if (minR < 0) minR = 0
@@ -52,7 +53,7 @@ export function particlePushToCells(self) {
 
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      world.cells[c + r * columns].pushParticle(this)
+      cellPushParticle(world.cells[c + r * columns], self)
     }
   }
 
@@ -63,16 +64,16 @@ export function particlePushToCells(self) {
 }
 
 export function particleRemoveFromCells(self) {
-  let world = self.world
+  const world = self.world
   for (let r = self.minR; r <= self.maxR; r++) {
     for (let c = self.minC; c <= self.maxC; c++) {
-      world.cells[c + r * world.columns].removeParticle(this)
+      cellRemoveParticle(world.cells[c + r * world.columns], self)
     }
   }
 }
 
 export function particleUpdateSector(self) {
-  self.sector = self.world.findSector(self.x, self.z)
+  self.sector = worldFindSector(self.world, self.x, self.z)
   return self.sector === null
 }
 
@@ -81,7 +82,7 @@ export function particleUpdateAnimation(self) {
   if (self.animationMod === ANIMATION_RATE) {
     self.animationMod = 0
     self.animationFrame++
-    let frames = self.animation.length
+    const frames = self.animation.length
     if (self.animationFrame === frames - 1) return ANIMATION_ALMOST_DONE
     else if (self.animationFrame === frames) return ANIMATION_DONE
   }

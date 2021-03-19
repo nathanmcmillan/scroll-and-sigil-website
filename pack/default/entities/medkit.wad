@@ -1,5 +1,5 @@
-sprite: item
-animation: medkit
+class: item
+sprite: items|medkit
 box: 0.25
 height: 2.0
 name: 'Medical Supplies'

@@ -2,23 +2,23 @@ export class Renderer {
   constructor(gl) {
     this.gl = gl
     this.program = null
-    this.programs = []
+    this.programs = new Map()
   }
 
-  insertProgram(index, program) {
-    this.programs[index] = program
+  insertProgram(id, program) {
+    this.programs.set(id, program)
   }
 
-  setProgram(index) {
-    this.program = this.programs[index]
+  setProgram(id) {
+    this.program = this.programs.get(id)
     this.gl.useProgram(this.program)
   }
 
   bindAttributes(b) {
-    let gl = this.gl
+    const gl = this.gl
     let index = 0
     let offset = 0
-    let stride = 4 * (b.position + b.color + b.texture + b.normal)
+    const stride = 4 * (b.position + b.color + b.texture + b.normal)
     if (b.position > 0) {
       gl.vertexAttribPointer(index, b.position, gl.FLOAT, false, stride, 0)
       gl.enableVertexAttribArray(index)
@@ -47,7 +47,7 @@ export class Renderer {
   }
 
   makeVAO(b) {
-    let gl = this.gl
+    const gl = this.gl
     b.vbo = gl.createBuffer()
     b.ebo = gl.createBuffer()
     b.vao = gl.createVertexArray()
@@ -63,7 +63,7 @@ export class Renderer {
   }
 
   updateUniformMatrix(name, matrix) {
-    let location = this.gl.getUniformLocation(this.program, name)
+    const location = this.gl.getUniformLocation(this.program, name)
     this.gl.uniformMatrix4fv(location, false, matrix)
   }
 
@@ -73,7 +73,7 @@ export class Renderer {
   }
 
   updateVAO(b, hint) {
-    let gl = this.gl
+    const gl = this.gl
     gl.bindVertexArray(b.vao)
     gl.bindBuffer(gl.ARRAY_BUFFER, b.vbo)
     gl.bufferData(gl.ARRAY_BUFFER, b.vertices, hint)
@@ -82,17 +82,17 @@ export class Renderer {
   }
 
   bindAndDraw(b) {
-    let count = b.indexPosition
+    const count = b.indexPosition
     if (count === 0) return
-    let gl = this.gl
+    const gl = this.gl
     gl.bindVertexArray(b.vao)
     gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, 0)
   }
 
   updateAndDraw(b) {
-    let count = b.indexPosition
+    const count = b.indexPosition
     if (count === 0) return
-    let gl = this.gl
+    const gl = this.gl
     this.updateVAO(b, gl.DYNAMIC_DRAW)
     gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, 0)
   }

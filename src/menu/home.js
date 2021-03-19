@@ -1,7 +1,7 @@
-import {flexText, flexSolve} from '../gui/flex.js'
-import {FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
-import {playSound} from '../assets/sounds.js'
-import {calcFontScale, calcFontPad} from '../editor/editor-util.js'
+import { playSound } from '../assets/sounds.js'
+import { calcFontPad, calcFontScale } from '../editor/editor-util.js'
+import { flexSolve, flexText } from '../gui/flex.js'
+import { TIC_FONT_HEIGHT, TIC_FONT_WIDTH } from '../render/render.js'
 
 const INPUT_RATE = 128
 
@@ -52,12 +52,12 @@ export class Home {
     const height = this.height
 
     const fontScale = calcFontScale(this.scale)
-    const fontWidth = fontScale * FONT_WIDTH
-    const fontHeight = fontScale * FONT_HEIGHT
+    const fontWidth = fontScale * TIC_FONT_WIDTH
+    const fontHeight = fontScale * TIC_FONT_HEIGHT
     const fontPad = calcFontPad(fontHeight)
 
     let text = 'Scroll and Sigil'
-    let titleBox = flexText(text, 2 * fontWidth * text.length, 2 * fontHeight)
+    const titleBox = flexText(text, 2 * fontWidth * text.length, 2 * fontHeight)
     titleBox.funX = '%'
     titleBox.argX = 15
     titleBox.funY = '%'
@@ -65,7 +65,7 @@ export class Home {
     this.titleBox = titleBox
 
     text = 'continue'
-    let continueGameBox = flexText(text, fontWidth * text.length, fontHeight)
+    const continueGameBox = flexText(text, fontWidth * text.length, fontHeight)
     continueGameBox.bottomSpace = fontPad
     continueGameBox.funX = '%'
     continueGameBox.argX = 15
@@ -74,7 +74,7 @@ export class Home {
     this.continueGameBox = continueGameBox
 
     text = 'new game'
-    let newGameBox = flexText(text, fontWidth * text.length, fontHeight)
+    const newGameBox = flexText(text, fontWidth * text.length, fontHeight)
     newGameBox.bottomSpace = fontPad
     newGameBox.funX = 'align-left'
     newGameBox.fromX = continueGameBox
@@ -83,7 +83,7 @@ export class Home {
     this.newGameBox = newGameBox
 
     text = 'editor'
-    let editorBox = flexText(text, fontWidth * text.length, fontHeight)
+    const editorBox = flexText(text, fontWidth * text.length, fontHeight)
     editorBox.bottomSpace = fontPad
     editorBox.funX = 'align-left'
     editorBox.fromX = newGameBox
@@ -92,7 +92,7 @@ export class Home {
     this.editorBox = editorBox
 
     text = 'options'
-    let optionsBox = flexText(text, fontWidth * text.length, fontHeight)
+    const optionsBox = flexText(text, fontWidth * text.length, fontHeight)
     optionsBox.bottomSpace = fontPad
     optionsBox.funX = 'align-left'
     optionsBox.fromX = editorBox
@@ -101,7 +101,7 @@ export class Home {
     this.optionsBox = optionsBox
 
     text = 'credits'
-    let creditsBox = flexText(text, fontWidth * text.length, fontHeight)
+    const creditsBox = flexText(text, fontWidth * text.length, fontHeight)
     creditsBox.bottomSpace = fontPad
     creditsBox.funX = 'align-left'
     creditsBox.fromX = optionsBox

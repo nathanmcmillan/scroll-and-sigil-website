@@ -1,12 +1,12 @@
-import {thingSetup, thingY, thingApproximateDistance, thingCheckSight, thingSetAnimation, thingUpdateSprite, thingUpdateAnimation, Thing} from '../thing/thing.js'
-import {thingMove} from '../thing/npc.js'
-import {randomInt} from '../math/random.js'
-import {ANIMATION_DONE} from '../world/world.js'
-import {newPlasma} from '../missile/plasma.js'
-import {playSound} from '../assets/sounds.js'
-import {textureIndexForName, entityByName} from '../assets/assets.js'
-import {redBloodTowards, redBloodExplode} from '../thing/thing-util.js'
-import {sin, cos, atan2} from '../math/approximate.js'
+import { entityByName } from '../assets/assets.js'
+import { playSound } from '../assets/sounds.js'
+import { atan2, cos, sin } from '../math/approximate.js'
+import { randomInt } from '../math/random.js'
+import { newPlasma } from '../missile/plasma.js'
+import { thingMove } from '../thing/npc.js'
+import { redBloodExplode, redBloodTowards } from '../thing/thing-util.js'
+import { Thing, thingApproximateDistance, thingCheckSight, thingSetAnimation, thingSetup, thingUpdateAnimation, thingUpdateSprite, thingY } from '../thing/thing.js'
+import { ANIMATION_DONE } from '../world/world.js'
 
 const STATUS_LOOK = 0
 const STATUS_CHASE = 1
@@ -21,13 +21,12 @@ export class Monster extends Thing {
     this.height = entity.height()
     this.name = entity.name()
     this.group = entity.group()
-    this.texture = textureIndexForName(entity.get('sprite'))
-    this.animations = entity.animations()
-    this.animation = this.animations.get('idle')
     this.health = entity.health()
     this.speed = entity.speed()
     this.sight = entity.sight()
-    this.sprite = this.animation[0]
+    this.animations = entity.stamps()
+    this.animation = this.animations.get('idle')
+    this.stamp = this.animation[0]
     this.target = null
     this.moveCount = 0
     this.status = STATUS_LOOK
@@ -73,10 +72,10 @@ function monsterLook(self) {
   if (self.reaction > 0) {
     self.reaction--
   } else {
-    let things = self.world.things
+    const things = self.world.things
     let i = self.world.thingCount
     while (i--) {
-      let thing = things[i]
+      const thing = things[i]
       if (self === thing) continue
       if (thing.group === 'human' && thing.health > 0) {
         if (thingApproximateDistance(self, thing) <= self.sight) {
@@ -97,37 +96,37 @@ function monsterLook(self) {
 }
 
 function monsterAttack(self) {
-  let anime = thingUpdateAnimation(self)
-  let attack = self.attack
+  const anime = thingUpdateAnimation(self)
+  const attack = self.attack
   if (self.animationMod === 0) {
-    let frame = self.animationFrame
-    let soundOnFrame = parseInt(attack.get('sound-on-frame'))
-    let damageOnFrame = parseInt(attack.get('damage-on-frame'))
+    const frame = self.animationFrame
+    const soundOnFrame = parseInt(attack.get('sound-on-frame'))
+    const damageOnFrame = parseInt(attack.get('damage-on-frame'))
     if (soundOnFrame && frame === soundOnFrame) playSound(attack.get('sound'))
     if (frame === damageOnFrame) {
-      let target = self.target
-      let type = attack.get('type')
+      const target = self.target
+      const type = attack.get('type')
       if (type === 'instant') {
-        let distance = thingApproximateDistance(self, target) - self.box - target.box
-        let range = parseFloat(attack.get('range'))
+        const distance = thingApproximateDistance(self, target) - self.box - target.box
+        const range = parseFloat(attack.get('range'))
         if (distance < range) {
-          let damage = attack.get('damage')
-          let amount = parseInt(damage[0]) + randomInt(parseInt(damage[1]))
+          const damage = attack.get('damage')
+          const amount = parseInt(damage[0]) + randomInt(parseInt(damage[1]))
           target.damage(self, amount)
         }
       } else if (type === 'projectile') {
         const speed = 0.3
-        let projectile = attack.get('projectile')
-        let angle = atan2(target.z - self.z, target.x - self.x)
-        let distance = thingApproximateDistance(self, target)
-        let dx = cos(angle)
-        let dz = sin(angle)
-        let dy = (target.y + target.height * 0.5 - self.y - self.height * 0.5) / (distance / speed)
-        let x = self.x + dx * (self.box + 2.0)
-        let z = self.z + dz * (self.box + 2.0)
-        let y = self.y + 0.5 * self.height
-        let damage = attack.get('damage')
-        let amount = parseInt(damage[0]) + randomInt(parseInt(damage[1]))
+        const projectile = attack.get('projectile')
+        const angle = atan2(target.z - self.z, target.x - self.x)
+        const distance = thingApproximateDistance(self, target)
+        const dx = cos(angle)
+        const dz = sin(angle)
+        const dy = (target.y + target.height * 0.5 - self.y - self.height * 0.5) / (distance / speed)
+        const x = self.x + dx * (self.box + 2.0)
+        const z = self.z + dz * (self.box + 2.0)
+        const y = self.y + 0.5 * self.height
+        const damage = attack.get('damage')
+        const amount = parseInt(damage[0]) + randomInt(parseInt(damage[1]))
         newPlasma(self.world, entityByName(projectile), x, y, z, dx * speed, dy, dz * speed, amount)
       }
     }
@@ -148,11 +147,11 @@ function monsterChase(self) {
     thingSetAnimation(self, 'idle')
   } else {
     if (self.reaction <= 0) {
-      let distance = thingApproximateDistance(self, self.target) - self.box - self.target.box
+      const distance = thingApproximateDistance(self, self.target) - self.box - self.target.box
       for (const attack of self.attackOptions) {
-        let range = parseFloat(attack.get('range'))
+        const range = parseFloat(attack.get('range'))
         if (distance < range) {
-          let reaction = attack.get('reaction')
+          const reaction = attack.get('reaction')
           if (attack.get('type') === 'instant' || thingCheckSight(self, self.target)) {
             self.attack = attack
             self.reaction = parseInt(reaction[0]) + randomInt(parseInt(reaction[1]))

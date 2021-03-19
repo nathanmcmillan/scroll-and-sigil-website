@@ -1,4 +1,19 @@
-import {spritesByName} from '../assets/assets.js'
+import { spritesByName, textureIndexForName } from '../assets/assets.js'
+
+export function spriteInfo(value) {
+  return value.split('|')
+}
+
+export function spriteName(value) {
+  return spriteInfo(value)[0]
+}
+
+export class Stamp {
+  constructor(texture, sprite) {
+    this.texture = texture
+    this.sprite = sprite
+  }
+}
 
 export class Entity {
   constructor(wad) {
@@ -45,29 +60,56 @@ export class Entity {
     return parseInt(this.wad.get('stamina'))
   }
 
-  animations() {
-    let sheet = spritesByName(this.wad.get('sprite'))
-    if (this.wad.has('animation')) {
-      let animation = this.wad.get('animation')
-      if (Array.isArray(animation)) {
-        let list = []
-        for (const sprite of animation) {
-          list.push(sheet.get(sprite))
-        }
-        return list
-      } else {
-        return sheet.get(animation)
+  spriteName() {
+    return spriteName(this.wad.get('sprite'))
+  }
+
+  spriteInfo() {
+    return spriteInfo(this.wad.get('sprite'))
+  }
+
+  stamp() {
+    const info = this.spriteInfo()
+    const sheet = spritesByName(info[0])
+    const texture = textureIndexForName(info[0])
+    const sprite = sheet.get(info[1])
+    return new Stamp(texture, sprite)
+  }
+
+  stamps() {
+    const sprites = this.wad.get('sprites')
+    if (Array.isArray(sprites)) {
+      const list = []
+      for (const item of sprites) {
+        const info = spriteInfo(item)
+        const sheet = spritesByName(info[0])
+        const texture = textureIndexForName(info[0])
+        const sprite = sheet.get(info[1])
+        list.push(new Stamp(texture, sprite))
       }
+      return list
     } else {
-      let map = new Map()
-      for (const [name, animation] of this.wad.get('animations')) {
-        let entry = []
-        for (const sprite of animation) {
-          entry.push(sheet.get(sprite))
+      const map = new Map()
+      for (const [name, value] of sprites) {
+        const entry = []
+        for (const item of value) {
+          const info = spriteInfo(item)
+          const sheet = spritesByName(info[0])
+          const texture = textureIndexForName(info[0])
+          const sprite = sheet.get(info[1])
+          entry.push(new Stamp(texture, sprite))
         }
         map.set(name, entry)
       }
       return map
     }
   }
+}
+
+export function entityWadToTape(wad) {
+  let content = ''
+  for (const [key, value] of wad) {
+    content += `${key} ${value}\n`
+  }
+  return content
 }

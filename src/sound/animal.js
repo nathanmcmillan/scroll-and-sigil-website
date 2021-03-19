@@ -41,15 +41,15 @@ export function animal(text, pitch, shorten, when = 0) {
       if (c >= 'a' && c <= 'z') small += text[i]
       else small += ' '
     }
-    let words = small.split(' ')
+    const words = small.split(' ')
     for (let i = 0; i < words.length; i++) words[i] = short(words[i])
     text = words.join('')
   }
-  let samples = text.length * samplesPerChar
-  let buffer = context.createBuffer(1, samples, SYNTH_ANIMAL_RATE)
-  let data = buffer.getChannelData(0)
+  const samples = text.length * samplesPerChar
+  const buffer = context.createBuffer(1, samples, SYNTH_ANIMAL_RATE)
+  const data = buffer.getChannelData(0)
   algo(data, text, pitch)
-  let source = context.createBufferSource()
+  const source = context.createBufferSource()
   source.buffer = buffer
   source.connect(context.destination)
   source.start(when)

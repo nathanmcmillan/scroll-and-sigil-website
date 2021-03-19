@@ -8,68 +8,68 @@ export class Cell {
     this.particles = []
     this.particleCount = 0
   }
+}
 
-  clear() {
-    this.lines.length = 0
-    this.things.length = 0
-    this.thingCount = 0
-    this.missiles.length = 0
-    this.missileCount = 0
-    this.particles.length = 0
-    this.particleCount = 0
-  }
+export function cellClear(cell) {
+  cell.lines.length = 0
+  cell.things.length = 0
+  cell.thingCount = 0
+  cell.missiles.length = 0
+  cell.missileCount = 0
+  cell.particles.length = 0
+  cell.particleCount = 0
+}
 
-  pushThing(thing) {
-    let things = this.things
-    if (things.length === this.thingCount) {
-      things.push(thing)
-    } else {
-      things[this.thingCount] = thing
-    }
-    this.thingCount++
+export function cellPushThing(cell, thing) {
+  const things = cell.things
+  if (things.length === cell.thingCount) {
+    things.push(thing)
+  } else {
+    things[cell.thingCount] = thing
   }
+  cell.thingCount++
+}
 
-  removeThing(thing) {
-    let things = this.things
-    let index = things.indexOf(thing)
-    this.thingCount--
-    things[index] = things[this.thingCount]
-    things[this.thingCount] = null
-  }
+export function cellRemoveThing(cell, thing) {
+  const things = cell.things
+  const index = things.indexOf(thing)
+  cell.thingCount--
+  things[index] = things[cell.thingCount]
+  things[cell.thingCount] = null
+}
 
-  pushMissile(missile) {
-    let missiles = this.missiles
-    if (missiles.length === this.missileCount) {
-      missiles.push(missile)
-    } else {
-      missiles[this.missileCount] = missile
-    }
-    this.missileCount++
+export function cellPushMissile(cell, missile) {
+  const missiles = cell.missiles
+  if (missiles.length === cell.missileCount) {
+    missiles.push(missile)
+  } else {
+    missiles[cell.missileCount] = missile
   }
+  cell.missileCount++
+}
 
-  removeMissile(missile) {
-    let missiles = this.missiles
-    let index = missiles.indexOf(missile)
-    this.missileCount--
-    missiles[index] = missiles[this.missileCount]
-    missiles[this.missileCount] = null
-  }
+export function cellRemoveMissile(cell, missile) {
+  const missiles = cell.missiles
+  const index = missiles.indexOf(missile)
+  cell.missileCount--
+  missiles[index] = missiles[cell.missileCount]
+  missiles[cell.missileCount] = null
+}
 
-  pushParticle(particle) {
-    let particles = this.particles
-    if (particles.length === this.particleCount) {
-      particles.push(particle)
-    } else {
-      particles[this.particleCount] = particle
-    }
-    this.particleCount++
+export function cellPushParticle(cell, particle) {
+  const particles = cell.particles
+  if (particles.length === cell.particleCount) {
+    particles.push(particle)
+  } else {
+    particles[cell.particleCount] = particle
   }
+  cell.particleCount++
+}
 
-  removeParticle(particle) {
-    let particles = this.particles
-    let index = particles.indexOf(particle)
-    this.particleCount--
-    particles[index] = particles[this.particleCount]
-    particles[this.particleCount] = null
-  }
+export function cellRemoveParticle(cell, particle) {
+  const particles = cell.particles
+  const index = particles.indexOf(particle)
+  cell.particleCount--
+  particles[index] = particles[cell.particleCount]
+  particles[cell.particleCount] = null
 }

@@ -7,23 +7,29 @@ export class Tape {
     this.sounds = []
     this.sprites = []
     this.textures = []
-    this.tiles = []
   }
 
   read() {}
 
   export() {
     let content = `tape ${this.name}\n`
-    content += `entities ${this.entities.length}\n`
+    content += 'entities\n'
     for (const entity of this.entities) content += `${entity}\n`
-    content += `maps ${this.maps.length}\n`
-    content += `music ${this.music.length}\n`
+    content += 'end entities\n'
+    content += 'maps\n'
+    content += 'end maps\n'
+    content += 'music\n'
     for (const music of this.music) content += `${music}\n`
-    content += `sounds ${this.sounds.length}\n`
-    content += `sprites ${this.sprites.length}\n`
-    content += `textures ${this.textures.length}\n`
-    content += `tiles ${this.tiles.length}\n`
-    for (const tile of this.tiles) content += `${tile}\n`
+    content += 'end music\n'
+    content += 'sounds\n'
+    for (const sound of this.sounds) content += `${sound}\n`
+    content += 'end sounds\n'
+    content += 'sprites\n'
+    content += 'end sprites\n'
+    content += 'textures\n'
+    for (const texture of this.textures) content += `${texture}\n`
+    content += 'end textures\n'
+    content += 'end tape\n'
     return content
   }
 }

@@ -1,5 +1,5 @@
-import {playSound} from '../assets/sounds.js'
-import {TextBox} from '../gui/text-box.js'
+import { playSound } from '../assets/sounds.js'
+import { TextBox } from '../gui/text-box.js'
 
 export const TAPE_MENU = 0
 export const PROGRAM_MENU = 1
@@ -97,24 +97,24 @@ export class Dashboard {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
         if (this.tapeRow > 0) {
           this.tapeRow--
-          playSound('baron-pain')
+          playSound('beep')
         }
       } else if (input.timerStickDown(timestamp, INPUT_RATE)) {
         if (this.tapeRow < 5) {
           this.tapeRow++
-          playSound('baron-pain')
+          playSound('beep')
         }
       }
     } else if (this.menu === PROGRAM_MENU) {
       if (input.timerStickUp(timestamp, INPUT_RATE)) {
         if (this.programRow > 0) {
           this.programRow--
-          playSound('baron-pain')
+          playSound('beep')
         }
       } else if (input.timerStickDown(timestamp, INPUT_RATE)) {
         if (this.programRow < 4) {
           this.programRow++
-          playSound('baron-pain')
+          playSound('beep')
         }
       }
     } else if (this.menu === EDIT_NAME) {

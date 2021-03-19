@@ -1,5 +1,5 @@
-import {textureNameFromIndex, textureIndexForName} from '../assets/assets.js'
-import {Float} from '../math/vector.js'
+import { textureIndexForName } from '../assets/assets.js'
+import { Float } from '../math/vector.js'
 
 export class VectorReference {
   constructor(x, y) {
@@ -13,9 +13,9 @@ export class VectorReference {
   }
 
   normal(b) {
-    let x = this.y - b.y
-    let y = -(this.x - b.x)
-    let magnitude = Math.sqrt(x * x + y * y)
+    const x = this.y - b.y
+    const y = -(this.x - b.x)
+    const magnitude = Math.sqrt(x * x + y * y)
     return new VectorReference(x / magnitude, y / magnitude)
   }
 
@@ -26,113 +26,70 @@ export class VectorReference {
   }
 
   export() {
-    return `${this.x} ${this.y}`
+    return `${this.x.toFixed(4)} ${this.y.toFixed(4)}`
   }
 }
 
 export class LineReference {
-  constructor(top, middle, bottom, a, b) {
+  constructor(bottom, middle, top, a, b, flags, trigger) {
     this.plus = null
     this.minus = null
     this.a = a
     this.b = b
-    this.top = new WallReference(this, top)
-    this.middle = new WallReference(this, middle)
-    this.bottom = new WallReference(this, bottom)
+    this.flags = flags
+    this.trigger = trigger
+    this.bottom = new WallReference(bottom)
+    this.middle = new WallReference(middle)
+    this.top = new WallReference(top)
     this.index = 0
   }
 
-  updateSectors(plus, minus, scale) {
-    this.plus = plus
-    this.minus = minus
+  updateSectorsForLine(scale) {
+    const plus = this.plus
+    const minus = this.minus
+    const a = this.a
+    const b = this.b
+    const x = a.x - b.x
+    const y = a.y - b.y
+    const uv = 0.0
+    const st = uv + Math.sqrt(x * x + y * y) * scale
 
-    let x = this.a.x - this.b.x
-    let y = this.a.y - this.b.y
-    let uv = 0.0
-    let st = uv + Math.sqrt(x * x + y * y) * scale
-
-    if (this.top.inUse()) {
-      let flip = false
-      let a = this.a
-      let b = this.b
-      let ceiling = null
-      let top = null
-      if (plus) {
+    if (this.top.use()) {
+      let ceiling, top
+      if (minus) {
+        ceiling = minus.ceiling
+        top = minus.top
+      } else {
         ceiling = plus.ceiling
         top = plus.top
       }
-      if (minus) {
-        if (ceiling === null) {
-          ceiling = minus.ceiling
-          top = minus.top
-        } else if (ceiling < minus.ceiling) {
-          ceiling = minus.ceiling
-          top = minus.top
-        }
-      }
-      if (ceiling >= top) console.error('invalid top wall:', ceiling, top)
-      if (flip) {
-        let temp = a
-        a = b
-        b = temp
-      }
+      if (ceiling >= top) console.warn(`Invalid top wall: ceiling := ${ceiling}, top := ${top}, ${this.top.texture}`)
       this.top.update(ceiling, top, uv, ceiling * scale, st, top * scale, a, b)
     }
 
-    if (this.middle.inUse()) {
-      let flip = false
-      let a = this.a
-      let b = this.b
-      let floor = null
-      let ceiling = null
-      if (plus) {
+    if (this.middle.use()) {
+      let floor, ceiling
+      if (minus) {
+        floor = minus.floor
+        ceiling = minus.ceiling
+      } else {
         floor = plus.floor
         ceiling = plus.ceiling
       }
-      if (minus) {
-        if (floor === null) {
-          floor = minus.floor
-          ceiling = minus.ceiling
-        } else if (floor < minus.floor) {
-          floor = minus.floor
-          ceiling = minus.ceiling
-        }
-      }
-      if (floor >= ceiling) console.error('invalid middle wall:', floor, ceiling)
-      if (flip) {
-        let temp = a
-        a = b
-        b = temp
-      }
+      if (floor >= ceiling) console.warn(`Invalid middle wall: floor := ${floor}, ceiling := ${ceiling}, ${this.middle.texture}`)
       this.middle.update(floor, ceiling, uv, floor * scale, st, ceiling * scale, a, b)
     }
 
-    if (this.bottom.inUse()) {
-      let flip = false
-      let a = this.a
-      let b = this.b
-      let bottom = null
-      let floor = null
-      if (plus) {
+    if (this.bottom.use()) {
+      let bottom, floor
+      if (minus) {
+        bottom = minus.bottom
+        floor = minus.floor
+      } else {
         bottom = plus.bottom
         floor = plus.floor
       }
-      if (minus) {
-        if (bottom === null) {
-          bottom = minus.bottom
-          floor = minus.floor
-        } else {
-          if (minus.floor > floor) floor = minus.floor
-          if (minus.bottom < bottom) bottom = minus.bottom
-          flip = true
-        }
-      }
-      if (bottom >= floor) console.error('invalid bottom wall:', bottom, floor)
-      if (flip) {
-        let temp = a
-        a = b
-        b = temp
-      }
+      if (bottom >= floor) console.warn(`Invalid bottom wall: bottom := ${bottom}, floor := ${floor}, ${this.bottom.texture}`)
       this.bottom.update(bottom, floor, uv, bottom * scale, st, floor * scale, a, b)
     }
   }
@@ -179,24 +136,25 @@ export class LineReference {
     content += ` ${this.topOffset()}`
     content += ` ${this.middleOffset()}`
     content += ` ${this.bottomOffset()}`
+    if (this.flags) content += ` flags ${this.flags.join(' ')} end`
+    if (this.trigger) content += ` trigger ${this.trigger.export()} end`
     return content
   }
 
   static copy(line) {
-    let top = line.top ? line.top.texture : -1
-    let middle = line.middle ? line.middle.texture : -1
-    let bottom = line.bottom ? line.bottom.texture : -1
-    let copy = new LineReference(top, middle, bottom, line.a, line.b)
-    WallReference.transfer(line.top, copy.top)
-    WallReference.transfer(line.middle, copy.middle)
+    const top = line.top ? line.top.texture : -1
+    const middle = line.middle ? line.middle.texture : -1
+    const bottom = line.bottom ? line.bottom.texture : -1
+    const copy = new LineReference(bottom, middle, top, line.a, line.b, line.flags, line.trigger)
     WallReference.transfer(line.bottom, copy.bottom)
+    WallReference.transfer(line.middle, copy.middle)
+    WallReference.transfer(line.top, copy.top)
     return copy
   }
 }
 
 export class WallReference {
-  constructor(line, texture) {
-    this.line = line
+  constructor(texture) {
     this.a = null
     this.b = null
     this.normal = null
@@ -210,8 +168,12 @@ export class WallReference {
     this.t = 0.0
   }
 
-  inUse() {
-    return this.texture >= 0
+  valid() {
+    return this.a && this.b && this.texture && this.floor < this.ceiling
+  }
+
+  use() {
+    return this.texture
   }
 
   update(floor, ceiling, u, v, s, t, a, b) {
@@ -227,7 +189,7 @@ export class WallReference {
   }
 
   textureName() {
-    return this.inUse() ? textureNameFromIndex(this.texture) : 'none'
+    return this.use() ? this.texture : 'none'
   }
 
   static transfer(src, dest) {
@@ -241,13 +203,15 @@ export class WallReference {
 }
 
 export class SectorReference {
-  constructor(bottom, floor, ceiling, top, floorTexture, ceilingTexture, vecs, lines) {
+  constructor(bottom, floor, ceiling, top, floorTexture, ceilingTexture, flags, trigger, vecs, lines) {
     this.bottom = bottom
     this.floor = floor
     this.ceiling = ceiling
     this.top = top
     this.floorTexture = floorTexture
     this.ceilingTexture = ceilingTexture
+    this.flags = flags
+    this.trigger = trigger
     this.vecs = vecs
     this.lines = lines
     this.triangles = []
@@ -255,26 +219,33 @@ export class SectorReference {
     this.outside = null
     this.neighbors = []
     this.view = []
-    this.index = 0
   }
 
   hasFloor() {
-    return this.floorTexture >= 0
+    return this.floorTexture
   }
 
   hasCeiling() {
-    return this.ceilingTexture >= 0
+    return this.ceilingTexture
+  }
+
+  getFloorTexture() {
+    return textureIndexForName(this.floorTexture)
+  }
+
+  getCeilingTexture() {
+    return textureIndexForName(this.ceilingTexture)
   }
 
   contains(x, z) {
     let odd = false
-    let len = this.vecs.length
+    const len = this.vecs.length
     let k = len - 1
     for (let i = 0; i < len; i++) {
-      let a = this.vecs[i]
-      let b = this.vecs[k]
-      if (a.y > z != b.y > z) {
-        let val = ((b.x - a.x) * (z - a.y)) / (b.y - a.y) + a.x
+      const a = this.vecs[i]
+      const b = this.vecs[k]
+      if (a.y > z !== b.y > z) {
+        const val = ((b.x - a.x) * (z - a.y)) / (b.y - a.y) + a.x
         if (x < val) {
           odd = !odd
         }
@@ -287,7 +258,7 @@ export class SectorReference {
   find(x, z) {
     let i = this.inside.length
     while (i--) {
-      let inside = this.inside[i]
+      const inside = this.inside[i]
       if (inside.contains(x, z)) {
         return inside.find(x, z)
       }
@@ -303,26 +274,22 @@ export class SectorReference {
   }
 
   floorTextureName() {
-    return this.hasFloor() ? textureNameFromIndex(this.floorTexture) : 'none'
+    return this.hasFloor() ? this.floorTexture : 'none'
   }
 
   ceilingTextureName() {
-    return this.hasCeiling() ? textureNameFromIndex(this.ceilingTexture) : 'none'
+    return this.hasCeiling() ? this.ceilingTexture : 'none'
   }
 
   refreshFloorTexture() {
     for (const triangle of this.triangles) {
-      if (Float.eq(triangle.height, this.floor)) {
-        triangle.texture = this.floorTexture
-      }
+      if (triangle.normal > 0.0) triangle.texture = this.getFloorTexture()
     }
   }
 
   refreshCeilingTexture() {
     for (const triangle of this.triangles) {
-      if (Float.eq(triangle.height, this.ceiling)) {
-        triangle.texture = this.ceilingTexture
-      }
+      if (triangle.normal < 0.0) triangle.texture = this.getCeilingTexture()
     }
   }
 
@@ -334,6 +301,8 @@ export class SectorReference {
     for (const vec of this.vecs) content += ` ${vec.index}`
     content += ` ${this.lines.length}`
     for (const line of this.lines) content += ` ${line.index}`
+    if (this.flags) content += ` flags ${this.flags.join(' ')} end`
+    if (this.trigger) content += ` trigger ${this.trigger.export()} end`
     return content
   }
 }
@@ -348,19 +317,15 @@ export class ThingReference {
   }
 
   setEntity(entity) {
+    this.entity = entity
     this.box = entity.box()
     this.height = entity.height()
-    this.texture = textureIndexForName(entity.get('sprite'))
-    this.animations = entity.animations()
-    if (Array.isArray(this.animations)) {
-      this.sprite = this.animations[0]
-    } else if (this.animations instanceof Map) {
-      this.animation = this.animations.values().next().value
-      this.sprite = this.animation[0]
-    } else {
-      this.sprite = this.animations
+    if (entity.has('sprite')) this.stamp = entity.stamp()
+    else {
+      const stamps = entity.stamps()
+      if (Array.isArray(stamps)) this.stamp = stamps[0]
+      else this.stamp = stamps.values().next().value[0]
     }
-    this.entity = entity
   }
 
   export() {

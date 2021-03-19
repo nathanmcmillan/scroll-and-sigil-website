@@ -1,10 +1,10 @@
-import {drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
-import {identity, multiply} from '../math/matrix.js'
-import {whitef, blackf} from '../editor/palette.js'
-import {flexText, flexSolve} from '../gui/flex.js'
-import {textureByName} from '../assets/assets.js'
-import {renderTouch} from '../client/render-touch.js'
-import {calcFontScale} from '../editor/editor-util.js'
+import { textureByName } from '../assets/assets.js'
+import { renderTouch } from '../client/render-touch.js'
+import { calcFontScale } from '../editor/editor-util.js'
+import { blackf, whitef } from '../editor/palette.js'
+import { flexSolve, flexText } from '../gui/flex.js'
+import { identity, multiply } from '../math/matrix.js'
+import { TIC_FONT_HEIGHT, TIC_FONT_WIDTH, drawTextSpecial } from '../render/render.js'
 
 export function renderLoadingInProgress(client, view, projection) {
   const gl = client.gl
@@ -16,10 +16,10 @@ export function renderLoadingInProgress(client, view, projection) {
   if (client.touch) renderTouch(client.touchRender)
 
   const fontScale = calcFontScale(scale)
-  const fontWidth = fontScale * FONT_WIDTH
-  const fontHeight = fontScale * FONT_HEIGHT
+  const fontWidth = fontScale * TIC_FONT_WIDTH
+  const fontHeight = fontScale * TIC_FONT_HEIGHT
 
-  rendering.setProgram(4)
+  rendering.setProgram('texture2d-font')
   rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
@@ -32,8 +32,8 @@ export function renderLoadingInProgress(client, view, projection) {
 
   client.bufferGUI.zero()
 
-  let text = 'Loading. Please wait...'
-  let box = flexText(text, fontWidth * text.length, fontHeight)
+  const text = 'Loading. Please wait...'
+  const box = flexText(text, fontWidth * text.length, fontHeight)
   box.funX = 'center'
   box.funY = 'center'
   flexSolve(width, height, box)

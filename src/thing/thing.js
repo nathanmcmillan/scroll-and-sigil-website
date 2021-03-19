@@ -1,12 +1,29 @@
-import {lineIntersect, Float} from '../math/vector.js'
-import {toCell, toFloatCell, WORLD_CELL_SHIFT, GRAVITY, RESISTANCE, ANIMATION_RATE, ANIMATION_NOT_DONE, ANIMATION_ALMOST_DONE, ANIMATION_DONE} from '../world/world.js'
+import { Float, lineIntersect } from '../math/vector.js'
+import { cellPushThing, cellRemoveThing } from '../world/cell.js'
+import {
+  ANIMATION_ALMOST_DONE,
+  ANIMATION_DONE,
+  ANIMATION_NOT_DONE,
+  ANIMATION_RATE,
+  GRAVITY,
+  RESISTANCE,
+  toCell,
+  toFloatCell,
+  worldEventTrigger,
+  worldFindSector,
+  worldPushThing,
+  WORLD_CELL_SHIFT,
+} from '../world/world.js'
 
-let collided = new Set()
-let collisions = new Set()
+let THING_UID = 0
+
+const collided = new Set()
+const collisions = new Set()
 
 export class Thing {
   constructor(world, x, z) {
     this.world = world
+    this.uid = THING_UID++
     this.sector = null
     this.floor = 0.0
     this.ceiling = 0.0
@@ -22,15 +39,15 @@ export class Thing {
     this.ground = false
     this.speed = 0.0
     this.health = 0.0
-    this.texture = 0
-    this.sprite = null
     this.minC = 0
     this.maxC = 0
     this.minR = 0
     this.maxR = 0
+    this.stamp = null
+    this.animation = null
+    this.animations = null
     this.animationMod = 0
     this.animationFrame = 0
-    this.animation = null
     this.isPhysical = true
     this.isItem = false
     this.wasOnLine = false
@@ -65,11 +82,11 @@ export function thingY(self) {
 }
 
 function thingLineCollision(self, line) {
-  let box = self.box
-  let vx = line.b.x - line.a.x
-  let vz = line.b.y - line.a.y
-  let wx = self.x - line.a.x
-  let wz = self.z - line.a.y
+  const box = self.box
+  const vx = line.b.x - line.a.x
+  const vz = line.b.y - line.a.y
+  const wx = self.x - line.a.x
+  const wz = self.z - line.a.y
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   let endpoint = false
   if (t < 0.0) {
@@ -79,23 +96,23 @@ function thingLineCollision(self, line) {
     t = 1.0
     endpoint = true
   }
-  let px = line.a.x + vx * t - self.x
-  let pz = line.a.y + vz * t - self.z
+  const px = line.a.x + vx * t - self.x
+  const pz = line.a.y + vz * t - self.z
   if (px * px + pz * pz > box * box) return false
   if (!line.physical) {
     const step = 1.0
-    let min = self.y + step
-    let max = self.y + self.height
+    const min = self.y + step
+    const max = self.y + self.height
     if (line.plus && min > line.plus.floor && max < line.plus.ceiling) return true
     if (line.minus && min > line.minus.floor && max < line.minus.ceiling) return true
   }
   if (endpoint) {
     let ex = -px
     let ez = -pz
-    let em = Math.sqrt(ex * ex + ez * ez)
+    const em = Math.sqrt(ex * ex + ez * ez)
     ex /= em
     ez /= em
-    let overlap = Math.sqrt((px + box * ex) * (px + box * ex) + (pz + box * ez) * (pz + box * ez))
+    const overlap = Math.sqrt((px + box * ex) * (px + box * ex) + (pz + box * ez) * (pz + box * ez))
     self.x += ex * overlap
     self.z += ez * overlap
   } else {
@@ -105,7 +122,7 @@ function thingLineCollision(self, line) {
       x = -x
       z = -z
     }
-    let overlap = Math.sqrt((px + box * x) * (px + box * x) + (pz + box * z) * (pz + box * z))
+    const overlap = Math.sqrt((px + box * x) * (px + box * x) + (pz + box * z) * (pz + box * z))
     self.x += x * overlap
     self.z += z * overlap
   }
@@ -113,30 +130,37 @@ function thingLineCollision(self, line) {
 }
 
 function thingLineFloorAndCeiling(self, line) {
-  let box = self.box
-  let vx = line.b.x - line.a.x
-  let vz = line.b.y - line.a.y
-  let wx = self.x - line.a.x
-  let wz = self.z - line.a.y
+  const box = self.box
+  const vx = line.b.x - line.a.x
+  const vz = line.b.y - line.a.y
+  const wx = self.x - line.a.x
+  const wz = self.z - line.a.y
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   if (t < 0.0) t = 0.0
   else if (t > 1.0) t = 1.0
-  let px = line.a.x + vx * t - self.x
-  let pz = line.a.y + vz * t - self.z
+  const px = line.a.x + vx * t - self.x
+  const pz = line.a.y + vz * t - self.z
   if (px * px + pz * pz > box * box) return false
+  const old = self.sector
+  let sector = old
   if (line.plus) {
     if (line.plus.floor > self.floor) {
-      self.sector = line.plus
+      sector = line.plus
       self.floor = line.plus.floor
     }
     if (line.plus.ceiling < self.ceiling) self.ceiling = line.plus.ceiling
   }
   if (line.minus) {
     if (line.minus.floor > self.floor) {
-      self.sector = line.minus
+      sector = line.minus
       self.floor = line.minus.floor
     }
     if (line.minus.ceiling < self.ceiling) self.ceiling = line.minus.ceiling
+  }
+  if (sector !== old) {
+    self.sector = sector
+    const trigger = sector.trigger
+    if (trigger) worldEventTrigger(self.world, 'enter', trigger, self)
   }
   return true
 }
@@ -149,7 +173,7 @@ export function thingFindSectorFromLine(self) {
   let on = false
   for (let r = self.minR; r <= self.maxR; r++) {
     for (let c = self.minC; c <= self.maxC; c++) {
-      let cell = cells[c + r * columns]
+      const cell = cells[c + r * columns]
       let i = cell.lines.length
       while (i--) {
         on = thingLineFloorAndCeiling(self, cell.lines[i]) || on
@@ -160,10 +184,15 @@ export function thingFindSectorFromLine(self) {
 }
 
 export function thingFindSector(self) {
-  let sector = self.sector
-  if (sector === null) sector = self.world.findSector(self.x, self.z)
+  const old = self.sector
+  let sector = old
+  if (sector === null) sector = worldFindSector(self.world, self.x, self.z)
   else sector = sector.searchFor(self.x, self.z)
-  self.sector = sector
+  if (sector !== old) {
+    self.sector = sector
+    const trigger = sector.trigger
+    if (trigger) worldEventTrigger(self.world, 'enter', trigger, self)
+  }
   self.floor = sector.floor
   self.ceiling = sector.ceiling
 }
@@ -173,7 +202,7 @@ export function thingUpdateAnimation(self) {
   if (self.animationMod === ANIMATION_RATE) {
     self.animationMod = 0
     self.animationFrame++
-    let frames = self.animation.length
+    const frames = self.animation.length
     if (self.animationFrame === frames - 1) return ANIMATION_ALMOST_DONE
     else if (self.animationFrame === frames) return ANIMATION_DONE
   }
@@ -181,7 +210,7 @@ export function thingUpdateAnimation(self) {
 }
 
 export function thingUpdateSprite(self) {
-  self.sprite = self.animation[self.animationFrame]
+  self.stamp = self.animation[self.animationFrame]
 }
 
 export function thingSetAnimation(self, name) {
@@ -192,14 +221,14 @@ export function thingSetAnimation(self, name) {
 }
 
 export function thingCheckSight(self, thing) {
-  let xf = toFloatCell(self.x)
-  let yf = toFloatCell(self.z)
-  let dx = Math.abs(toFloatCell(thing.x) - xf)
-  let dy = Math.abs(toFloatCell(thing.z) - yf)
+  const xf = toFloatCell(self.x)
+  const yf = toFloatCell(self.z)
+  const dx = Math.abs(toFloatCell(thing.x) - xf)
+  const dy = Math.abs(toFloatCell(thing.z) - yf)
   let x = toCell(self.x)
   let y = toCell(self.z)
-  let xb = toCell(thing.x)
-  let yb = toCell(thing.z)
+  const xb = toCell(thing.x)
+  const yb = toCell(thing.z)
   let n = 1
   let error = 0.0
   let incrementX = 0
@@ -228,13 +257,13 @@ export function thingCheckSight(self, thing) {
     n += y - yb
     error -= (yf - y) * dx
   }
-  let cells = self.world.cells
-  let columns = self.world.columns
+  const cells = self.world.cells
+  const columns = self.world.columns
   for (; n > 0; n--) {
-    let cell = cells[x + y * columns]
+    const cell = cells[x + y * columns]
     let i = cell.lines.length
     while (i--) {
-      let line = cell.lines[i]
+      const line = cell.lines[i]
       if (line.physical && lineIntersect(self.x, self.z, thing.x, thing.z, line.a.x, line.a.y, line.b.x, line.b.y)) return false
     }
     if (error > 0.0) {
@@ -249,16 +278,14 @@ export function thingCheckSight(self, thing) {
 }
 
 export function thingApproximateDistance(self, thing) {
-  let dx = Math.abs(self.x - thing.x)
-  let dz = Math.abs(self.z - thing.z)
-  if (dx > dz) {
-    return dx + dz - dz * 0.5
-  }
+  const dx = Math.abs(self.x - thing.x)
+  const dz = Math.abs(self.z - thing.z)
+  if (dx > dz) return dx + dz - dz * 0.5
   return dx + dz - dx * 0.5
 }
 
 function thingCollision(self, thing) {
-  let box = self.box + thing.box
+  const box = self.box + thing.box
   return Math.abs(self.x - thing.x) <= box && Math.abs(self.z - thing.z) <= box
 }
 
@@ -266,17 +293,24 @@ export function thingSetup(self) {
   thingPushToCells(self)
   if (!thingFindSectorFromLine(self)) thingFindSector(self)
   thingUpdateY(self)
-  self.world.pushThing(self)
+  worldPushThing(self.world, self)
 }
 
 export function thingSet(self, x, z) {
   self.x = self.previousX = x
   self.z = self.previousZ = z
   thingPushToCells(self)
+  const old = self.sector
   self.sector = null
   if (!thingFindSectorFromLine(self)) thingFindSector(self)
+  const world = self.world
+  const sector = self.sector
+  if (sector !== old) {
+    const trigger = sector.trigger
+    if (trigger) worldEventTrigger(world, 'enter', trigger, self)
+  }
   thingUpdateY(self)
-  self.world.pushThing(self)
+  worldPushThing(world, self)
 }
 
 export function thingTeleport(self, x, z) {
@@ -284,26 +318,33 @@ export function thingTeleport(self, x, z) {
   self.x = self.previousX = x
   self.z = self.previousZ = z
   thingPushToCells(self)
+  const old = self.sector
   self.sector = null
   if (!thingFindSectorFromLine(self)) thingFindSector(self)
+  const world = self.world
+  const sector = self.sector
+  if (sector !== old) {
+    const trigger = sector.trigger
+    if (trigger) worldEventTrigger(world, 'enter', trigger, self)
+  }
   thingUpdateY(self)
 }
 
 export function thingPushToCells(self) {
-  let box = self.box
+  const box = self.box
   let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
   let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
   let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
   let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
-  let world = self.world
-  let columns = world.columns
+  const world = self.world
+  const columns = world.columns
   if (minC < 0) minC = 0
   if (minR < 0) minR = 0
   if (maxC >= columns) maxC = columns - 1
   if (maxR >= world.rows) maxR = world.rows - 1
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      world.cells[c + r * columns].pushThing(self)
+      cellPushThing(world.cells[c + r * columns], self)
     }
   }
   self.minC = minC
@@ -317,7 +358,7 @@ export function thingRemoveFromCells(self) {
   const columns = self.world.columns
   for (let r = self.minR; r <= self.maxR; r++) {
     for (let c = self.minC; c <= self.maxC; c++) {
-      cells[c + r * columns].removeThing(self)
+      cellRemoveThing(cells[c + r * columns], self)
     }
   }
 }
@@ -325,7 +366,7 @@ export function thingRemoveFromCells(self) {
 function thingDamage() {}
 
 function thingResolveCollision(self, thing) {
-  let box = self.box + thing.box
+  const box = self.box + thing.box
   if (Math.abs(self.x - thing.x) > box || Math.abs(self.z - thing.z) > box) return
   if (Math.abs(self.previousX - thing.x) > Math.abs(self.previousZ - thing.z)) {
     if (self.previousX - thing.x < 0.0) {
@@ -359,13 +400,13 @@ export function thingIntegrate(self) {
 
     thingRemoveFromCells(self)
 
-    let box = self.box
+    const box = self.box
     let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
     let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
     let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
     let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
-    let world = self.world
-    let columns = world.columns
+    const world = self.world
+    const columns = world.columns
     if (minC < 0) minC = 0
     if (minR < 0) minR = 0
     if (maxC >= columns) maxC = columns - 1
@@ -376,10 +417,10 @@ export function thingIntegrate(self) {
 
     for (let r = minR; r <= maxR; r++) {
       for (let c = minC; c <= maxC; c++) {
-        let cell = world.cells[c + r * columns]
+        const cell = world.cells[c + r * columns]
         let i = cell.thingCount
         while (i--) {
-          let thing = cell.things[i]
+          const thing = cell.things[i]
           if (!thing.isPhysical || collisions.has(thing)) continue
           if (thingCollision(self, thing)) collided.add(thing)
           collisions.add(thing)
@@ -391,7 +432,7 @@ export function thingIntegrate(self) {
       let closest = null
       let manhattan = Number.MAX_VALUE
       for (const thing of collided) {
-        let distance = Math.abs(self.previousX - thing.x) + Math.abs(self.previousZ - thing.z)
+        const distance = Math.abs(self.previousX - thing.x) + Math.abs(self.previousZ - thing.z)
         if (distance < manhattan) {
           manhattan = distance
           closest = thing
@@ -404,7 +445,7 @@ export function thingIntegrate(self) {
     let on = false
     for (let r = minR; r <= maxR; r++) {
       for (let c = minC; c <= maxC; c++) {
-        let cell = world.cells[c + r * world.columns]
+        const cell = world.cells[c + r * world.columns]
         let i = cell.lines.length
         while (i--) {
           on = thingLineCollision(self, cell.lines[i]) || on

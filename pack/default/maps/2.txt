@@ -1,0 +1,20 @@
+map base
+vectors
+44.1500 55.9000
+55.1500 52.9000
+44.1500 42.4000
+55.1500 42.4000
+29.6500 29.4000
+68.1500 29.4000
+end vectors
+lines
+0 2 none grass none 0 0 0
+1 5 none grass none 0 0 0
+2 3 none grass none 0 0 0
+3 1 none grass none 0 0 0
+4 0 none grass none 0 0 0
+5 4 none grass none 0 0 0
+end lines
+sectors
+0 0 5 6 none none 6 3 1 5 4 0 2 6 3 1 5 4 0 2
+end sector

@@ -1,4 +1,4 @@
-sprite: doodads
-animation: dead-tree
+class: doodad
+sprite: doodads|dead-tree
 box: 0.25
 height: 1.76

@@ -1,5 +1,4 @@
-sprite: missiles
-animation: plasma-missile
+sprite: missiles|plasma-missile
 function: particle-with-decal-on-collision
 box: 0.6
 height: 0.6

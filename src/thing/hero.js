@@ -1,10 +1,10 @@
-import {thingSetup, thingIntegrate, thingUpdateSprite, thingSetAnimation, thingUpdateAnimation, thingApproximateDistance, Thing} from '../thing/thing.js'
-import {playSound} from '../assets/sounds.js'
-import {textureIndexForName, entityByName} from '../assets/assets.js'
-import {WORLD_CELL_SHIFT, ANIMATION_ALMOST_DONE, ANIMATION_DONE} from '../world/world.js'
-import {newPlasma} from '../missile/plasma.js'
-import {randomInt} from '../math/random.js'
-import {redBloodTowards, redBloodExplode} from '../thing/thing-util.js'
+import { entityByName } from '../assets/assets.js'
+import { playSound } from '../assets/sounds.js'
+import { randomInt } from '../math/random.js'
+import { newPlasma } from '../missile/plasma.js'
+import { redBloodExplode, redBloodTowards } from '../thing/thing-util.js'
+import { Thing, thingApproximateDistance, thingIntegrate, thingSetAnimation, thingSetup, thingUpdateAnimation, thingUpdateSprite } from '../thing/thing.js'
+import { ANIMATION_ALMOST_DONE, ANIMATION_DONE, worldEventTrigger, WORLD_CELL_SHIFT } from '../world/world.js'
 
 // TODO
 // If thing interacting with dies / is busy then nullify hero interaction
@@ -67,17 +67,17 @@ function heroUpdate() {
 }
 
 function heroDistanceToLine(self, box, line) {
-  let vx = line.b.x - line.a.x
-  let vz = line.b.y - line.a.y
-  let wx = self.x - line.a.x
-  let wz = self.z - line.a.y
+  const vx = line.b.x - line.a.x
+  const vz = line.b.y - line.a.y
+  const wx = self.x - line.a.x
+  const wz = self.z - line.a.y
   if (vx * wz - vz * wx < 0.0) return null
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   if (t < 0.0) t = 0.0
   else if (t > 1.0) t = 1.0
-  let px = line.a.x + vx * t - self.x
-  let pz = line.a.y + vz * t - self.z
-  let distance = px * px + pz * pz
+  const px = line.a.x + vx * t - self.x
+  const pz = line.a.y + vz * t - self.z
+  const distance = px * px + pz * pz
   if (distance > box * box) return null
   return Math.sqrt(distance)
 }
@@ -85,14 +85,14 @@ function heroDistanceToLine(self, box, line) {
 function heroFindClosestThing(self) {
   self.nearby = null
 
-  let box = self.box + 2.0
+  const box = self.box + 2.0
   let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
   let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
   let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
   let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
 
-  let world = self.world
-  let columns = world.columns
+  const world = self.world
+  const columns = world.columns
 
   if (minC < 0) minC = 0
   if (minR < 0) minR = 0
@@ -103,13 +103,13 @@ function heroFindClosestThing(self) {
 
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      let cell = world.cells[c + r * columns]
+      const cell = world.cells[c + r * columns]
       let i = cell.thingCount
       while (i--) {
-        let thing = cell.things[i]
+        const thing = cell.things[i]
         if (self === thing) continue
         if ((thing.isItem && !thing.pickedUp) || (thing.interaction && thing.health > 0)) {
-          let distance = thingApproximateDistance(self, thing)
+          const distance = thingApproximateDistance(self, thing)
           if (distance < 2.0 && distance < closest) {
             closest = distance
             self.nearby = thing
@@ -122,7 +122,7 @@ function heroFindClosestThing(self) {
 
 function heroInteract(self) {
   if (self.nearby) {
-    let thing = self.nearby
+    const thing = self.nearby
     if (thing.isItem && !thing.pickedUp) {
       playSound('pickup-item')
       self.inventory.push(thing)
@@ -134,22 +134,21 @@ function heroInteract(self) {
       thingSetAnimation(self, 'move')
       self.interactionWith = thing
       self.interaction = thing.interaction
-      if (self.interaction.get('type') === 'quest') {
-        self.world.notify('begin-cinema')
-      }
-      // self.world.notify('interact-thing', [self, thing])
+      if (self.interaction.get('type') === 'quest') self.world.notify('begin-cinema')
+      const trigger = thing.trigger
+      if (trigger) worldEventTrigger(world, 'interact', trigger, self)
       return true
     }
   }
 
-  let box = self.box + 2.0
+  const box = self.box + 2.0
   let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
   let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
   let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
   let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
 
-  let world = self.world
-  let columns = world.columns
+  const world = self.world
+  const columns = world.columns
 
   if (minC < 0) minC = 0
   if (minR < 0) minR = 0
@@ -158,13 +157,14 @@ function heroInteract(self) {
 
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      let cell = world.cells[c + r * columns]
+      const cell = world.cells[c + r * columns]
       let i = cell.lines.length
       while (i--) {
-        let line = cell.lines[i]
-        let distance = heroDistanceToLine(self, box, line)
+        const line = cell.lines[i]
+        const distance = heroDistanceToLine(self, box, line)
         if (distance !== null && distance < 2.0) {
-          self.world.notify('interact-line', [self, line])
+          const trigger = line.trigger
+          if (trigger) worldEventTrigger(world, 'interact', trigger, self)
         }
       }
     }
@@ -175,9 +175,7 @@ function heroInteract(self) {
 
 function heroDead(self) {
   if (self.animationFrame === self.animation.length - 1) {
-    if (self.input.pressA()) {
-      self.world.notify('death-menu')
-    }
+    if (self.input.pressStart()) self.world.notify('death-menu')
     return
   }
   thingUpdateAnimation(self)
@@ -187,7 +185,7 @@ function heroDead(self) {
 function heroOpenMenu(self) {
   self.status = STATUS_BUSY
   thingSetAnimation(self, 'move')
-  self.menu = {page: 'inventory'}
+  self.menu = { page: 'inventory' }
 }
 
 function heroBusy(self) {
@@ -211,20 +209,20 @@ function heroTakeExperience(self, value) {
 }
 
 function heroMelee(self) {
-  let frame = thingUpdateAnimation(self)
+  const frame = thingUpdateAnimation(self)
   if (frame === ANIMATION_ALMOST_DONE) {
     self.reaction = 40
 
     const meleeRange = 1.0
 
-    let box = self.box + meleeRange
+    const box = self.box + meleeRange
     let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
     let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
     let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
     let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
 
-    let world = self.world
-    let columns = world.columns
+    const world = self.world
+    const columns = world.columns
 
     if (minC < 0) minC = 0
     if (minR < 0) minR = 0
@@ -236,12 +234,12 @@ function heroMelee(self) {
 
     for (let r = minR; r <= maxR; r++) {
       for (let c = minC; c <= maxC; c++) {
-        let cell = world.cells[c + r * columns]
+        const cell = world.cells[c + r * columns]
         let i = cell.thingCount
         while (i--) {
-          let thing = cell.things[i]
+          const thing = cell.things[i]
           if (self === thing) continue
-          let distance = thingApproximateDistance(self, thing)
+          const distance = thingApproximateDistance(self, thing)
           if (distance < self.box + thing.box + meleeRange && distance < closest) {
             closest = distance
             target = thing
@@ -263,15 +261,15 @@ function heroMelee(self) {
 }
 
 function heroMissile(self) {
-  let frame = thingUpdateAnimation(self)
+  const frame = thingUpdateAnimation(self)
   if (frame === ANIMATION_ALMOST_DONE) {
     self.reaction = 60
-    let speed = 0.3
-    let dx = Math.cos(self.rotation)
-    let dz = Math.sin(self.rotation)
-    let x = self.x + dx * (self.box + 2.0)
-    let z = self.z + dz * (self.box + 2.0)
-    let y = self.y + 0.5 * self.height
+    const speed = 0.3
+    const dx = Math.cos(self.rotation)
+    const dz = Math.sin(self.rotation)
+    const x = self.x + dx * (self.box + 2.0)
+    const z = self.z + dz * (self.box + 2.0)
+    const y = self.y + 0.5 * self.height
     newPlasma(self.world, entityByName('plasma'), x, y, z, dx * speed, 0.0, dz * speed, 1 + randomInt(3))
   } else if (frame === ANIMATION_DONE) {
     self.status = STATUS_IDLE
@@ -309,7 +307,6 @@ function heroMove(self) {
     return
   } else if (self.input.pressRightTrigger()) {
     if (heroInteract(self)) return
-    else playSound('baron-scream')
   }
   if (self.input.pressSelect()) {
     heroOpenMenu(self)
@@ -383,10 +380,9 @@ export class Hero extends Thing {
     this.box = entity.box()
     this.height = entity.height()
     this.input = input
-    this.texture = textureIndexForName(entity.get('sprite'))
-    this.animations = entity.animations()
+    this.animations = entity.stamps()
     this.animation = this.animations.get('move')
-    this.sprite = this.animation[0]
+    this.stamp = this.animation[0]
     this.speed = entity.speed()
     this.maxHealth = entity.health()
     this.health = this.maxHealth

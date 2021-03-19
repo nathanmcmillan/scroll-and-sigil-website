@@ -68,10 +68,10 @@ function frustum(matrix, left, right, bottom, top, near, far) {
 }
 
 export function perspective(matrix, fov, near, far, aspect) {
-  let top = near * Math.tan((fov * Math.PI) / 360.0)
-  let bottom = -top
-  let left = bottom * aspect
-  let right = top * aspect
+  const top = near * Math.tan((fov * Math.PI) / 360.0)
+  const bottom = -top
+  const left = bottom * aspect
+  const right = top * aspect
 
   frustum(matrix, left, right, bottom, top, near, far)
 }
@@ -269,7 +269,7 @@ export function matrixInverse(matrix, from) {
   temp[15] = copy[10] * from[10] + copy[4] * from[8] + copy[9] * from[9]
   temp[15] -= copy[8] * from[9] + copy[11] * from[10] + copy[5] * from[8]
 
-  let det = 1.0 / (from[0] * temp[0] + from[1] * temp[1] + from[2] * temp[2] + from[3] * temp[3])
+  const det = 1.0 / (from[0] * temp[0] + from[1] * temp[1] + from[2] * temp[2] + from[3] * temp[3])
 
   for (let i = 0; i < 16; i++) matrix[i] = temp[i] * det
 }
@@ -314,8 +314,8 @@ export function lookAt(matrix, eye, center) {
   let forwardY = center[1] - eye[1]
   let forwardZ = center[2] - eye[2]
 
-  let magnitude = Math.sqrt(forwardX * forwardX + forwardY * forwardY + forwardZ * forwardZ)
-  let multiple = 1.0 / magnitude
+  const magnitude = Math.sqrt(forwardX * forwardX + forwardY * forwardY + forwardZ * forwardZ)
+  const multiple = 1.0 / magnitude
   forwardX *= multiple
   forwardY *= multiple
   forwardZ *= multiple
@@ -324,13 +324,13 @@ export function lookAt(matrix, eye, center) {
   const anyY = 1.0
   const anyZ = 0.0
 
-  let sideX = forwardY * anyZ - forwardZ * anyY
-  let sideY = forwardZ * anyX - forwardX * anyZ
-  let sideZ = forwardX * anyY - forwardY * anyX
+  const sideX = forwardY * anyZ - forwardZ * anyY
+  const sideY = forwardZ * anyX - forwardX * anyZ
+  const sideZ = forwardX * anyY - forwardY * anyX
 
-  let upX = sideY * forwardZ - sideZ * forwardY
-  let upY = sideZ * forwardX - sideX * forwardZ
-  let upZ = sideX * forwardY - sideY * forwardX
+  const upX = sideY * forwardZ - sideZ * forwardY
+  const upY = sideZ * forwardX - sideX * forwardZ
+  const upZ = sideX * forwardY - sideY * forwardX
 
   matrix[0] = sideX
   matrix[4] = sideY

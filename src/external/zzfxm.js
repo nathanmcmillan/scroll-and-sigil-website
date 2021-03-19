@@ -1,6 +1,6 @@
 // ZzFXM (v2.0.3) | (C) Keith Clark | MIT | https://github.com/keithclark/ZzFXM
 
-import {zzfxr, zzfxg} from '../external/zzfx.js'
+import { zzfxg, zzfxr } from '../external/zzfx.js'
 
 export function zzfxm(instruments, patterns, sequence, BPM = 125) {
   let instrumentParameters
@@ -19,13 +19,13 @@ export function zzfxm(instruments, patterns, sequence, BPM = 125) {
   let sampleOffset = 0
   let nextSampleOffset
   let sampleBuffer = []
-  let leftChannelBuffer = []
-  let rightChannelBuffer = []
+  const leftChannelBuffer = []
+  const rightChannelBuffer = []
   let channelIndex = 0
   let panning = 0
   let hasMore = 1
-  let sampleCache = {}
-  let beatLength = ((zzfxr / BPM) * 60) >> 2
+  const sampleCache = {}
+  const beatLength = ((zzfxr / BPM) * 60) >> 2
   // for each channel in order until there are no more
   for (; hasMore; channelIndex++) {
     // reset current values
@@ -39,12 +39,12 @@ export function zzfxm(instruments, patterns, sequence, BPM = 125) {
       // get next offset, use the length of first channel
       nextSampleOffset = outSampleOffset + (patterns[patternIndex][0].length - 2 - !notFirstBeat) * beatLength
       // for each beat in pattern, plus one extra if end of sequence
-      isSequenceEnd = sequenceIndex == sequence.length - 1
+      isSequenceEnd = sequenceIndex === sequence.length - 1
       for (i = 2, k = outSampleOffset; i < patternChannel.length + isSequenceEnd; notFirstBeat = ++i) {
         // <channel-note>
         note = patternChannel[i]
         // stop if end, different instrument or new note
-        stop = (i == patternChannel.length + isSequenceEnd - 1 && isSequenceEnd) || (instrument != (patternChannel[0] || 0)) | note | 0
+        stop = (i === patternChannel.length + isSequenceEnd - 1 && isSequenceEnd) || (instrument !== (patternChannel[0] || 0)) | note | 0
         // fill buffer with samples for previous beat, most cpu intensive part
         for (
           j = 0;

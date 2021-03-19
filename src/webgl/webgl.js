@@ -7,7 +7,7 @@ export class Texture {
 }
 
 export function createTexture(gl, image, filter, wrap) {
-  let texture = gl.createTexture()
+  const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture)
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
@@ -19,7 +19,7 @@ export function createTexture(gl, image, filter, wrap) {
 }
 
 export function createPixelsToTexture(gl, width, height, pixels, format, filter, wrap) {
-  let texture = gl.createTexture()
+  const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture)
   gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, gl.UNSIGNED_BYTE, pixels, 0)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
@@ -31,7 +31,7 @@ export function createPixelsToTexture(gl, width, height, pixels, format, filter,
 }
 
 function compileShader(gl, code, type) {
-  let shader = gl.createShader(type)
+  const shader = gl.createShader(type)
   gl.shaderSource(shader, code)
   gl.compileShader(shader)
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -41,10 +41,10 @@ function compileShader(gl, code, type) {
 }
 
 export function compileProgram(gl, glsl) {
-  let code = glsl.split('===========================================================')
-  let vertex = compileShader(gl, code[0], gl.VERTEX_SHADER)
-  let fragment = compileShader(gl, code[1].trim(), gl.FRAGMENT_SHADER)
-  let program = gl.createProgram()
+  const code = glsl.split('===========================================================')
+  const vertex = compileShader(gl, code[0], gl.VERTEX_SHADER)
+  const fragment = compileShader(gl, code[1].trim(), gl.FRAGMENT_SHADER)
+  const program = gl.createProgram()
   gl.attachShader(program, vertex)
   gl.attachShader(program, fragment)
   gl.linkProgram(program)

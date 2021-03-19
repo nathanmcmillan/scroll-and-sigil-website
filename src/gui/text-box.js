@@ -18,7 +18,10 @@ export class TextBox {
   }
 
   down() {
-    if (this.r < this.cols.length - 1) this.r++
+    if (this.r < this.cols.length - 1) {
+      this.r++
+      if (this.c > this.cols[this.r].length - 1) this.c = this.cols[this.r].length - 1
+    }
   }
 
   left() {

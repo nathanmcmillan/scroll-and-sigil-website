@@ -1,5 +1,5 @@
-import {lineIntersectAt, Float} from '../math/vector.js'
-import {WORLD_CELL_SHIFT} from '../world/world.js'
+import { Float, lineIntersectAt } from '../math/vector.js'
+import { worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'
 
 const out = [0.0, 0.0]
 
@@ -18,25 +18,25 @@ export class Camera {
 }
 
 function cameraFixView(self, world) {
-  let target = self.target
+  const target = self.target
   let minC = Math.floor(self.x) >> WORLD_CELL_SHIFT
   let maxC = Math.floor(target.x) >> WORLD_CELL_SHIFT
   let minR = Math.floor(self.z) >> WORLD_CELL_SHIFT
   let maxR = Math.floor(target.z) >> WORLD_CELL_SHIFT
 
   if (maxC < minC) {
-    let c = minC
+    const c = minC
     minC = maxC
     maxC = c
   }
 
   if (maxR < minR) {
-    let r = minR
+    const r = minR
     minR = maxR
     maxR = r
   }
 
-  let columns = world.columns
+  const columns = world.columns
 
   if (minC < 0) minC = 0
   if (minR < 0) minR = 0
@@ -47,14 +47,14 @@ function cameraFixView(self, world) {
 
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      let cell = world.cells[c + r * world.columns]
+      const cell = world.cells[c + r * world.columns]
       let i = cell.lines.length
       while (i--) {
-        let line = cell.lines[i]
+        const line = cell.lines[i]
         if (line.physical && lineIntersectAt(out, self.x, self.z, target.x, target.z, line.a.x, line.a.y, line.b.x, line.b.y)) {
-          let angle = Math.atan2(target.z - self.z, target.x - self.x)
-          let dx = Math.cos(angle)
-          let dz = Math.sin(angle)
+          const angle = Math.atan2(target.z - self.z, target.x - self.x)
+          const dx = Math.cos(angle)
+          const dz = Math.sin(angle)
           self.x = out[0] + fudge * dx
           self.z = out[1] + fudge * dz
         }
@@ -62,33 +62,33 @@ function cameraFixView(self, world) {
     }
   }
 
-  let sector = world.findSector(self.x, self.z)
+  const sector = worldFindSector(world, self.x, self.z)
   if (sector === null) return
   if (sector.hasFloor() && self.y < sector.floor + fudge) self.y = sector.floor + fudge
   if (sector.hasCeiling() && self.y > sector.ceiling - fudge) self.y = sector.ceiling - fudge
 }
 
 export function cameraFollowOrbit(self) {
-  let target = self.target
-  let sinX = Math.sin(self.rx)
-  let cosX = Math.cos(self.rx)
-  let sinY = Math.sin(self.ry)
-  let cosY = Math.cos(self.ry)
+  const target = self.target
+  const sinX = Math.sin(self.rx)
+  const cosX = Math.cos(self.rx)
+  const sinY = Math.sin(self.ry)
+  const cosY = Math.cos(self.ry)
   self.x = target.x - self.radius * cosX * sinY
   self.y = target.y + self.radius * sinX + target.height
   self.z = target.z + self.radius * cosX * cosY
 }
 
 export function cameraFollowCinema(self, world) {
-  let target = self.target
+  const target = self.target
   const offset = Math.PI / 16.0
-  let sinX = Math.sin(self.rx)
-  let cosX = Math.cos(self.rx)
-  let sinY = Math.sin(self.ry - offset)
-  let cosY = Math.cos(self.ry - offset)
-  let x = target.x
-  let y = target.y + target.height
-  let z = target.z
+  const sinX = Math.sin(self.rx)
+  const cosX = Math.cos(self.rx)
+  const sinY = Math.sin(self.ry - offset)
+  const cosY = Math.cos(self.ry - offset)
+  const x = target.x
+  const y = target.y + target.height
+  const z = target.z
   self.x = x - self.radius * cosX * sinY
   self.y = y + self.radius * sinX
   self.z = z + self.radius * cosX * cosY
@@ -96,16 +96,16 @@ export function cameraFollowCinema(self, world) {
 }
 
 export function cameraTowardsTarget(self) {
-  let target = self.target
+  const target = self.target
   if (!target) return
   if (Float.eq(self.x, target.x) && Float.eq(self.z, target.z)) return
-  let x = target.x - self.x
-  let z = target.z - self.z
-  let angle = Math.atan2(z, x)
-  let distance = Math.sqrt(x * x + z * z)
-  let speed = Math.min(0.2, distance)
-  let dx = speed * Math.cos(angle)
-  let dz = speed * Math.sin(angle)
+  const x = target.x - self.x
+  const z = target.z - self.z
+  const angle = Math.atan2(z, x)
+  const distance = Math.sqrt(x * x + z * z)
+  const speed = Math.min(0.2, distance)
+  const dx = speed * Math.cos(angle)
+  const dz = speed * Math.sin(angle)
   self.x += dx
   self.z += dz
 }

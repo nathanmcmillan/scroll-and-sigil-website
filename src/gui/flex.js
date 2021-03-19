@@ -29,14 +29,14 @@ class FlexText extends FlexBox {
 }
 
 export function flexBox(width = 0, height = 0) {
-  let flex = new FlexBox()
+  const flex = new FlexBox()
   flex.width = width
   flex.height = height
   return flex
 }
 
 export function flexText(text, width = 0, height = 0) {
-  let flex = new FlexText()
+  const flex = new FlexText()
   flex.text = text
   flex.width = width
   flex.height = height
@@ -44,9 +44,9 @@ export function flexText(text, width = 0, height = 0) {
 }
 
 export function flexSolve(width, height, ...list) {
-  for (let flex of list) {
-    let funX = flex.funX
-    if (funX != null) {
+  for (const flex of list) {
+    const funX = flex.funX
+    if (funX !== null) {
       if (funX === 'center') {
         if (flex.fromX) {
           flex.x = Math.floor(flex.fromX.x + 0.5 * flex.fromX.width - 0.5 * flex.width)
@@ -68,8 +68,8 @@ export function flexSolve(width, height, ...list) {
       flex.x = parseFloat(flex.argX)
     }
 
-    let funY = flex.funY
-    if (funY != null) {
+    const funY = flex.funY
+    if (funY !== null) {
       if (funY === 'center') {
         if (flex.fromY) {
           flex.y = Math.floor(flex.fromY.y + 0.5 * flex.fromY.height - 0.5 * flex.height)
@@ -98,7 +98,7 @@ export function flexSize(...list) {
   let y = Number.MAX_VALUE
   let right = 0
   let bottom = 0
-  for (let flex of list) {
+  for (const flex of list) {
     if (flex.x < x) x = flex.x
     if (flex.y < y) y = flex.y
     if (flex.x + flex.width > right) right = flex.x + flex.width

@@ -5,17 +5,17 @@ class Reader {
   }
 
   bool() {
-    let src = this.src
-    let pos = this.pos
+    const src = this.src
+    const pos = this.pos
     if (pos >= src.length) throw 'Reader out of bounds: ' + pos
-    let value = src[pos]
+    const value = src[pos]
     this.pos = pos + 1
     return value === '1'
   }
 
   char() {
-    let src = this.src
-    let pos = this.pos
+    const src = this.src
+    const pos = this.pos
     if (this.pos + 8 >= this.src.length) throw 'Reader out of bounds: ' + pos
     let value = ''
     for (let i = 0; i < 8; i++) value += src[pos + i]
@@ -24,8 +24,8 @@ class Reader {
   }
 
   int() {
-    let src = this.src
-    let pos = this.pos
+    const src = this.src
+    const pos = this.pos
     if (this.pos + 32 >= this.src.length) throw 'Reader out of bounds: ' + pos
     let value = ''
     for (let i = 0; i < 32; i++) value += src[pos + i]
@@ -53,8 +53,8 @@ class Queue {
   }
 
   add(item) {
-    let items = this.items
-    let len = items.length
+    const items = this.items
+    const len = items.length
     for (let i = 0; i < len; i++) {
       if (item.freq < items[i].freq) {
         items.splice(i, 0, item)
@@ -109,8 +109,8 @@ function codes(lookup, node, str) {
 }
 
 function binary(src) {
-  let len = src.length
-  let array = new Uint8Array(Math.ceil(len / 8))
+  const len = src.length
+  const array = new Uint8Array(Math.ceil(len / 8))
   let i = 0
   let pos = 0
   while (true) {
@@ -118,13 +118,13 @@ function binary(src) {
       let value = ''
       while (i < len) value += src[i++]
       while (value.length < 8) value += '0'
-      let u8 = parseInt(value, 2)
+      const u8 = parseInt(value, 2)
       array[pos] = u8
       break
     } else {
       let value = ''
       for (let k = 0; k < 8; k++) value += src[i + k]
-      let u8 = parseInt(value, 2)
+      const u8 = parseInt(value, 2)
       array[pos] = u8
       pos++
       i += 8
@@ -134,25 +134,25 @@ function binary(src) {
 }
 
 export function compress(src) {
-  let len = src.length
+  const len = src.length
   if (len < 1) return null
-  let map = new Map()
+  const map = new Map()
   let i = len
   while (i--) {
-    let c = src[i]
+    const c = src[i]
     let f = map.get(c)
     if (f === undefined) f = 0
     map.set(c, f + 1)
   }
-  let queue = new Queue()
+  const queue = new Queue()
   for (const [k, v] of map) queue.add(new Node(k, v))
   while (queue.size() > 1) {
-    let a = queue.dequeue()
-    let b = queue.dequeue()
+    const a = queue.dequeue()
+    const b = queue.dequeue()
     queue.add(new Node('\0', a.freq + b.freq, a, b))
   }
-  let tree = queue.dequeue()
-  let lookup = new Map()
+  const tree = queue.dequeue()
+  const lookup = new Map()
   codes(lookup, tree, '')
   let out = write(tree)
   out += int32(len)
@@ -166,10 +166,10 @@ function read(reader) {
 }
 
 function text(src) {
-  let len = src.length
+  const len = src.length
   let str = ''
   for (let i = 0; i < len; i++) {
-    let u8 = src[i]
+    const u8 = src[i]
     for (let k = 7; k >= 0; k--) {
       str += ((u8 >> k) & 1) === 1 ? '1' : '0'
     }
@@ -178,15 +178,15 @@ function text(src) {
 }
 
 export function decompress(src) {
-  let str = text(src)
-  let reader = new Reader(str)
-  let tree = read(reader)
-  let len = reader.int()
+  const str = text(src)
+  const reader = new Reader(str)
+  const tree = read(reader)
+  const len = reader.int()
   let out = ''
   for (let i = 0; i < len; i++) {
     let node = tree
     while (!node.leaf()) {
-      let bool = reader.bool()
+      const bool = reader.bool()
       if (bool) node = node.right
       else node = node.left
     }

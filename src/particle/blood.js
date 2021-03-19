@@ -1,18 +1,17 @@
-import {WORLD_CELL_SHIFT} from '../world/world.js'
-import {textureIndexForName, spritesByName} from '../assets/assets.js'
-import {randomInt} from '../math/random.js'
-import {particleSetup, particleUpdateSector} from '../particle/particle.js'
+import { randomInt } from '../math/random.js'
+import { particleSetup, particleUpdateSector } from '../particle/particle.js'
+import { worldNewParticle, WORLD_CELL_SHIFT } from '../world/world.js'
 
 function bloodHitFloor(self) {
-  let sector = self.sector
-  let decal = self.world.newDecal(self.texture)
+  const sector = self.sector
+  const decal = self.world.newDecal(self.stamp.texture)
 
-  let sprite = self.sprite
-  let width = sprite.halfWidth
-  let height = 0.5 * sprite.height
+  const sprite = self.stamp.sprite
+  const width = sprite.halfWidth
+  const height = 0.5 * sprite.height
 
-  let x = Math.round(self.x * 16.0) / 16.0
-  let z = Math.round(self.z * 16.0) / 16.0
+  const x = Math.round(self.x * 16.0) / 16.0
+  const z = Math.round(self.z * 16.0) / 16.0
 
   decal.x1 = x - width
   decal.y1 = sector.floor
@@ -48,15 +47,15 @@ function bloodHitFloor(self) {
 }
 
 function bloodHitCeiling(self) {
-  let sector = self.sector
-  let decal = self.world.newDecal(self.texture)
+  const sector = self.sector
+  const decal = self.world.newDecal(self.stamp.texture)
 
-  let sprite = self.sprite
-  let width = sprite.halfWidth
-  let height = 0.5 * sprite.height
+  const sprite = self.stamp.sprite
+  const width = sprite.halfWidth
+  const height = 0.5 * sprite.height
 
-  let x = Math.round(self.x * 16.0) / 16.0
-  let z = Math.round(self.z * 16.0) / 16.0
+  const x = Math.round(self.x * 16.0) / 16.0
+  const z = Math.round(self.z * 16.0) / 16.0
 
   decal.x1 = x + width
   decal.y1 = sector.ceiling
@@ -93,31 +92,31 @@ function bloodHitCeiling(self) {
 
 function bloodHitLine(self, line) {
   if (!line.physical) {
-    let max = self.y + self.height
+    const max = self.y + self.height
     if (line.plus && self.y > line.plus.floor && max < line.plus.ceiling) return false
     if (line.minus && self.y > line.minus.floor && max < line.minus.ceiling) return false
   }
 
-  let box = self.box
-  let vx = line.b.x - line.a.x
-  let vz = line.b.y - line.a.y
+  const box = self.box
+  const vx = line.b.x - line.a.x
+  const vz = line.b.y - line.a.y
   let wx = self.x - line.a.x
   let wz = self.z - line.a.y
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   if (t < 0.0) t = 0.0
   else if (t > 1.0) t = 1.0
-  let px = line.a.x + vx * t - self.x
-  let pz = line.a.y + vz * t - self.z
+  const px = line.a.x + vx * t - self.x
+  const pz = line.a.y + vz * t - self.z
   if (px * px + pz * pz > box * box) return false
 
-  let decal = self.world.newDecal(self.texture)
+  const decal = self.world.newDecal(self.stamp.texture)
 
-  let x = px + self.x
-  let z = pz + self.z
+  const x = px + self.x
+  const z = pz + self.z
 
-  let sprite = self.sprite
-  let width = sprite.halfWidth
-  let height = sprite.height
+  const sprite = self.stamp.sprite
+  const width = sprite.halfWidth
+  const height = sprite.height
 
   decal.x1 = x - line.normal.y * width
   decal.y1 = self.y + height
@@ -183,17 +182,17 @@ function bloodCheck(self) {
     bloodHitCeiling(self)
     return true
   }
-  let box = self.box
-  let minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
-  let maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
-  let minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
-  let maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
-  let world = self.world
-  let columns = world.columns
+  const box = self.box
+  const minC = Math.floor(self.x - box) >> WORLD_CELL_SHIFT
+  const maxC = Math.floor(self.x + box) >> WORLD_CELL_SHIFT
+  const minR = Math.floor(self.z - box) >> WORLD_CELL_SHIFT
+  const maxR = Math.floor(self.z + box) >> WORLD_CELL_SHIFT
+  const world = self.world
+  const columns = world.columns
   if (minC < 0 || minR < 0 || maxC >= columns || maxR >= world.rows) return true
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
-      let cell = world.cells[c + r * columns]
+      const cell = world.cells[c + r * columns]
       let i = cell.lines.length
       while (i--) {
         if (bloodHitLine(self, cell.lines[i])) {
@@ -219,9 +218,8 @@ function bloodInit(self, entity, dx, dy, dz) {
   self.update = bloodUpdate
   self.box = entity.box()
   self.height = entity.height()
-  self.texture = textureIndexForName(entity.get('sprite'))
-  let types = entity.get('animation')
-  self.sprite = spritesByName(entity.get('sprite')).get(types[randomInt(types.length)])
+  const sprites = entity.stamps()
+  self.stamp = sprites[randomInt(sprites.length)]
   self.deltaX = dx
   self.deltaY = dy
   self.deltaZ = dz
@@ -229,7 +227,7 @@ function bloodInit(self, entity, dx, dy, dz) {
 }
 
 export function newBlood(world, entity, x, y, z, dx, dy, dz) {
-  let particle = world.newParticle(x, y, z)
+  const particle = worldNewParticle(world, x, y, z)
   bloodInit(particle, entity, dx, dy, dz)
   return particle
 }

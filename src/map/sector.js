@@ -1,11 +1,17 @@
+const MAX_SECTOR_HEIGHT = 9999
+
 export class Sector {
-  constructor(bottom, floor, ceiling, top, floorTexture, ceilingTexture, vecs, lines) {
-    this.bottom = bottom
-    this.floor = floor
-    this.ceiling = ceiling
-    this.top = top
+  constructor(bottom, floor, ceiling, top, floorTexture, ceilingTexture, flags, trigger, vecs, lines) {
+    this.bottom = Math.min(bottom, floor)
+    this.floor = Math.max(bottom, floor)
+    if (ceiling === 0) ceiling = MAX_SECTOR_HEIGHT
+    if (top === 0) top = MAX_SECTOR_HEIGHT
+    this.ceiling = Math.min(ceiling, top)
+    this.top = Math.max(ceiling, top)
     this.floorTexture = floorTexture
     this.ceilingTexture = ceilingTexture
+    this.flags = flags
+    this.trigger = trigger
     this.vecs = vecs
     this.lines = lines
     this.triangles = []
@@ -22,15 +28,23 @@ export class Sector {
     return this.ceilingTexture >= 0
   }
 
+  getFloorTexture() {
+    return this.floorTexture
+  }
+
+  getCeilingTexture() {
+    return this.ceilingTexture
+  }
+
   contains(x, z) {
     let odd = false
-    let len = this.vecs.length
+    const len = this.vecs.length
     let k = len - 1
     for (let i = 0; i < len; i++) {
-      let a = this.vecs[i]
-      let b = this.vecs[k]
-      if (a.y > z != b.y > z) {
-        let val = ((b.x - a.x) * (z - a.y)) / (b.y - a.y) + a.x
+      const a = this.vecs[i]
+      const b = this.vecs[k]
+      if (a.y > z !== b.y > z) {
+        const val = ((b.x - a.x) * (z - a.y)) / (b.y - a.y) + a.x
         if (x < val) {
           odd = !odd
         }
@@ -43,7 +57,7 @@ export class Sector {
   find(x, z) {
     let i = this.inside.length
     while (i--) {
-      let inside = this.inside[i]
+      const inside = this.inside[i]
       if (inside.contains(x, z)) {
         return inside.find(x, z)
       }
@@ -53,14 +67,14 @@ export class Sector {
 
   searchFor(x, z) {
     if (this.contains(x, z)) return this.find(x, z)
-    let queue = this.neighbors.slice()
-    let done = []
+    const queue = this.neighbors.slice()
+    const done = []
     while (queue.length > 0) {
-      let current = queue.shift()
+      const current = queue.shift()
       if (current.contains(x, z)) return current.find(x, z)
-      let neighbors = current.neighbors
+      const neighbors = current.neighbors
       for (let i = 0; i < neighbors.length; i++) {
-        let neighbor = neighbors[i]
+        const neighbor = neighbors[i]
         if (neighbor === current || queue.includes(neighbor) || done.includes(neighbor)) continue
         queue.push(neighbor)
       }
@@ -77,10 +91,10 @@ export class Sector {
   }
 }
 
-function deleteNestedInside(set, inside) {
-  for (const nested of inside.inside) {
+function deleteNestedInside(set, inner) {
+  for (const nested of inner.inside) {
     set.add(nested)
-    deleteNestedInside(nested)
+    deleteNestedInside(set, nested)
   }
 }
 
@@ -106,43 +120,60 @@ export function sectorInsideOutside(sectors) {
     }
   }
   for (const sector of sectors) {
-    let dead = new Set()
-    for (const inside of sector.inside) deleteNestedInside(dead, inside)
+    const inside = sector.inside
+    const dead = new Set()
+    for (const inner of inside) deleteNestedInside(dead, inner)
     for (const other of dead) {
-      let index = sector.inside.indexOf(other)
-      if (index >= 0) sector.inside.splice(index, 1)
+      const index = inside.indexOf(other)
+      if (index >= 0) inside.splice(index, 1)
     }
-    for (const inside of sector.inside) inside.outside = sector
+    for (const inner of inside) inner.outside = sector
   }
 }
 
-export function sectorLineNeighbors(sectors, scale) {
-  for (const sector of sectors) {
-    for (const other of sectors) {
-      if (sector === other) continue
-      if (other.neighbors.includes(sector)) continue
-      iter: for (const o of other.lines) {
-        for (const line of sector.lines) {
-          if (line === o) {
-            sector.neighbors.push(other)
-            other.neighbors.push(sector)
-            line.updateSectors(sector, other, scale)
-            break iter
-          }
+function sectorLineFacing(sector, line) {
+  const a = line.a
+  const vecs = sector.vecs
+  const size = vecs.length
+  for (let i = 0; i < size; i++) {
+    const vec = vecs[i]
+    if (vec !== a) continue
+    i++
+    if (i === size) i = 0
+    if (vecs[i] === line.b) line.plus = sector
+    else line.minus = sector
+    return
+  }
+}
+
+export function sectorLineNeighbors(sectors, lines, scale) {
+  const size = sectors.length
+  for (let i = 0; i < size; i++) {
+    const sector = sectors[i]
+    for (const line of sector.lines) sectorLineFacing(sector, line)
+  }
+  for (const line of lines) {
+    const plus = line.plus
+    const minus = line.minus
+    if (plus !== null && minus !== null) {
+      if (!plus.neighbors.includes(minus)) plus.neighbors.push(minus)
+      if (!minus.neighbors.includes(plus)) minus.neighbors.push(plus)
+    }
+  }
+  for (let i = 0; i < size; i++) {
+    const sector = sectors[i]
+    const outside = sector.outside
+    if (outside) {
+      if (!sector.neighbors.includes(sector.outside)) sector.neighbors.push(sector.outside)
+      if (!sector.outside.neighbors.includes(sector)) sector.outside.neighbors.push(sector)
+      for (const line of sector.lines) {
+        if (line.plus !== null) {
+          if (line.minus === null) line.minus = outside
+        } else {
+          if (line.plus === null) line.plus = outside
         }
       }
     }
-    let plus, minus
-    if (sector.outside) {
-      plus = sector
-      minus = sector.outside
-    } else {
-      plus = null
-      minus = sector
-    }
-    for (const line of sector.lines) {
-      if (line.plus !== null || line.minus !== null) continue
-      line.updateSectors(plus, minus, scale)
-    }
   }
+  for (const line of lines) line.updateSectorsForLine(scale)
 }

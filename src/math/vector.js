@@ -21,9 +21,9 @@ export class Vector2 {
   }
 
   normal(b) {
-    let x = this.y - b.y
-    let y = -(this.x - b.x)
-    let magnitude = Math.sqrt(x * x + y * y)
+    const x = this.y - b.y
+    const y = -(this.x - b.x)
+    const magnitude = Math.sqrt(x * x + y * y)
     return new Vector2(x / magnitude, y / magnitude)
   }
 
@@ -46,8 +46,8 @@ export class Vector3 {
   }
 
   normalize() {
-    let magnitude = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z)
-    let multiple = 1.0 / magnitude
+    const magnitude = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z)
+    const multiple = 1.0 / magnitude
     this.x *= multiple
     this.y *= multiple
     this.z *= multiple
@@ -59,33 +59,33 @@ export class Vector3 {
 }
 
 export function lineIntersect(ax, ay, bx, by, cx, cy, dx, dy) {
-  let a1 = by - ay
-  let b1 = ax - bx
-  let c1 = bx * ay - ax * by
-  let r3 = a1 * cx + b1 * cy + c1
-  let r4 = a1 * dx + b1 * dy + c1
+  const a1 = by - ay
+  const b1 = ax - bx
+  const c1 = bx * ay - ax * by
+  const r3 = a1 * cx + b1 * cy + c1
+  const r4 = a1 * dx + b1 * dy + c1
   if (!Float.zero(r3) && !Float.zero(r4) && r3 * r4 >= 0.0) return false
-  let a2 = dy - cy
-  let b2 = cx - dx
-  let c2 = dx * cy - cx * dy
-  let r1 = a2 * ax + b2 * ay + c2
-  let r2 = a2 * bx + b2 * by + c2
+  const a2 = dy - cy
+  const b2 = cx - dx
+  const c2 = dx * cy - cx * dy
+  const r1 = a2 * ax + b2 * ay + c2
+  const r2 = a2 * bx + b2 * by + c2
   if (!Float.zero(r1) && !Float.zero(r2) && r1 * r2 >= 0.0) return false
-  let denominator = a1 * b2 - a2 * b1
+  const denominator = a1 * b2 - a2 * b1
   return !Float.zero(denominator)
 }
 
 export function lineIntersectAt(out, ax, ay, bx, by, cx, cy, dx, dy) {
-  let a1 = by - ay
-  let a2 = dy - cy
-  let a3 = bx - ax
-  let a4 = ay - cy
-  let a5 = ax - cx
-  let a6 = dx - cx
-  let div = a2 * a3 - a6 * a1
-  let uA = (a6 * a4 - a2 * a5) / div
+  const a1 = by - ay
+  const a2 = dy - cy
+  const a3 = bx - ax
+  const a4 = ay - cy
+  const a5 = ax - cx
+  const a6 = dx - cx
+  const div = a2 * a3 - a6 * a1
+  const uA = (a6 * a4 - a2 * a5) / div
   if (uA < 0.0 || uA > 1.0) return false
-  let uB = (a3 * a4 - a1 * a5) / div
+  const uB = (a3 * a4 - a1 * a5) / div
   if (uB < 0.0 || uB > 1.0) return false
   out[0] = ax + uA * a3
   out[1] = ay + uA * a1
@@ -93,8 +93,8 @@ export function lineIntersectAt(out, ax, ay, bx, by, cx, cy, dx, dy) {
 }
 
 export function normalize(a) {
-  let magnitude = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2])
-  let multiple = 1.0 / magnitude
+  const magnitude = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2])
+  const multiple = 1.0 / magnitude
   a[0] *= multiple
   a[1] *= multiple
   a[2] *= multiple

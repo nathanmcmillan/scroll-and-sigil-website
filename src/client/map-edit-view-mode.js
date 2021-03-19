@@ -1,34 +1,35 @@
-import {drawSprite, drawTextSpecial, FONT_WIDTH, FONT_HEIGHT} from '../render/render.js'
-import {identity, multiply, rotateX, rotateY, translate} from '../math/matrix.js'
-import {textureByName, textureByIndex} from '../assets/assets.js'
-import {drawWall, drawFloorCeil} from '../client/render-sector.js'
-import {renderTouch} from '../client/render-touch.js'
-import {redf} from '../editor/palette.js'
-import {renderDialogBox} from '../client/client-util.js'
+import { textureByIndex, textureByName, textureIndexForName } from '../assets/assets.js'
+import { renderDialogBox } from '../client/client-util.js'
+import { drawFloorCeil, drawWall } from '../client/render-sector.js'
+import { renderTouch } from '../client/render-touch.js'
+import { calcFontScale, defaultFont } from '../editor/editor-util.js'
+import { redf } from '../editor/palette.js'
+import { identity, multiply, rotateX, rotateY, translate } from '../math/matrix.js'
+import { drawSprite, drawTextFontSpecial } from '../render/render.js'
 
 function lineRender(client, line) {
   let wall = line.top
-  if (wall.inUse()) {
-    let buffer = client.getSectorBuffer(wall.texture)
+  if (wall.valid()) {
+    const buffer = client.getSectorBuffer(textureIndexForName(wall.texture))
     drawWall(buffer, wall)
   }
   wall = line.middle
-  if (wall.inUse()) {
-    let buffer = client.getSectorBuffer(wall.texture)
+  if (wall.valid()) {
+    const buffer = client.getSectorBuffer(textureIndexForName(wall.texture))
     drawWall(buffer, wall)
   }
   wall = line.bottom
-  if (wall.inUse()) {
-    let buffer = client.getSectorBuffer(wall.texture)
+  if (wall.valid()) {
+    const buffer = client.getSectorBuffer(textureIndexForName(wall.texture))
     drawWall(buffer, wall)
   }
 }
 
 function floorCeilRender(client, sector) {
   for (const triangle of sector.triangles) {
-    let texture = triangle.texture
+    const texture = triangle.texture
     if (texture < 0) continue
-    let buffer = client.getSectorBuffer(texture)
+    const buffer = client.getSectorBuffer(texture)
     drawFloorCeil(buffer, triangle)
   }
 }
@@ -58,9 +59,9 @@ export function renderMapEditViewMode(state) {
 
   if (client.touch) renderTouch(client.touchRender)
 
-  // sky box
+  // render world
 
-  rendering.setProgram(2)
+  rendering.setProgram('texture3d-rgb')
   rendering.setView(0, client.top, width, height)
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -75,11 +76,9 @@ export function renderMapEditViewMode(state) {
   multiply(projection, client.perspective, view)
   rendering.updateUniformMatrix('u_mvp', projection)
 
-  let sky = textureByName('sky-box-1')
+  const sky = textureByName('sky-box-1')
   rendering.bindTexture(gl.TEXTURE0, sky.texture)
   rendering.bindAndDraw(client.bufferSky)
-
-  // render world
 
   gl.enable(gl.CULL_FACE)
   gl.enable(gl.DEPTH_TEST)
@@ -96,20 +95,20 @@ export function renderMapEditViewMode(state) {
     rendering.bindAndDraw(buffer)
   }
 
-  let buffers = client.spriteBuffers
+  const buffers = client.spriteBuffers
   for (const buffer of buffers.values()) {
     buffer.zero()
   }
 
-  let sine = Math.sin(-camera.ry)
-  let cosine = Math.cos(-camera.ry)
+  const sine = Math.sin(-camera.ry)
+  const cosine = Math.cos(-camera.ry)
 
-  let things = maps.things
+  const things = maps.things
   let t = things.length
   while (t--) {
-    let thing = things[t]
-    let buffer = client.getSpriteBuffer(thing.texture)
-    drawSprite(buffer, thing.x, thing.y, thing.z, thing.sprite, sine, cosine)
+    const thing = things[t]
+    const buffer = client.getSpriteBuffer(thing.stamp.texture)
+    drawSprite(buffer, thing.x, thing.y, thing.z, thing.stamp.sprite, sine, cosine)
   }
 
   for (const [index, buffer] of buffers) {
@@ -120,7 +119,7 @@ export function renderMapEditViewMode(state) {
 
   // text
 
-  rendering.setProgram(4)
+  rendering.setProgram('texture2d-font')
   rendering.setView(0, client.top, width, height)
 
   gl.disable(gl.CULL_FACE)
@@ -130,17 +129,18 @@ export function renderMapEditViewMode(state) {
   multiply(projection, client.orthographic, view)
   rendering.updateUniformMatrix('u_mvp', projection)
 
-  const fontScale = scale
-  const fontWidth = fontScale * FONT_WIDTH
-  const fontHeight = fontScale * FONT_HEIGHT
+  const font = defaultFont()
+  const fontScale = calcFontScale(scale)
+  const fontWidth = fontScale * font.width
+  const fontHeight = fontScale * font.base
 
   client.bufferGUI.zero()
-  let text = 'x:' + camera.x.toFixed(2) + ' y:' + camera.y.toFixed(2) + ' z:' + camera.z.toFixed(2)
-  drawTextSpecial(client.bufferGUI, fontWidth, fontHeight, text, fontScale, redf(0), redf(1), redf(2))
-  rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+  const text = 'x:' + camera.x.toFixed(2) + ' y:' + camera.y.toFixed(2) + ' z:' + camera.z.toFixed(2)
+  drawTextFontSpecial(client.bufferGUI, fontWidth, fontHeight, text, fontScale, redf(0), redf(1), redf(2), font)
+  rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
   rendering.updateAndDraw(client.bufferGUI)
 
   // dialog box
 
-  if (maps.dialog != null) renderDialogBox(state, scale, maps.dialog)
+  if (maps.dialog !== null) renderDialogBox(state, scale, font, maps.dialog)
 }

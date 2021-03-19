@@ -1,0 +1,27 @@
+map untitled
+vectors
+35.0000 58.4000
+50.2000 55.8000
+43.0000 47.4000
+48.5000 42.3000
+57.2000 37.4000
+31.5000 35.9000
+40.0000 25.9000
+50.7000 25.7000
+end vectors
+lines
+0 2 none grass none 0 0 0
+1 4 none grass none 0 0 0
+2 1 none grass none 0 0 0
+2 3 none grass none 0 0 0
+3 7 none grass none 0 0 0
+4 7 none grass none 0 0 0
+5 0 none grass none 0 0 0
+6 5 none grass none 0 0 0
+7 6 none grass none 0 0 0
+end lines
+sectors
+0 0 5 6 none none 6 5 0 2 3 7 6 6 6 0 3 4 8 7
+0 0 5 6 none none 5 2 1 4 7 3 5 2 1 5 4 3
+end sectors
+end map

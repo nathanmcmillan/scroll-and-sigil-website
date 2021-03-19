@@ -16,13 +16,6 @@ entities [
   armor
   zombie
 ]
-tiles [
-  grass
-  plank-floor
-  plank
-  stone-floor
-  stone
-]
 sounds [
   baron-scream
   baron-melee
@@ -31,10 +24,19 @@ sounds [
   baron-death
   plasma-impact
   pickup-item
+  beep.txt
 ]
-textures [
-  {name:tic-80-font.txt, wrap:clamp}
-  {name:tic-80-wide-font.txt, wrap:clamp}
-  {name:editor-sprites.txt, wrap:clamp}
-  {name:sky-box-1.txt, wrap:clamp}
+sprites [
+  tic-80-font.txt
+  tic-80-wide-font.txt
+  dina-10-font.txt
+  win-9-font.txt
+  ega-8-font.txt
+  vga-437-font.txt
+  super-font.txt
+  super-outline-font.txt
+  super-title-font.txt
+  editor-sprites.txt
+  sky-box-1.txt
+  tiles.txt
 ]

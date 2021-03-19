@@ -1,11 +1,11 @@
-import {textureByName} from '../assets/assets.js'
-import {drawTextSpecial} from '../render/render.js'
-import {identity, multiply} from '../math/matrix.js'
-import {whitef, darkgreyf} from '../editor/palette.js'
-import {compress} from '../compress/huffman.js'
-import {SfxEdit} from '../editor/sfx.js'
-import {calcFontScale} from '../editor/editor-util.js'
-import * as In from '../input/input.js'
+import { textureByName } from '../assets/assets.js'
+import { renderDialogBox, renderStatus } from '../client/client-util.js'
+import { calcBottomBarHeight, calcFontPad, calcFontScale, calcTopBarHeight, defaultFont } from '../editor/editor-util.js'
+import { orange0f, orange1f, orange2f, red0f, red1f, red2f, silver0f, silver1f, silver2f, slatef } from '../editor/palette.js'
+import { DURATION_INDEX, FREQUENCY_INDEX, SfxEdit, WAVE_INDEX } from '../editor/sfx.js'
+import { identity, multiply } from '../math/matrix.js'
+import { drawRectangle, drawTextFont } from '../render/render.js'
+import { SEMITONES, WAVE_LIST, diatonic, semitoneName } from '../sound/synth.js'
 
 export class SfxState {
   constructor(client) {
@@ -15,7 +15,7 @@ export class SfxState {
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
 
-    let sfx = new SfxEdit(client.width, client.height - client.top, client.scale, client.input)
+    const sfx = new SfxEdit(this, client.width, client.height - client.top, client.scale, client.input)
     this.sfx = sfx
   }
 
@@ -26,30 +26,10 @@ export class SfxState {
   }
 
   keyEvent(code, down) {
-    let sfx = this.sfx
-    if (this.keys.has(code)) sfx.input.set(this.keys.get(code), down)
-    if (down && code === 'Digit1') {
-      this.client.openState('dashboard')
-    } else if (down && code === 'Digit0') {
-      // local storage
-      let blob = sfx.export()
-      localStorage.setItem('sfx.txt', blob)
-      console.info('saved to local storage!')
-      console.info(blob)
-    } else if (down && code === 'Digit6') {
-      // compressed text
-      let blob = compress(sfx.export())
-      let download = document.createElement('a')
-      download.href = window.URL.createObjectURL(new Blob([blob], {type: 'application/octet-stream'}))
-      download.download = 'sfx.huff'
-      download.click()
-    } else if (down && code === 'Digit8') {
-      // plain text
-      let blob = sfx.export()
-      let download = document.createElement('a')
-      download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
-      download.download = 'sfx.txt'
-      download.click()
+    const sfx = this.sfx
+    if (this.keys.has(code)) {
+      sfx.input.set(this.keys.get(code), down)
+      sfx.immediateInput()
     }
   }
 
@@ -61,9 +41,51 @@ export class SfxState {
     await this.sfx.load()
   }
 
-  update() {
-    let sfx = this.sfx
-    sfx.update()
+  eventCall(event) {
+    if (event === 'start-export') this.export()
+    else if (event === 'save-save') this.save()
+    else if (event === 'start-open') this.import()
+    else if (event === 'start-save') this.save()
+    else if (event === 'start-exit') this.returnToDashboard()
+  }
+
+  returnToDashboard() {
+    this.client.openState('dashboard')
+  }
+
+  import() {
+    const button = document.createElement('input')
+    button.type = 'file'
+    button.onchange = (e) => {
+      const file = e.target.files[0]
+      console.info(file)
+      const reader = new FileReader()
+      reader.readAsText(file, 'utf-8')
+      reader.onload = (event) => {
+        const content = event.target.result
+        this.sfx.read(content)
+      }
+    }
+    button.click()
+  }
+
+  save() {
+    const blob = this.sfx.export()
+    localStorage.setItem('sfx.txt', blob)
+    console.info(blob)
+    console.info('saved to local storage!')
+  }
+
+  export() {
+    const blob = this.sfx.export()
+    const download = document.createElement('a')
+    download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
+    download.download = 'sfx.txt'
+    download.click()
+  }
+
+  update(timestamp) {
+    this.sfx.update(timestamp)
   }
 
   render() {
@@ -79,78 +101,71 @@ export class SfxState {
     const width = client.width
     const height = client.height
 
-    gl.clearColor(darkgreyf(0), darkgreyf(1), darkgreyf(2), 1.0)
+    identity(view)
+    multiply(projection, client.orthographic, view)
 
+    const font = defaultFont()
+    const fontScale = calcFontScale(scale)
+    const fontWidth = fontScale * font.width
+    const fontHeight = fontScale * font.base
+    const fontPad = calcFontPad(fontHeight)
+    const fontHeightAndPad = fontHeight + fontPad
+
+    rendering.setProgram('color2d')
+    rendering.setView(0, client.top, width, height)
+    rendering.updateUniformMatrix('u_mvp', projection)
+
+    gl.clearColor(slatef(0), slatef(1), slatef(2), 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
 
-    identity(view)
-    multiply(projection, client.orthographic, view)
+    // top and bottom bar
 
-    const fontScale = calcFontScale(scale)
+    client.bufferColor.zero()
+
+    const topBarHeight = calcTopBarHeight(scale)
+    drawRectangle(client.bufferColor, 0, height - topBarHeight, width, topBarHeight, red0f, red1f, red2f, 1.0)
+
+    const bottomBarHeight = calcBottomBarHeight(scale)
+    drawRectangle(client.bufferColor, 0, 0, width, bottomBarHeight, red0f, red1f, red2f, 1.0)
+
+    rendering.updateAndDraw(client.bufferColor)
 
     // text
-    rendering.setProgram(4)
+
+    rendering.setProgram('texture2d-font')
     rendering.setView(0, 0, width, height)
     rendering.updateUniformMatrix('u_mvp', projection)
 
+    //  status text
+
     client.bufferGUI.zero()
 
-    // keys
-    let startKey = this.keys.reversed(In.BUTTON_START)
-    if (startKey.startsWith('Key')) startKey = startKey.substring(3)
-
-    let selectKey = this.keys.reversed(In.BUTTON_SELECT)
-    if (selectKey.startsWith('Key')) selectKey = selectKey.substring(3)
-
-    let buttonA = this.keys.reversed(In.BUTTON_A)
-    if (buttonA.startsWith('Key')) buttonA = buttonA.substring(3)
-
-    let buttonB = this.keys.reversed(In.BUTTON_B)
-    if (buttonB.startsWith('Key')) buttonB = buttonB.substring(3)
-
-    let buttonX = this.keys.reversed(In.BUTTON_X)
-    if (buttonX.startsWith('Key')) buttonX = buttonX.substring(3)
-
-    let buttonY = this.keys.reversed(In.BUTTON_Y)
-    if (buttonY.startsWith('Key')) buttonY = buttonY.substring(3)
+    renderStatus(client, width, height, font, fontWidth, fontScale, topBarHeight, sfx)
 
     // sound
-    let text = 'Wave: ' + sfx.wave
-    drawTextSpecial(client.bufferGUI, 20, 400, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Frequency: ' + sfx.pitch + ' hz'
-    drawTextSpecial(client.bufferGUI, 20, 380, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Duration: ' + sfx.duration + ' ms'
-    drawTextSpecial(client.bufferGUI, 20, 360, text, fontScale, whitef(0), whitef(1), whitef(2))
 
-    text = 'Volume: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 340, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Attack: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 320, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Delay: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 300, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Sustain: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 280, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Release: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 260, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Modulation: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 240, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Noise: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 220, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Bit Crush: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 200, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Delay: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 180, text, fontScale, whitef(0), whitef(1), whitef(2))
-    text = 'Tremolo: 1.0'
-    drawTextSpecial(client.bufferGUI, 20, 160, text, fontScale, whitef(0), whitef(1), whitef(2))
+    const x = 40
+    let y = 600
 
-    // info
-    text = '(' + buttonB + ')Duration down (' + buttonA + ')Duration up (' + buttonX + ') Play'
-    drawTextSpecial(client.bufferGUI, 20, 20, text, fontScale, whitef(0), whitef(1), whitef(2))
+    for (let i = 0; i < sfx.parameters.length; i++) {
+      let text = sfx.parameters[i] + ': '
+      if (i === WAVE_INDEX) text += WAVE_LIST[sfx.arguments[i]]
+      else if (i === FREQUENCY_INDEX) text += diatonic(sfx.arguments[i] - SEMITONES).toFixed(2) + ' (' + semitoneName(sfx.arguments[i] - SEMITONES) + ')'
+      else if (i === DURATION_INDEX) text += sfx.arguments[i] + ' ms'
+      else text += sfx.arguments[i].toFixed(2)
+      if (i === sfx.row) drawTextFont(client.bufferGUI, x, y, text, fontScale, orange0f, orange1f, orange2f, 1.0, font)
+      else drawTextFont(client.bufferGUI, x, y, text, fontScale, silver0f, silver1f, silver2f, 1.0, font)
+      y -= fontHeightAndPad
+    }
 
-    rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+    rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
     rendering.updateAndDraw(client.bufferGUI)
+
+    // dialog box
+
+    if (sfx.dialog !== null) renderDialogBox(this, scale, font, sfx.dialog)
   }
 }

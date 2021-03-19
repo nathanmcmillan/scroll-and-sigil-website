@@ -1,6 +1,6 @@
-import {Entity} from '../entity/entity.js'
-import {fetchText, fetchImage} from '../client/net.js'
-import {createSpriteSheet} from '../assets/sprite-sheet.js'
+import { createSpriteSheet } from '../assets/sprite-sheet.js'
+import { fetchText } from '../client/net.js'
+import { Entity, spriteName } from '../entity/entity.js'
 import * as Wad from '../wad/wad.js'
 
 const PROMISES = []
@@ -8,8 +8,66 @@ const PROMISES = []
 const TEXTURE_NAME_TO_INDEX = new Map()
 const TEXTURES = []
 
+export function readPaintFile(text, palette) {
+  const image = text.split('\n')
+
+  const info = image[0].split(' ')
+
+  const name = info[1]
+  const width = parseInt(info[2])
+  const height = parseInt(info[3])
+  const pixels = new Uint8Array(width * height * 3)
+
+  let index = 1
+  let transparency = 0
+
+  if (image[index].startsWith('transparency')) {
+    transparency = parseInt(image[index].split(' ')[1])
+    index++
+  }
+
+  for (let h = 0; h < height; h++) {
+    const row = image[index].split(' ')
+    for (let c = 0; c < width; c++) {
+      let p = parseInt(row[c])
+      let red, green, blue
+      if (p === transparency) {
+        red = 255
+        green = 255
+        blue = 255
+      } else {
+        p *= 3
+        red = palette[p]
+        green = palette[p + 1]
+        blue = palette[p + 2]
+      }
+      const i = (c + h * width) * 3
+      pixels[i] = red
+      pixels[i + 1] = green
+      pixels[i + 2] = blue
+    }
+    index++
+  }
+
+  let sprites = null
+  if (index < image.length) {
+    if (image[index] === 'sprites') {
+      index++
+      while (index < image.length) {
+        if (image[index] === 'end sprites') break
+        const sprite = image[index].split(' ')
+        if (sprites === null) sprites = []
+        sprites.push(sprite)
+        index++
+      }
+    }
+  }
+
+  return { name: name, wrap: 'clamp', width: width, height: height, pixels: pixels, sprites: sprites }
+}
+
 export function saveTexture(name, texture) {
-  let index = TEXTURES.length
+  const index = TEXTURES.length
   TEXTURE_NAME_TO_INDEX.set(name, index)
   TEXTURES.push(texture)
   return index
@@ -31,7 +89,7 @@ export function textureNameFromIndex(search) {
 }
 
 export function textureByName(name) {
-  let index = TEXTURE_NAME_TO_INDEX.get(name)
+  const index = TEXTURE_NAME_TO_INDEX.get(name)
   return TEXTURES[index]
 }
 
@@ -62,16 +120,8 @@ const SPRITE_IMAGES = new Map()
 
 async function promiseImage(sprite, directory) {
   if (SPRITE_IMAGES.has(sprite)) return
-  let image = await fetchImage(directory + '/' + sprite + '/' + sprite + '.png')
+  const image = await fetchText(directory + '/' + sprite + '.txt')
   SPRITE_IMAGES.set(sprite, image)
-}
-
-const SPRITE_ATLASES = new Map()
-
-async function promiseAtlas(sprite, directory) {
-  if (SPRITE_ATLASES.has(sprite)) return
-  let text = await fetchText(directory + '/' + sprite + '/' + sprite + '.wad')
-  SPRITE_ATLASES.set(sprite, Wad.parse(text))
 }
 
 const ENTITIES = new Map()
@@ -82,24 +132,38 @@ async function promiseEntity(name, directory, path) {
     return
   }
 
-  let text = await fetchText(directory + path)
+  const text = await fetchText(directory + path)
 
-  let wad = Wad.parse(text)
+  const wad = Wad.parse(text)
   wad.set('_wad', name)
-
-  let sprite = wad.get('sprite')
 
   ENTITIES.set(name, new Entity(wad))
 
+  const set = new Set()
+
+  const sprite = wad.get('sprite')
+  if (sprite) {
+    set.add(spriteName(sprite))
+  } else {
+    const sprites = wad.get('sprites')
+    if (Array.isArray(sprites)) {
+      for (const sprite of sprites) {
+        set.add(spriteName(sprite))
+      }
+    } else {
+      for (const value of sprites.values()) {
+        for (const sprite of value) set.add(spriteName(sprite))
+      }
+    }
+  }
+
   directory += '/sprites'
 
-  let image = promiseImage(sprite, directory)
-  let atlas = promiseAtlas(sprite, directory)
-
-  ASYNC_SPRITE_NAMES.add(sprite)
-
-  await image
-  await atlas
+  for (const sprite of set) {
+    const image = promiseImage(sprite, directory)
+    ASYNC_SPRITE_NAMES.add(sprite)
+    await image
+  }
 }
 
 export function saveEntity(name, directory, path) {
@@ -129,14 +193,17 @@ export function spritesByName(name) {
   return SPRITE_SHEETS.get(name)
 }
 
-export function createNewTexturesAndSpriteSheets(closure) {
+export function createNewTexturesAndSpriteSheets(palette, closure) {
   for (const sprite of ASYNC_SPRITE_NAMES) {
     if (SPRITE_SHEETS.has(sprite)) continue
-    let image = SPRITE_IMAGES.get(sprite)
-    let texture = closure(image)
-    let sheet = createSpriteSheet(texture, SPRITE_ATLASES.get(sprite))
+    const image = SPRITE_IMAGES.get(sprite)
+    const paint = readPaintFile(image, palette)
+    const texture = closure(paint)
     saveTexture(sprite, texture)
-    saveSprites(sprite, sheet)
+    if (paint.sprites) {
+      const sheet = createSpriteSheet(texture.width, texture.height, paint.sprites)
+      saveSprites(sprite, sheet)
+    }
   }
   ASYNC_SPRITE_NAMES.clear()
 }

@@ -1,41 +1,41 @@
-import {index3, index4} from '../render/render.js'
+import { index3, index4 } from '../render/render.js'
 
 export function drawWall(b, wall) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = wall.a.x
-  vertices[pos + 1] = wall.ceiling
+  vertices[pos + 1] = wall.floor
   vertices[pos + 2] = wall.a.y
   vertices[pos + 3] = wall.u
-  vertices[pos + 4] = wall.t
+  vertices[pos + 4] = wall.v
   vertices[pos + 5] = wall.normal.x
   vertices[pos + 6] = 0.0
   vertices[pos + 7] = wall.normal.y
 
   vertices[pos + 8] = wall.a.x
-  vertices[pos + 9] = wall.floor
+  vertices[pos + 9] = wall.ceiling
   vertices[pos + 10] = wall.a.y
   vertices[pos + 11] = wall.u
-  vertices[pos + 12] = wall.v
+  vertices[pos + 12] = wall.t
   vertices[pos + 13] = wall.normal.x
   vertices[pos + 14] = 0.0
   vertices[pos + 15] = wall.normal.y
 
   vertices[pos + 16] = wall.b.x
-  vertices[pos + 17] = wall.floor
+  vertices[pos + 17] = wall.ceiling
   vertices[pos + 18] = wall.b.y
   vertices[pos + 19] = wall.s
-  vertices[pos + 20] = wall.v
+  vertices[pos + 20] = wall.t
   vertices[pos + 21] = wall.normal.x
   vertices[pos + 22] = 0.0
   vertices[pos + 23] = wall.normal.y
 
   vertices[pos + 24] = wall.b.x
-  vertices[pos + 25] = wall.ceiling
+  vertices[pos + 25] = wall.floor
   vertices[pos + 26] = wall.b.y
   vertices[pos + 27] = wall.s
-  vertices[pos + 28] = wall.t
+  vertices[pos + 28] = wall.v
   vertices[pos + 29] = wall.normal.x
   vertices[pos + 30] = 0.0
   vertices[pos + 31] = wall.normal.y
@@ -45,8 +45,8 @@ export function drawWall(b, wall) {
 }
 
 export function drawFloorCeil(b, triangle) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = triangle.c.x
   vertices[pos + 1] = triangle.height
@@ -80,8 +80,8 @@ export function drawFloorCeil(b, triangle) {
 }
 
 export function drawDecal(b, decal) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = decal.x1
   vertices[pos + 1] = decal.y1

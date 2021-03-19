@@ -5,7 +5,7 @@ export async function fetchText(path) {
 }
 
 export async function fetchImage(path) {
-  let image = new Image()
+  const image = new Image()
   image.src = path
   return new Promise(function (resolve) {
     image.onload = resolve
@@ -15,6 +15,6 @@ export async function fetchImage(path) {
 }
 
 export async function fetchModule(path) {
-  let module = await import(path)
+  const module = await import(path)
   console.log(module)
 }

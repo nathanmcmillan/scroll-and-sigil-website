@@ -19,7 +19,7 @@ in vec2 v_texture;
 layout (location = 0) out vec4 color;
 void main() {
   vec4 pixel = texture(u_texture, v_texture);
-  if (pixel.rgb == vec3(0.0, 0.0, 0.0)) {
+  if (pixel.rgb == vec3(1.0, 1.0, 1.0)) {
     discard;
   }
   color = v_color * pixel;

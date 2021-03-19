@@ -1,24 +1,24 @@
 export const black0 = 0
 export const black1 = 0
 export const black2 = 0
-export const darkblue0 = 29
-export const darkblue1 = 43
-export const darkblue2 = 83
-export const darkpurple0 = 126
-export const darkpurple1 = 37
-export const darkpurple2 = 83
-export const darkgreen0 = 0
-export const darkgreen1 = 135
-export const darkgreen2 = 81
+export const storm0 = 29
+export const storm1 = 43
+export const storm2 = 83
+export const wine0 = 126
+export const wine1 = 37
+export const wine2 = 83
+export const moss0 = 0
+export const moss1 = 135
+export const moss2 = 81
 export const brown0 = 171
 export const brown1 = 82
 export const brown2 = 54
-export const darkgrey0 = 95
-export const darkgrey1 = 87
-export const darkgrey2 = 79
-export const lightgrey0 = 194
-export const lightgrey1 = 195
-export const lightgrey2 = 199
+export const slate0 = 95
+export const slate1 = 87
+export const slate2 = 79
+export const silver0 = 194
+export const silver1 = 195
+export const silver2 = 199
 export const white0 = 255
 export const white1 = 241
 export const white2 = 232
@@ -43,31 +43,80 @@ export const lavender2 = 156
 export const pink0 = 255
 export const pink1 = 119
 export const pink2 = 168
-export const lightpeach0 = 255
-export const lightpeach1 = 204
-export const lightpeach2 = 170
+export const peach0 = 255
+export const peach1 = 204
+export const peach2 = 170
+
+export const cocoa0 = 41
+export const cocoa1 = 24
+export const cocoa2 = 20
+export const midnight0 = 17
+export const midnight1 = 29
+export const midnight2 = 53
+export const port0 = 66
+export const port1 = 33
+export const port2 = 54
+export const sea0 = 18
+export const sea1 = 83
+export const sea2 = 89
+export const leather0 = 116
+export const leather1 = 47
+export const leather2 = 41
+export const charcoal0 = 73
+export const charcoal1 = 51
+export const charcoal2 = 59
+export const olive0 = 162
+export const olive1 = 136
+export const olive2 = 121
+export const sand0 = 243
+export const sand1 = 239
+export const sand2 = 125
+export const crimson0 = 190
+export const crimson1 = 18
+export const crimson2 = 80
+export const amber0 = 255
+export const amber1 = 108
+export const amber2 = 36
+export const tea0 = 168
+export const tea1 = 231
+export const tea2 = 46
+export const jade0 = 0
+export const jade1 = 181
+export const jade2 = 67
+export const denim0 = 6
+export const denim1 = 90
+export const denim2 = 181
+export const augergine0 = 117
+export const augergine1 = 70
+export const augergine2 = 101
+export const salmon0 = 255
+export const salmon1 = 110
+export const salmon2 = 89
+export const coral0 = 255
+export const coral1 = 157
+export const coral2 = 129
 
 export const black0f = black0 / 255.0
 export const black1f = black1 / 255.0
 export const black2f = black2 / 255.0
-export const darkblue0f = darkblue0 / 255.0
-export const darkblue1f = darkblue1 / 255.0
-export const darkblue2f = darkblue2 / 255.0
-export const darkpurple0f = darkpurple0 / 255.0
-export const darkpurple1f = darkpurple1 / 255.0
-export const darkpurple2f = darkpurple2 / 255.0
-export const darkgreen0f = darkgreen0 / 255.0
-export const darkgreen1f = darkgreen1 / 255.0
-export const darkgreen2f = darkgreen2 / 255.0
+export const storm0f = storm0 / 255.0
+export const storm1f = storm1 / 255.0
+export const storm2f = storm2 / 255.0
+export const wine0f = wine0 / 255.0
+export const wine1f = wine1 / 255.0
+export const wine2f = wine2 / 255.0
+export const moss0f = moss0 / 255.0
+export const moss1f = moss1 / 255.0
+export const moss2f = moss2 / 255.0
 export const brown0f = brown0 / 255.0
 export const brown1f = brown1 / 255.0
 export const brown2f = brown2 / 255.0
-export const darkgrey0f = darkgrey0 / 255.0
-export const darkgrey1f = darkgrey1 / 255.0
-export const darkgrey2f = darkgrey2 / 255.0
-export const lightgrey0f = lightgrey0 / 255.0
-export const lightgrey1f = lightgrey1 / 255.0
-export const lightgrey2f = lightgrey2 / 255.0
+export const slate0f = slate0 / 255.0
+export const slate1f = slate1 / 255.0
+export const slate2f = slate2 / 255.0
+export const silver0f = silver0 / 255.0
+export const silver1f = silver1 / 255.0
+export const silver2f = silver2 / 255.0
 export const white0f = white0 / 255.0
 export const white1f = white1 / 255.0
 export const white2f = white2 / 255.0
@@ -92,9 +141,58 @@ export const lavender2f = lavender2 / 255.0
 export const pink0f = pink0 / 255.0
 export const pink1f = pink1 / 255.0
 export const pink2f = pink2 / 255.0
-export const lightpeach0f = lightpeach0 / 255.0
-export const lightpeach1f = lightpeach1 / 255.0
-export const lightpeach2f = lightpeach2 / 255.0
+export const peach0f = peach0 / 255.0
+export const peach1f = peach1 / 255.0
+export const peach2f = peach2 / 255.0
+
+export const cocoa0f = cocoa0 / 255.0
+export const cocoa1f = cocoa1 / 255.0
+export const cocoa2f = cocoa2 / 255.0
+export const midnight0f = midnight0 / 255.0
+export const midnight1f = midnight1 / 255.0
+export const midnight2f = midnight2 / 255.0
+export const port0f = port0 / 255.0
+export const port1f = port1 / 255.0
+export const port2f = port2 / 255.0
+export const sea0f = sea0 / 255.0
+export const sea1f = sea1 / 255.0
+export const sea2f = sea2 / 255.0
+export const leather0f = leather0 / 255.0
+export const leather1f = leather1 / 255.0
+export const leather2f = leather2 / 255.0
+export const charcoal0f = charcoal0 / 255.0
+export const charcoal1f = charcoal1 / 255.0
+export const charcoal2f = charcoal2 / 255.0
+export const olive0f = olive0 / 255.0
+export const olive1f = olive1 / 255.0
+export const olive2f = olive2 / 255.0
+export const sand0f = sand0 / 255.0
+export const sand1f = sand1 / 255.0
+export const sand2f = sand2 / 255.0
+export const crimson0f = crimson0 / 255.0
+export const crimson1f = crimson1 / 255.0
+export const crimson2f = crimson2 / 255.0
+export const amber0f = amber0 / 255.0
+export const amber1f = amber1 / 255.0
+export const amber2f = amber2 / 255.0
+export const tea0f = tea0 / 255.0
+export const tea1f = tea1 / 255.0
+export const tea2f = tea2 / 255.0
+export const jade0f = jade0 / 255.0
+export const jade1f = jade1 / 255.0
+export const jade2f = jade2 / 255.0
+export const denim0f = denim0 / 255.0
+export const denim1f = denim1 / 255.0
+export const denim2f = denim2 / 255.0
+export const augergine0f = augergine0 / 255.0
+export const augergine1f = augergine1 / 255.0
+export const augergine2f = augergine2 / 255.0
+export const salmon0f = salmon0 / 255.0
+export const salmon1f = salmon1 / 255.0
+export const salmon2f = salmon2 / 255.0
+export const coral0f = coral0 / 255.0
+export const coral1f = coral1 / 255.0
+export const coral2f = coral2 / 255.0
 
 export function black() {
   return black0
@@ -104,40 +202,40 @@ export function blackf() {
   return black0f
 }
 
-export function darkblue(i) {
-  if (i === 0) return darkblue0
-  if (i === 1) return darkblue1
-  return darkblue2
+export function storm(i) {
+  if (i === 0) return storm0
+  if (i === 1) return storm1
+  return storm2
 }
 
-export function darkbluef(i) {
-  if (i === 0) return darkblue0f
-  if (i === 1) return darkblue1f
-  return darkblue2f
+export function stormf(i) {
+  if (i === 0) return storm0f
+  if (i === 1) return storm1f
+  return storm2f
 }
 
-export function darkpurple(i) {
-  if (i === 0) return darkpurple0
-  if (i === 1) return darkpurple1
-  return darkpurple2
+export function wine(i) {
+  if (i === 0) return wine0
+  if (i === 1) return wine1
+  return wine2
 }
 
-export function darkpurplef(i) {
-  if (i === 0) return darkpurple0f
-  if (i === 1) return darkpurple1f
-  return darkpurple2f
+export function winef(i) {
+  if (i === 0) return wine0f
+  if (i === 1) return wine1f
+  return wine2f
 }
 
-export function darkgreen(i) {
-  if (i === 0) return darkgreen0
-  if (i === 1) return darkgreen1
-  return darkgreen2
+export function moss(i) {
+  if (i === 0) return moss0
+  if (i === 1) return moss1
+  return moss2
 }
 
-export function darkgreenf(i) {
-  if (i === 0) return darkgreen0f
-  if (i === 1) return darkgreen1f
-  return darkgreen2f
+export function mossf(i) {
+  if (i === 0) return moss0f
+  if (i === 1) return moss1f
+  return moss2f
 }
 
 export function brown(i) {
@@ -152,28 +250,28 @@ export function brownf(i) {
   return brown2f
 }
 
-export function darkgrey(i) {
-  if (i === 0) return darkgrey0
-  if (i === 1) return darkgrey1
-  return darkgrey2
+export function slate(i) {
+  if (i === 0) return slate0
+  if (i === 1) return slate1
+  return slate2
 }
 
-export function darkgreyf(i) {
-  if (i === 0) return darkgrey0f
-  if (i === 1) return darkgrey1f
-  return darkgrey2f
+export function slatef(i) {
+  if (i === 0) return slate0f
+  if (i === 1) return slate1f
+  return slate2f
 }
 
-export function lightgrey(i) {
-  if (i === 0) return lightgrey0
-  if (i === 1) return lightgrey1
-  return lightgrey2
+export function silver(i) {
+  if (i === 0) return silver0
+  if (i === 1) return silver1
+  return silver2
 }
 
-export function lightgreyf(i) {
-  if (i === 0) return lightgrey0f
-  if (i === 1) return lightgrey1f
-  return lightgrey2f
+export function silverf(i) {
+  if (i === 0) return silver0f
+  if (i === 1) return silver1f
+  return silver2f
 }
 
 export function white(i) {
@@ -272,125 +370,248 @@ export function pinkf(i) {
   return pink2f
 }
 
-export function lightpeach(i) {
-  if (i === 0) return lightpeach0
-  if (i === 1) return lightpeach1
-  return lightpeach2
+export function peach(i) {
+  if (i === 0) return peach0
+  if (i === 1) return peach1
+  return peach2
 }
 
-export function lightpeachf(i) {
-  if (i === 0) return lightpeach0f
-  if (i === 1) return lightpeach1f
-  return lightpeach2f
+export function peachf(i) {
+  if (i === 0) return peach0f
+  if (i === 1) return peach1f
+  return peach2f
+}
+
+export function cocoa(i) {
+  if (i === 0) return cocoa0
+  if (i === 1) return cocoa1
+  return cocoa2
+}
+
+export function cocoaf(i) {
+  if (i === 0) return cocoa0f
+  if (i === 1) return cocoa1f
+  return cocoa2f
+}
+
+export function midnight(i) {
+  if (i === 0) return midnight0
+  if (i === 1) return midnight1
+  return midnight2
+}
+
+export function midnightf(i) {
+  if (i === 0) return midnight0f
+  if (i === 1) return midnight1f
+  return midnight2f
+}
+
+export function port(i) {
+  if (i === 0) return port0
+  if (i === 1) return port1
+  return port2
+}
+
+export function portf(i) {
+  if (i === 0) return port0f
+  if (i === 1) return port1f
+  return port2f
+}
+
+export function sea(i) {
+  if (i === 0) return sea0
+  if (i === 1) return sea1
+  return sea2
+}
+
+export function seaf(i) {
+  if (i === 0) return sea0f
+  if (i === 1) return sea1f
+  return sea2f
+}
+
+export function leather(i) {
+  if (i === 0) return leather0
+  if (i === 1) return leather1
+  return leather2
+}
+
+export function leatherf(i) {
+  if (i === 0) return leather0f
+  if (i === 1) return leather1f
+  return leather2f
+}
+
+export function charcoal(i) {
+  if (i === 0) return charcoal0
+  if (i === 1) return charcoal1
+  return charcoal2
+}
+
+export function charcoalf(i) {
+  if (i === 0) return charcoal0f
+  if (i === 1) return charcoal1f
+  return charcoal2f
+}
+
+export function olive(i) {
+  if (i === 0) return olive0
+  if (i === 1) return olive1
+  return olive2
+}
+
+export function olivef(i) {
+  if (i === 0) return olive0f
+  if (i === 1) return olive1f
+  return olive2f
+}
+
+export function sand(i) {
+  if (i === 0) return sand0
+  if (i === 1) return sand1
+  return sand2
+}
+
+export function sandf(i) {
+  if (i === 0) return sand0f
+  if (i === 1) return sand1f
+  return sand2f
+}
+
+export function crimson(i) {
+  if (i === 0) return crimson0
+  if (i === 1) return crimson1
+  return crimson2
+}
+
+export function crimsonf(i) {
+  if (i === 0) return crimson0f
+  if (i === 1) return crimson1f
+  return crimson2f
+}
+
+export function amber(i) {
+  if (i === 0) return amber0
+  if (i === 1) return amber1
+  return amber2
+}
+
+export function amberf(i) {
+  if (i === 0) return amber0f
+  if (i === 1) return amber1f
+  return amber2f
+}
+
+export function tea(i) {
+  if (i === 0) return tea0
+  if (i === 1) return tea1
+  return tea2
+}
+
+export function teaf(i) {
+  if (i === 0) return tea0f
+  if (i === 1) return tea1f
+  return tea2f
+}
+
+export function jade(i) {
+  if (i === 0) return jade0
+  if (i === 1) return jade1
+  return jade2
+}
+
+export function jadef(i) {
+  if (i === 0) return jade0f
+  if (i === 1) return jade1f
+  return jade2f
+}
+
+export function denim(i) {
+  if (i === 0) return denim0
+  if (i === 1) return denim1
+  return denim2
+}
+
+export function denimf(i) {
+  if (i === 0) return denim0f
+  if (i === 1) return denim1f
+  return denim2f
+}
+
+export function augergine(i) {
+  if (i === 0) return augergine0
+  if (i === 1) return augergine1
+  return augergine2
+}
+
+export function augerginef(i) {
+  if (i === 0) return augergine0f
+  if (i === 1) return augergine1f
+  return augergine2f
+}
+
+export function salmon(i) {
+  if (i === 0) return salmon0
+  if (i === 1) return salmon1
+  return salmon2
+}
+
+export function salmonf(i) {
+  if (i === 0) return salmon0f
+  if (i === 1) return salmon1f
+  return salmon2f
+}
+
+export function coral(i) {
+  if (i === 0) return coral0
+  if (i === 1) return coral1
+  return coral2
+}
+
+export function coralf(i) {
+  if (i === 0) return coral0f
+  if (i === 1) return coral1f
+  return coral2f
 }
 
 export function luminosity(red, green, blue) {
   return 0.2126 * red + 0.7152 * green + 0.0722 * blue
 }
 
-export function luminosityTable(palette) {
-  let table = []
+export function closestInPalette(palette, red, green, blue) {
+  let closest = 0
+  let smallest = Number.MAX_VALUE
   for (let i = 0; i < palette.length; i += 3) {
-    let index = i / 3
-    table[index] = [luminosity(palette[i], palette[i + 1], palette[i + 2]), index]
+    const r = palette[i] - red
+    const g = palette[i + 1] - green
+    const b = palette[i + 2] - blue
+    const distance = r * r + g * g + b * b
+    if (distance < smallest) {
+      closest = i
+      smallest = distance
+    }
   }
-  table.sort((a, b) => {
-    return a[0] - b[0]
-  })
-  return table
+  return closest / 3
 }
 
 export function newPalette() {
-  let palette = new Uint8Array(4 * 4 * 3)
+  const colors = 32
+  const palette = new Uint8Array(colors * 3)
   let index = 0
-
-  palette[index] = black0
-  palette[index + 1] = black1
-  palette[index + 2] = black2
-  index += 3
-
-  palette[index] = darkblue0
-  palette[index + 1] = darkblue1
-  palette[index + 2] = darkblue2
-  index += 3
-
-  palette[index] = darkpurple0
-  palette[index + 1] = darkpurple1
-  palette[index + 2] = darkpurple2
-  index += 3
-
-  palette[index] = darkgreen0
-  palette[index + 1] = darkgreen1
-  palette[index + 2] = darkgreen2
-  index += 3
-
-  palette[index] = brown0
-  palette[index + 1] = brown1
-  palette[index + 2] = brown2
-  index += 3
-
-  palette[index] = darkgrey0
-  palette[index + 1] = darkgrey1
-  palette[index + 2] = darkgrey2
-  index += 3
-
-  palette[index] = lightgrey0
-  palette[index + 1] = lightgrey1
-  palette[index + 2] = lightgrey2
-  index += 3
-
-  palette[index] = white0
-  palette[index + 1] = white1
-  palette[index + 2] = white2
-  index += 3
-
-  palette[index] = red0
-  palette[index + 1] = red1
-  palette[index + 2] = red2
-  index += 3
-
-  palette[index] = orange0
-  palette[index + 1] = orange1
-  palette[index + 2] = orange2
-  index += 3
-
-  palette[index] = yellow0
-  palette[index + 1] = yellow1
-  palette[index + 2] = yellow2
-  index += 3
-
-  palette[index] = green0
-  palette[index + 1] = green1
-  palette[index + 2] = green2
-  index += 3
-
-  palette[index] = blue0
-  palette[index + 1] = blue1
-  palette[index + 2] = blue2
-  index += 3
-
-  palette[index] = lavender0
-  palette[index + 1] = lavender1
-  palette[index + 2] = lavender2
-  index += 3
-
-  palette[index] = pink0
-  palette[index + 1] = pink1
-  palette[index + 2] = pink2
-  index += 3
-
-  palette[index] = lightpeach0
-  palette[index + 1] = lightpeach1
-  palette[index + 2] = lightpeach2
-
+  for (let c = 0; c < colors; c++) {
+    palette[index] = color(c, 0)
+    palette[index + 1] = color(c, 1)
+    palette[index + 2] = color(c, 2)
+    index += 3
+  }
   return palette
 }
 
 export function newPaletteFloat(source) {
-  let palettef = new Float32Array(source.length)
+  const palette = new Float32Array(source.length)
   let i = source.length
-  while (i--) palettef[i] = source[i] / 255.0
-  return palettef
+  while (i--) palette[i] = source[i] / 255.0
+  return palette
 }
 
 export function describeColor(i) {
@@ -398,17 +619,17 @@ export function describeColor(i) {
     case 0:
       return 'black'
     case 1:
-      return 'dark blue'
+      return 'storm'
     case 2:
-      return 'dark purple'
+      return 'wine'
     case 3:
-      return 'dark green'
+      return 'moss'
     case 4:
       return 'brown'
     case 5:
-      return 'dark grey'
+      return 'slate'
     case 6:
-      return 'light grey'
+      return 'silver'
     case 7:
       return 'white'
     case 8:
@@ -426,7 +647,39 @@ export function describeColor(i) {
     case 14:
       return 'pink'
     case 15:
-      return 'light peach'
+      return 'peach'
+    case 16:
+      return 'cocoa'
+    case 17:
+      return 'midnight'
+    case 18:
+      return 'port'
+    case 19:
+      return 'sea'
+    case 20:
+      return 'leather'
+    case 21:
+      return 'charcoal'
+    case 22:
+      return 'olive'
+    case 23:
+      return 'sand'
+    case 24:
+      return 'crimson'
+    case 25:
+      return 'amber'
+    case 26:
+      return 'tea'
+    case 27:
+      return 'jade'
+    case 28:
+      return 'denim'
+    case 29:
+      return 'augergine'
+    case 30:
+      return 'salmon'
+    case 31:
+      return 'coral'
   }
 }
 
@@ -435,17 +688,17 @@ export function color(c, i) {
     case 0:
       return black(i)
     case 1:
-      return darkblue(i)
+      return storm(i)
     case 2:
-      return darkpurple(i)
+      return wine(i)
     case 3:
-      return darkgreen(i)
+      return moss(i)
     case 4:
       return brown(i)
     case 5:
-      return darkgrey(i)
+      return slate(i)
     case 6:
-      return lightgrey(i)
+      return silver(i)
     case 7:
       return white(i)
     case 8:
@@ -463,7 +716,39 @@ export function color(c, i) {
     case 14:
       return pink(i)
     case 15:
-      return lightpeach(i)
+      return peach(i)
+    case 16:
+      return cocoa(i)
+    case 17:
+      return midnight(i)
+    case 18:
+      return port(i)
+    case 19:
+      return sea(i)
+    case 20:
+      return leather(i)
+    case 21:
+      return charcoal(i)
+    case 22:
+      return olive(i)
+    case 23:
+      return sand(i)
+    case 24:
+      return crimson(i)
+    case 25:
+      return amber(i)
+    case 26:
+      return tea(i)
+    case 27:
+      return jade(i)
+    case 28:
+      return denim(i)
+    case 29:
+      return augergine(i)
+    case 30:
+      return salmon(i)
+    case 31:
+      return coral(i)
   }
 }
 

@@ -142,7 +142,7 @@ class Stream {
   }
 
   next() {
-    let c = this.code[this.position]
+    const c = this.code[this.position]
     this.position++
     if (c === '\n') {
       this.line++
@@ -166,9 +166,9 @@ class Parser {
   }
 
   spaces() {
-    let stream = this.stream
+    const stream = this.stream
     while (!stream.eof()) {
-      let c = stream.peek()
+      const c = stream.peek()
       if (c === ' ') {
         stream.next()
       } else break
@@ -176,11 +176,11 @@ class Parser {
   }
 
   num() {
-    let stream = this.stream
+    const stream = this.stream
     let op = OP_INT_LITERAL
     let value = ''
     while (!stream.eof()) {
-      let c = stream.peek()
+      const c = stream.peek()
       if (digit(c)) {
         value += c
         stream.next()
@@ -196,11 +196,11 @@ class Parser {
   }
 
   word() {
-    let stream = this.stream
+    const stream = this.stream
     let value = ''
     let begin = true
     while (!stream.eof()) {
-      let c = stream.peek()
+      const c = stream.peek()
       if (!letter(c)) {
         if (begin || (c !== '_' && !digit(c))) break
       }
@@ -226,7 +226,7 @@ class Parser {
     if (position < this.operations.length) {
       return this.operations[position]
     }
-    let stream = this.stream
+    const stream = this.stream
     if (stream.position >= this.size) {
       return EOF
     }
@@ -234,7 +234,7 @@ class Parser {
     if (stream.position >= this.size) {
       return EOF
     }
-    let c = stream.peek()
+    const c = stream.peek()
     switch (c) {
       case '.':
         return this.eat(new OpCode(OP_DOT))
@@ -243,11 +243,11 @@ class Parser {
       case '-':
         return this.eat(new OpCode(OP_MINUS))
     }
-    let num = this.num()
+    const num = this.num()
     if (num) return this.push(num)
-    let word = this.word()
+    const word = this.word()
     if (word) {
-      let key = OP_WORD_MAP.get(word)
+      const key = OP_WORD_MAP.get(word)
       if (key === undefined) return this.push(new OpCode(OP_ID, word))
       return this.push(new OpCode(key, word))
     }
@@ -256,7 +256,7 @@ class Parser {
 }
 
 function prefixPrimitive(parser, op) {
-  let t = literals.get(op)
+  const t = literals.get(op)
   if (t === undefined) {
     return null
   }
@@ -271,12 +271,12 @@ class Interpreter {
 
   interpret(code) {
     console.log('script:', code)
-    let stream = new Stream(code)
-    let parser = new Parser(stream)
+    const stream = new Stream(code)
+    const parser = new Parser(stream)
 
     let position = 0
     while (true) {
-      let op = parser.get(position)
+      const op = parser.get(position)
       console.log('op:', op)
       if (op === EOF) break
       position++
@@ -286,6 +286,6 @@ class Interpreter {
 }
 
 export function script(code) {
-  let interpreter = new Interpreter()
+  const interpreter = new Interpreter()
   console.log(interpreter.interpret(code))
 }

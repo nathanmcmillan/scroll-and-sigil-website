@@ -1,16 +1,34 @@
-export const FONT_WIDTH = 6
-export const FONT_HEIGHT = 6
-export const FONT_HEIGHT_BASE = 5
+const FONT = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
 
-const FONT = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,""\'\'"\'?!@_*#$%&()+-/:;<=>[]\\^`{}|~'
-const FONT_GRID = Math.floor(128.0 / FONT_WIDTH)
-const FONT_COLUMN = FONT_WIDTH / 128.0
-const FONT_ROW = FONT_HEIGHT / 128.0
+class Font {
+  constructor(name, width, height, base) {
+    this.name = name
+    this.width = width
+    this.height = height
+    this.base = base
+    this.grid = Math.floor(128.0 / width)
+    this.column = width / 128.0
+    this.row = height / 128.0
+  }
+}
+
+export const TIC_FONT_WIDTH = 6
+export const TIC_FONT_HEIGHT = 6
+export const TIC_FONT_HEIGHT_BASE = 5
+
+export const TIC_FONT = new Font('tic-80-wide-font', 6, 6, 5)
+export const WIN_FONT = new Font('win-9-font', 8, 15, 14)
+export const EGA_FONT = new Font('ega-8-font', 9, 8, 8)
+export const VGA_FONT = new Font('vga-437-font', 9, 16, 15)
+export const DINA_FONT = new Font('dina-10-font', 8, 16, 15)
+export const SUPER_FONT = new Font('super-font', 8, 9, 8)
+export const SUPER_OUTLINE_FONT = new Font('super-outline-font', 8, 8, 8)
+export const SUPER_TITLE_FONT = new Font('super-title-font', 8, 16, 15)
 
 export function index3(b) {
-  let pos = b.indexPosition
-  let offset = b.indexOffset
-  let indices = b.indices
+  const pos = b.indexPosition
+  const offset = b.indexOffset
+  const indices = b.indices
 
   indices[pos] = offset
   indices[pos + 1] = offset + 1
@@ -21,9 +39,9 @@ export function index3(b) {
 }
 
 export function index4(b) {
-  let pos = b.indexPosition
-  let offset = b.indexOffset
-  let indices = b.indices
+  const pos = b.indexPosition
+  const offset = b.indexOffset
+  const indices = b.indices
 
   indices[pos] = offset
   indices[pos + 1] = offset + 1
@@ -37,8 +55,8 @@ export function index4(b) {
 }
 
 export function screen(b, x, y, width, height) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = x
   vertices[pos + 1] = y
@@ -54,12 +72,12 @@ export function screen(b, x, y, width, height) {
 }
 
 export function drawLine(b, x1, y1, x2, y2, thickness, red, green, blue, alpha) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   let x = y1 - y2
   let y = -(x1 - x2)
-  let magnitude = Math.sqrt(x * x + y * y)
+  const magnitude = Math.sqrt(x * x + y * y)
   x /= magnitude
   y /= magnitude
 
@@ -96,8 +114,8 @@ export function drawLine(b, x1, y1, x2, y2, thickness, red, green, blue, alpha) 
 }
 
 export function drawTriangle(b, x1, y1, x2, y2, x3, y3, red, green, blue, alpha) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = x1
   vertices[pos + 1] = y1
@@ -125,8 +143,8 @@ export function drawTriangle(b, x1, y1, x2, y2, x3, y3, red, green, blue, alpha)
 }
 
 export function drawRectangle(b, x, y, width, height, red, green, blue, alpha) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = x
   vertices[pos + 1] = y
@@ -168,8 +186,8 @@ export function drawHollowRectangle(b, x, y, width, height, thickness, red, gree
 }
 
 export function drawImage(b, x, y, width, height, red, green, blue, alpha, left, top, right, bottom) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   vertices[pos] = x
   vertices[pos + 1] = y
@@ -212,8 +230,8 @@ export function drawImage(b, x, y, width, height, red, green, blue, alpha, left,
 }
 
 export function drawSprite(b, x, y, z, sprite, sine, cosine) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   sine = sprite.halfWidth * sine
   cosine = sprite.halfWidth * cosine
@@ -258,13 +276,13 @@ export function drawSprite(b, x, y, z, sprite, sine, cosine) {
   index4(b)
 }
 
-export function drawText(b, x, y, text, scale, red, green, blue, alpha) {
+export function drawTextFont(b, x, y, text, scale, red, green, blue, alpha, font) {
   let currentX = x
   let currentY = y
-  const fontWidth = FONT_WIDTH * scale
-  const fontHeight = FONT_HEIGHT * scale
+  const fontWidth = font.width * scale
+  const fontHeight = font.height * scale
   for (let i = 0; i < text.length; i++) {
-    let c = text.charAt(i)
+    const c = text.charAt(i)
     if (c === ' ') {
       currentX += fontWidth
       continue
@@ -273,24 +291,33 @@ export function drawText(b, x, y, text, scale, red, green, blue, alpha) {
       currentY += fontHeight
       continue
     }
-    let index = FONT.indexOf(c)
-    let left = Math.floor(index % FONT_GRID) * FONT_COLUMN
-    let top = Math.floor(index / FONT_GRID) * FONT_ROW
-    let right = left + FONT_COLUMN
-    let bottom = top + FONT_ROW
+    const index = FONT.indexOf(c)
+    const left = Math.floor(index % font.grid) * font.column
+    const top = Math.floor(index / font.grid) * font.row
+    const right = left + font.column
+    const bottom = top + font.row
     drawImage(b, currentX, currentY, fontWidth, fontHeight, red, green, blue, alpha, left, top, right, bottom)
     currentX += fontWidth
   }
 }
 
+export function drawText(b, x, y, text, scale, red, green, blue, alpha) {
+  drawTextFont(b, x, y, text, scale, red, green, blue, alpha, TIC_FONT)
+}
+
 export function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
-  drawText(b, x, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
-  drawText(b, x, y, text, scale, red, green, blue, 1.0)
+  drawTextFont(b, x, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0, TIC_FONT)
+  drawTextFont(b, x, y, text, scale, red, green, blue, 1.0, TIC_FONT)
+}
+
+export function drawTextFontSpecial(b, x, y, text, scale, red, green, blue, font) {
+  drawTextFont(b, x, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0, font)
+  drawTextFont(b, x, y, text, scale, red, green, blue, 1.0, font)
 }
 
 export function drawCubeSide(b, side, x, y, z, size) {
-  let pos = b.vertexPosition
-  let vertices = b.vertices
+  const pos = b.vertexPosition
+  const vertices = b.vertices
 
   switch (side) {
     case 0:

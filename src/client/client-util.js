@@ -1,17 +1,17 @@
-import {textureByName} from '../assets/assets.js'
-import {drawText, drawRectangle, drawHollowRectangle, FONT_WIDTH, FONT_HEIGHT_BASE, drawTextSpecial} from '../render/render.js'
-import {white0f, white1f, white2f, lightpeach0f, lightpeach1f, lightpeach2f, orange0f, orange1f, orange2f, darkgrey0f, darkgrey1f, darkgrey2f} from '../editor/palette.js'
-import {calcFontScale, calcThickness, calcFontPad, calcLongest} from '../editor/editor-util.js'
+import { textureByName } from '../assets/assets.js'
+import { calcFontPad, calcFontScale, calcLongest, calcThickness } from '../editor/editor-util.js'
+import { orange0f, orange1f, orange2f, peach0f, peach1f, peach2f, slate0f, slate1f, slate2f, white0f, white1f, white2f, wine0f, wine1f, wine2f } from '../editor/palette.js'
+import { drawHollowRectangle, drawRectangle, drawTextFont, drawTextFontSpecial } from '../render/render.js'
 
-export function renderDialogBox(state, scale, dialog) {
+export function renderDialogBox(state, scale, font, dialog) {
   const client = state.client
   const gl = client.gl
   const rendering = client.rendering
   const projection = state.projection
 
   const fontScale = calcFontScale(scale)
-  const fontWidth = fontScale * FONT_WIDTH
-  const fontHeight = fontScale * FONT_HEIGHT_BASE
+  const fontWidth = fontScale * font.width
+  const fontHeight = fontScale * font.base
 
   const thickness = calcThickness(scale)
   const doubleThick = 2 * thickness
@@ -22,7 +22,7 @@ export function renderDialogBox(state, scale, dialog) {
   const fontPad = calcFontPad(fontHeight)
   const fontHeightAndPad = fontHeight + fontPad
 
-  rendering.setProgram(0)
+  rendering.setProgram('color2d')
   rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
@@ -32,31 +32,21 @@ export function renderDialogBox(state, scale, dialog) {
   const title = dialog.title
   let longest = calcLongest(options)
   if (title !== null) longest = Math.max(longest, title.length)
-  let dialogWidth = (longest + 2) * fontWidth
+  const dialogWidth = (longest + 2) * fontWidth
   let dialogHeight = (options.length + 2) * fontHeightAndPad
   if (title !== null) dialogHeight += fontHeightAndPad
   let x = Math.floor(0.5 * (width - dialogWidth))
-  let y = Math.floor(0.5 * (height - dialogHeight))
-  drawRectangle(client.bufferColor, x, y, dialogWidth + doubleThick, dialogHeight + doubleThick, darkgrey0f, darkgrey1f, darkgrey2f, 1.0)
+  const y = Math.floor(0.5 * (height - dialogHeight))
+  drawRectangle(client.bufferColor, x, y, dialogWidth + doubleThick, dialogHeight + doubleThick, slate0f, slate1f, slate2f, 1.0)
 
-  drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, dialogWidth, dialogHeight, thickness, lightpeach0f, lightpeach1f, lightpeach2f, 1.0)
+  drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, dialogWidth, dialogHeight, thickness, peach0f, peach1f, peach2f, 1.0)
 
   if (title !== null)
-    drawRectangle(
-      client.bufferColor,
-      x + thickness,
-      y + dialogHeight - thickness - fontHeightAndPad - 2 * fontPad,
-      dialogWidth,
-      thickness,
-      lightpeach0f,
-      lightpeach1f,
-      lightpeach2f,
-      1.0
-    )
+    drawRectangle(client.bufferColor, x + thickness, y + dialogHeight - thickness - fontHeightAndPad - 2 * fontPad, dialogWidth, thickness, peach0f, peach1f, peach2f, 1.0)
 
   rendering.updateAndDraw(client.bufferColor)
 
-  rendering.setProgram(4)
+  rendering.setProgram('texture2d-font')
   rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
@@ -65,20 +55,20 @@ export function renderDialogBox(state, scale, dialog) {
   let yy = y + dialogHeight - 2 * fontHeightAndPad
   if (title !== null) yy -= fontHeightAndPad
 
-  let xx = x + fontWidth
+  const xx = x + fontWidth
   for (let i = 0; i < options.length; i++) {
-    let option = options[i]
-    if (i === dialog.pos) drawText(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, orange0f, orange1f, orange2f, 1.0)
-    else drawText(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, white0f, white1f, white2f, 1.0)
+    const option = options[i]
+    if (i === dialog.pos) drawTextFont(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, orange0f, orange1f, orange2f, 1.0, font)
+    else drawTextFont(client.bufferGUI, xx, yy - i * fontHeightAndPad, option, fontScale, white0f, white1f, white2f, 1.0, font)
   }
 
   if (title !== null) {
     x += Math.floor(0.5 * (dialogWidth - fontWidth * title.length))
     yy = y + dialogHeight - fontHeightAndPad - fontPad
-    drawText(client.bufferGUI, x, yy, title, fontScale, white0f, white1f, white2f, 1.0)
+    drawTextFont(client.bufferGUI, x, yy, title, fontScale, white0f, white1f, white2f, 1.0, font)
   }
 
-  rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+  rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
   rendering.updateAndDraw(client.bufferGUI)
 }
 
@@ -90,15 +80,15 @@ export function textBoxHeight(fontHeightAndPad, box) {
   return (box.cols.length + 1) * fontHeightAndPad
 }
 
-export function renderTextBox(state, scale, box, x, y) {
+export function renderTextBox(state, scale, font, box, x, y) {
   const client = state.client
   const gl = client.gl
   const rendering = client.rendering
   const projection = state.projection
 
   const fontScale = calcFontScale(scale)
-  const fontWidth = fontScale * FONT_WIDTH
-  const fontHeight = fontScale * FONT_HEIGHT_BASE
+  const fontWidth = fontScale * font.width
+  const fontHeight = fontScale * font.base
 
   const thickness = calcThickness(scale)
   const doubleThick = 2 * thickness
@@ -109,7 +99,7 @@ export function renderTextBox(state, scale, box, x, y) {
   const fontPad = calcFontPad(fontHeight)
   const fontHeightAndPad = fontHeight + 3 * fontPad
 
-  rendering.setProgram(0)
+  rendering.setProgram('color2d')
   rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
@@ -118,13 +108,13 @@ export function renderTextBox(state, scale, box, x, y) {
   const boxWidth = textBoxWidth(fontWidth, box)
   const boxHeight = textBoxHeight(fontHeightAndPad, box)
 
-  drawRectangle(client.bufferColor, x, y, boxWidth + doubleThick, boxHeight + doubleThick, darkgrey0f, darkgrey1f, darkgrey2f, 1.0)
+  drawRectangle(client.bufferColor, x, y, boxWidth + doubleThick, boxHeight + doubleThick, slate0f, slate1f, slate2f, 1.0)
 
-  drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, boxWidth, boxHeight, thickness, lightpeach0f, lightpeach1f, lightpeach2f, 1.0)
+  drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, boxWidth, boxHeight, thickness, peach0f, peach1f, peach2f, 1.0)
 
   rendering.updateAndDraw(client.bufferColor)
 
-  rendering.setProgram(4)
+  rendering.setProgram('texture2d-font')
   rendering.setView(0, client.top, width, height)
   rendering.updateUniformMatrix('u_mvp', projection)
 
@@ -136,14 +126,29 @@ export function renderTextBox(state, scale, box, x, y) {
     const col = box.cols[r]
     let xx = x + fontWidth
     for (let c = 0; c < col.length; c++) {
-      let chr = col[c]
-      if (c === box.c && r === box.r) drawTextSpecial(client.bufferGUI, xx, yy, chr, fontScale, orange0f, orange1f, orange2f, 1.0)
-      else drawTextSpecial(client.bufferGUI, xx, yy, chr, fontScale, white0f, white1f, white2f, 1.0)
+      const chr = col[c]
+      if (c === box.c && r === box.r) drawTextFontSpecial(client.bufferGUI, xx, yy, chr, fontScale, orange0f, orange1f, orange2f, font)
+      else drawTextFontSpecial(client.bufferGUI, xx, yy, chr, fontScale, white0f, white1f, white2f, font)
       xx += 2 * fontWidth
     }
     yy -= fontHeightAndPad
   }
 
-  rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+  rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
   rendering.updateAndDraw(client.bufferGUI)
+}
+
+export function renderStatus(client, width, height, font, fontWidth, fontScale, topBarHeight, edit) {
+  const topLeftStatus = edit.topLeftStatus()
+  drawTextFont(client.bufferGUI, fontWidth, height - topBarHeight, topLeftStatus, fontScale, wine0f, wine1f, wine2f, 1.0, font)
+
+  const topRightStatus = edit.topRightStatus()
+  if (topRightStatus)
+    drawTextFont(client.bufferGUI, width - (topRightStatus.length + 1) * fontWidth, height - topBarHeight, topRightStatus, fontScale, wine0f, wine1f, wine2f, 1.0, font)
+
+  const bottmRightStatus = edit.bottomRightStatus()
+  if (bottmRightStatus) drawTextFont(client.bufferGUI, width - (bottmRightStatus.length + 1) * fontWidth, 0, bottmRightStatus, fontScale, wine0f, wine1f, wine2f, 1.0, font)
+
+  const bottomLeftStatus = edit.bottomLeftStatus()
+  if (bottomLeftStatus) drawTextFont(client.bufferGUI, fontWidth, 0, bottomLeftStatus, fontScale, wine0f, wine1f, wine2f, 1.0, font)
 }
