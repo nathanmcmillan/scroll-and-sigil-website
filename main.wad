@@ -1,9 +1,0 @@
-package: default
-map: test
-open: sfx
-open: music
-open: game
-open: paint
-open: dashboard
-open: maps
-open: home
