@@ -18,6 +18,7 @@ export class Stamp {
 export class Entity {
   constructor(wad) {
     this.wad = wad
+    this.cache = null
   }
 
   has(key) {
@@ -26,6 +27,10 @@ export class Entity {
 
   get(key) {
     return this.wad.get(key)
+  }
+
+  id() {
+    return this.wad.get('_wad')
   }
 
   name() {
@@ -60,6 +65,12 @@ export class Entity {
     return parseInt(this.wad.get('stamina'))
   }
 
+  experience() {
+    const experience = this.wad.get('experience')
+    if (experience) return parseInt(experience)
+    return 0
+  }
+
   spriteName() {
     return spriteName(this.wad.get('sprite'))
   }
@@ -69,40 +80,46 @@ export class Entity {
   }
 
   stamp() {
+    if (this.cache) return this.cache
     const info = this.spriteInfo()
     const sheet = spritesByName(info[0])
     const texture = textureIndexForName(info[0])
     const sprite = sheet.get(info[1])
-    return new Stamp(texture, sprite)
+    const stamp = new Stamp(texture, sprite)
+    this.cache = stamp
+    return stamp
   }
 
   stamps() {
+    if (this.cache) return this.cache
     const sprites = this.wad.get('sprites')
     if (Array.isArray(sprites)) {
       const list = []
-      for (const item of sprites) {
+      for (let i = 0; i < sprites.length; i++) {
+        const item = sprites[i]
         const info = spriteInfo(item)
         const sheet = spritesByName(info[0])
         const texture = textureIndexForName(info[0])
         const sprite = sheet.get(info[1])
         list.push(new Stamp(texture, sprite))
       }
+      this.cache = list
       return list
-    } else {
-      const map = new Map()
-      for (const [name, value] of sprites) {
-        const entry = []
-        for (const item of value) {
-          const info = spriteInfo(item)
-          const sheet = spritesByName(info[0])
-          const texture = textureIndexForName(info[0])
-          const sprite = sheet.get(info[1])
-          entry.push(new Stamp(texture, sprite))
-        }
-        map.set(name, entry)
-      }
-      return map
     }
+    const map = new Map()
+    for (const [name, value] of sprites) {
+      const entry = []
+      for (const item of value) {
+        const info = spriteInfo(item)
+        const sheet = spritesByName(info[0])
+        const texture = textureIndexForName(info[0])
+        const sprite = sheet.get(info[1])
+        entry.push(new Stamp(texture, sprite))
+      }
+      map.set(name, entry)
+    }
+    this.cache = map
+    return map
   }
 }
 

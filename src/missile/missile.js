@@ -1,10 +1,12 @@
 import { cellPushMissile, cellRemoveMissile } from '../world/cell.js'
-import { worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'
+import { TRIGGER_ATTACK } from '../world/trigger.js'
+import { worldEventTrigger, worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'
 
 export class Missile {
   constructor() {
     this.world = null
     this.sector = null
+    this.origin = null
     this.x = 0.0
     this.y = 0.0
     this.z = 0.0
@@ -27,7 +29,10 @@ export class Missile {
 }
 
 export function missileHit(self, thing) {
-  if (thing) thing.damage(self, self.damage)
+  if (thing) {
+    thing.damage(thing, self, self.damage)
+    if (self.origin && self.origin.attack) self.origin.attack(self.origin, thing)
+  }
 }
 
 export function missileInitialize(self, world, x, y, z) {
@@ -108,13 +113,13 @@ export function missileLineOverlap(self, line) {
 
 export function missileCheck(self) {
   if (missileUpdateSector(self)) {
-    self.hit(null)
+    self.hit(self, null)
     return true
   } else if (self.y < self.sector.floor) {
-    self.hit(null)
+    self.hit(self, null)
     return true
   } else if (self.y + self.height > self.sector.ceiling) {
-    self.hit(null)
+    self.hit(self, null)
     return true
   }
   const box = self.box
@@ -132,14 +137,16 @@ export function missileCheck(self) {
         const thing = cell.things[i]
         if (self === thing) continue
         if (thing.isPhysical && missileOverlap(self, thing)) {
-          self.hit(thing)
+          self.hit(self, thing)
           return true
         }
       }
       i = cell.lines.length
       while (i--) {
-        if (missileLineOverlap(self, cell.lines[i])) {
-          self.hit(null)
+        const line = cell.lines[i]
+        if (missileLineOverlap(self, line)) {
+          if (line.trigger) worldEventTrigger(self.world, TRIGGER_ATTACK, line.trigger, self.origin)
+          self.hit(self, null)
           return true
         }
       }

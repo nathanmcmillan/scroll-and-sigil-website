@@ -2,16 +2,36 @@ import { textureByIndex, textureByName } from '../assets/assets.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
 import { drawDecal } from '../client/render-sector.js'
 import { renderTouch } from '../client/render-touch.js'
+import { tableIter, tableIterHasNext, tableIterNext, tableIterStart } from '../collections/table.js'
+import { calcFontPad, calcFontScale, defaultFont } from '../editor/editor-util.js'
+import { black0f, black1f, black2f, green0f, green1f, green2f, red0f, red1f, red2f, white0f, white1f, white2f } from '../editor/palette.js'
 import { Game } from '../game/game.js'
+import { flexSolve, flexText, returnFlexText } from '../gui/flex.js'
 import { identity, multiply, multiplyVector3, rotateX, rotateY, translate } from '../math/matrix.js'
-import { TIC_FONT_HEIGHT, TIC_FONT_WIDTH, drawRectangle, drawSprite, drawText } from '../render/render.js'
+import { drawRectangle, drawSprite, drawText } from '../render/render.js'
 import { animal } from '../sound/animal.js'
 import { speech } from '../sound/speech.js'
+import { bufferZero } from '../webgl/buffer.js'
+import {
+  rendererBindAndDraw,
+  rendererBindTexture,
+  rendererSetProgram,
+  rendererSetView,
+  rendererUpdateAndDraw,
+  rendererUpdateUniformFloat,
+  rendererUpdateUniformInt,
+  rendererUpdateUniformMatrix,
+  rendererUpdateUniformVec3,
+  rendererUpdateVAO,
+} from '../webgl/renderer.js'
 
 function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
   drawText(b, x + scale, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
   drawText(b, x, y, text, scale, red, green, blue, 1.0)
 }
+
+const VEC = new Array(3)
+const POSITION = new Array(3)
 
 export class GameState {
   constructor(client) {
@@ -24,8 +44,9 @@ export class GameState {
 
     this.view = new Float32Array(16)
     this.projection = new Float32Array(16)
+    this.projection3d = new Float32Array(16)
 
-    if (true) {
+    if (false) {
       const text = 'scrol and sigil'
       const base = 60
       const speed = 1.5
@@ -61,29 +82,49 @@ export class GameState {
     const client = this.client
     const gl = client.gl
 
-    for (const buffer of client.sectorBuffers.values()) buffer.zero()
-    for (const sector of world.sectors) client.sectorRender(sector)
-    for (const buffer of client.sectorBuffers.values()) client.rendering.updateVAO(buffer, gl.STATIC_DRAW)
+    const sectorIter = tableIter(client.sectorBuffers)
+    while (tableIterHasNext(sectorIter)) bufferZero(tableIterNext(sectorIter).value)
+
+    for (let s = 0; s < world.sectors.length; s++) client.sectorRender(world.sectors[s])
+
+    tableIterStart(sectorIter)
+    while (tableIterHasNext(sectorIter)) rendererUpdateVAO(client.rendering, tableIterNext(sectorIter).value, gl.STATIC_DRAW)
 
     this.loading = false
   }
 
-  handle(event) {
-    const trigger = event[0]
-    const params = event[1]
-    switch (trigger) {
-      case 'hero-goto-map':
+  notify(type, args) {
+    switch (type) {
+      case 'map':
+        this.events.push([type, args])
+        return
+      case 'death':
+        return
+    }
+  }
+
+  doEvent(event) {
+    const type = event[0]
+    const args = event[1]
+    switch (type) {
+      case 'map':
         this.loading = true
-        this.load('./pack/' + this.client.pack + '/maps/' + params + '.txt')
+        this.load('./pack/' + this.client.pack + '/maps/' + args + '.txt')
         return
     }
   }
 
   update() {
     if (this.loading) return
+
     this.game.update()
-    for (const event of this.events) this.handle(event)
-    this.events.length = 0
+
+    const events = this.events
+    let e = events.length
+    if (e > 0) {
+      while (e--) this.doEvent(events[e])
+      events.length = 0
+    }
   }
 
   render() {
@@ -105,55 +146,87 @@ export class GameState {
     const world = game.world
     const camera = game.camera
 
-    const fontWidth = scale * TIC_FONT_WIDTH
-    const fontHeight = scale * TIC_FONT_HEIGHT
+    const font = defaultFont()
+    const fontScale = calcFontScale(scale)
+    const fontWidth = fontScale * font.width
+    const fontHeight = fontScale * font.base
 
     const pad = 10.0
 
     if (client.touch) renderTouch(client.touchRender)
 
-    // sky box
-
-    rendering.setProgram('texture3d-rgb')
-    rendering.setView(0, client.top, width, height)
+    rendererSetView(rendering, 0, client.top, width, height)
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+    // sky box
+
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
+
+    rendererSetProgram(rendering, 'texture3d-rgb')
 
     identity(view)
     rotateX(view, Math.sin(camera.rx), Math.cos(camera.rx))
     rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
     translate(view, 0.0, 0.0, 0.0)
     multiply(projection, client.perspective, view)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
     const sky = textureByName('sky-box-1')
-    rendering.bindTexture(gl.TEXTURE0, sky.texture)
-    rendering.bindAndDraw(client.bufferSky)
+    rendererBindTexture(rendering, gl.TEXTURE0, sky.texture)
+    rendererBindAndDraw(rendering, client.bufferSky)
 
     // render world
 
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
 
+    const trueColor = false
+    if (trueColor) {
+      rendererSetProgram(rendering, 'texture3d-light')
+    } else {
+      rendererSetProgram(rendering, 'texture3d-lookup')
+      rendererBindTexture(rendering, gl.TEXTURE1, textureByName('_shading').texture, 'u_lookup', 1)
+    }
+
     identity(view)
     rotateX(view, Math.sin(camera.rx), Math.cos(camera.rx))
     rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
     translate(view, -camera.x, -camera.y, -camera.z)
     multiply(projection, client.perspective, view)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_view', view)
 
-    const projection3d = projection.slice()
+    if (true) {
+      const missiles = world.missiles
+      const count = Math.min(world.missileCount, 8)
+      rendererUpdateUniformInt(rendering, 'u_light_count', count)
+      for (let m = 0; m < count; m++) {
+        const missile = missiles[m]
+        rendererUpdateUniformVec3(rendering, 'u_light_color[' + m + ']', 0.0, 0.4, 0.0)
+        rendererUpdateUniformVec3(rendering, 'u_light_position[' + m + ']', missile.x, missile.y, missile.z)
+        const radius = 15.0
+        rendererUpdateUniformFloat(rendering, 'u_light_strength[' + m + ']', 1.0 / (radius * radius))
+      }
+    }
 
-    for (const [index, buffer] of client.sectorBuffers) {
-      rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-      rendering.bindAndDraw(buffer)
+    const projection3d = this.projection3d
+    for (let p = 0; p < 16; p++) projection3d[p] = projection[p]
+
+    const sectorIter = tableIter(client.sectorBuffers)
+    while (tableIterHasNext(sectorIter)) {
+      const entry = tableIterNext(sectorIter)
+      const index = entry.key
+      const buffer = entry.value
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+      rendererBindAndDraw(rendering, buffer)
     }
 
     const buffers = client.spriteBuffers
-    for (const buffer of buffers.values()) buffer.zero()
+
+    const iter = tableIter(buffers)
+    while (tableIterHasNext(iter)) bufferZero(tableIterNext(iter).value)
 
     const sine = Math.sin(-camera.ry)
     const cosine = Math.cos(-camera.ry)
@@ -182,18 +255,21 @@ export class GameState {
       drawSprite(buffer, particle.x, particle.y, particle.z, particle.stamp.sprite, sine, cosine)
     }
 
-    for (const [index, buffer] of buffers) {
+    tableIterStart(iter)
+    while (tableIterHasNext(iter)) {
+      const entry = tableIterNext(iter)
+      const buffer = entry.value
       if (buffer.indexPosition === 0) continue
-      rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-      rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
+      const index = entry.key
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+      rendererUpdateAndDraw(rendering, buffer, gl.DYNAMIC_DRAW)
     }
 
     const decals = world.decals
     let d = decals.length
     if (d > 0) {
-      for (const buffer of buffers.values()) {
-        buffer.zero()
-      }
+      tableIterStart(iter)
+      while (tableIterHasNext(iter)) bufferZero(tableIterNext(iter).value)
 
       gl.depthMask(false)
       gl.enable(gl.POLYGON_OFFSET_FILL)
@@ -205,27 +281,30 @@ export class GameState {
         drawDecal(buffer, decal)
       }
 
-      for (const [index, buffer] of buffers) {
+      tableIterStart(iter)
+      while (tableIterHasNext(iter)) {
+        const entry = tableIterNext(iter)
+        const buffer = entry.value
         if (buffer.indexPosition === 0) continue
-        rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-        rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
+        const index = entry.key
+        rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+        rendererUpdateAndDraw(rendering, buffer, gl.DYNAMIC_DRAW)
       }
 
       gl.depthMask(true)
       gl.disable(gl.POLYGON_OFFSET_FILL)
     }
 
-    rendering.setProgram('texture2d-font')
-    rendering.setView(0, client.top, width, height)
+    rendererSetProgram(rendering, 'texture2d-font')
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
 
     identity(view)
     multiply(projection, client.orthographic, view)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
-    client.bufferGUI.zero()
+    bufferZero(client.bufferGUI)
 
     const hero = game.hero
 
@@ -233,107 +312,120 @@ export class GameState {
 
     if (game.cinema) {
       const black = 60.0
-      rendering.setProgram('color2d')
-      rendering.setView(0, client.top, width, height)
-      rendering.updateUniformMatrix('u_mvp', projection)
-      client.bufferColor.zero()
-      drawRectangle(client.bufferColor, 0.0, 0.0, width, black, 0.0, 0.0, 0.0, 1.0)
-      drawRectangle(client.bufferColor, 0.0, height - black, width, black, 0.0, 0.0, 0.0, 1.0)
-      rendering.updateAndDraw(client.bufferColor)
+      rendererSetProgram(rendering, 'color2d')
+      rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+      bufferZero(client.bufferColor)
+      drawRectangle(client.bufferColor, 0.0, 0.0, width, black, black0f, black1f, black2f, 1.0)
+      drawRectangle(client.bufferColor, 0.0, height - black, width, black, black0f, black1f, black2f, 1.0)
+      rendererUpdateAndDraw(rendering, client.bufferColor)
     } else if (hero.menu) {
       const menu = hero.menu
       const page = menu.page
       if (page === 'inventory') {
         let x = Math.floor(0.5 * width)
         let text = 'Outfit'
-        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, 1.0, 0.0, 0.0)
+        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, red0f, red1f, red2f)
         if (hero.outfit) {
           text = hero.outfit.name
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, red0f, red1f, red2f)
         } else {
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, red0f, red1f, red2f)
         }
         x += (text.length + 1) * fontWidth
         text = 'Headpiece'
-        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, 1.0, 0.0, 0.0)
+        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, red0f, red1f, red2f)
         if (hero.headpiece) {
           text = hero.headpiece.name
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, red0f, red1f, red2f)
         } else {
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, red0f, red1f, red2f)
         }
         x += (text.length + 1) * fontWidth
         text = 'Weapon'
         if (hero.weapon) {
           text = hero.weapon.name
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, red0f, red1f, red2f)
         } else {
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, red0f, red1f, red2f)
         }
-        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, 1.0, 0.0, 0.0)
+        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, red0f, red1f, red2f)
         let y = height - pad - fontHeight
-        drawTextSpecial(client.bufferGUI, pad, y, 'Inventory', scale, 1.0, 0.0, 0.0)
+        drawTextSpecial(client.bufferGUI, pad, y, 'Inventory', scale, red0f, red1f, red2f)
         let index = 0
-        for (const item of hero.inventory) {
+        for (let i = 0; i < hero.inventory.length; i++) {
+          const item = hero.inventory[i]
           y -= fontHeight
           if (index === hero.menuRow) drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, 1.0, 1.0, 0.0)
-          else drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, 1.0, 0.0, 0.0)
+          else drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, red0f, red1f, red2f)
           index++
         }
-        rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
-        rendering.updateAndDraw(client.bufferGUI)
+        rendererBindTexture(rendering, gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+        rendererUpdateAndDraw(rendering, client.bufferGUI)
       }
     } else {
       if (hero.interaction) {
         const interaction = hero.interaction
         const interactionWith = hero.interactionWith
-        drawTextSpecial(client.bufferGUI, pad, height - pad - fontHeight, interactionWith.name, scale, 1.0, 0.0, 0.0)
+        drawTextSpecial(client.bufferGUI, pad, height - pad - fontHeight, interactionWith.name, scale, red0f, red1f, red2f)
         let y = Math.floor(0.5 * height)
         for (const option of interaction.keys()) {
-          drawTextSpecial(client.bufferGUI, pad, y, option, scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, pad, y, option, scale, red0f, red1f, red2f)
           y += fontHeight
         }
       } else {
         if (hero.nearby) {
           const thing = hero.nearby
           const text = thing.isItem ? 'COLLECT' : 'SPEAK'
-          const vec = [thing.x, thing.y + thing.height, thing.z]
-          const position = []
-          multiplyVector3(position, projection3d, vec)
-          position[0] /= position[2]
-          position[1] /= position[2]
-          position[0] = 0.5 * ((position[0] + 1.0) * width)
-          position[1] = 0.5 * ((position[1] + 1.0) * height)
-          position[0] = Math.floor(position[0])
-          position[1] = Math.floor(position[1])
-          drawTextSpecial(client.bufferGUI, position[0], position[1], text, scale, 1.0, 0.0, 0.0)
+          VEC[0] = thing.x
+          VEC[1] = thing.y + thing.height
+          VEC[2] = thing.z
+          multiplyVector3(POSITION, projection3d, VEC)
+          POSITION[0] /= POSITION[2]
+          POSITION[1] /= POSITION[2]
+          POSITION[0] = 0.5 * ((POSITION[0] + 1.0) * width)
+          POSITION[1] = 0.5 * ((POSITION[1] + 1.0) * height)
+          POSITION[0] = Math.floor(POSITION[0])
+          POSITION[1] = Math.floor(POSITION[1])
+          drawTextSpecial(client.bufferGUI, POSITION[0], POSITION[1], text, scale, red0f, red1f, red2f)
         }
         if (hero.combat) {
           let text = ''
           for (let i = 0; i < hero.health; i++) text += 'x'
           const x = pad
           let y = pad
-          drawTextSpecial(client.bufferGUI, x, y, text, scale, 1.0, 0.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, y, text, scale, red0f, red1f, red2f)
           text = ''
           y += fontHeight
           for (let i = 0; i < hero.stamina; i++) text += 'x'
-          drawTextSpecial(client.bufferGUI, x, y, text, scale, 0.0, 1.0, 0.0)
+          drawTextSpecial(client.bufferGUI, x, y, text, scale, green0f, green1f, green2f)
+        }
+        const boss = hero.boss
+        if (boss && boss.health > 0) {
+          const fontPad = calcFontPad(fontHeight)
+          let text = boss.name
+          const name = flexText(text, fontWidth * text.length, fontHeight)
+          name.bottomSpace = fontPad
+          name.funX = 'center'
+          name.funY = '%'
+          name.argY = '95'
+          flexSolve(width, height, name)
+          drawTextSpecial(client.bufferGUI, name.x, name.y, name.text, fontScale, white0f, white1f, white2f)
+          text = ''
+          for (let i = 0; i < boss.health; i++) text += 'x'
+          const health = flexText(text, fontWidth * text.length, fontHeight)
+          health.funX = 'center'
+          health.funY = 'below'
+          health.fromY = name
+          flexSolve(width, height, health)
+          drawTextSpecial(client.bufferGUI, health.x, health.y, health.text, fontScale, red0f, red1f, red2f)
+          returnFlexText(name)
+          returnFlexText(health)
         }
       }
       if (client.bufferGUI.indexPosition > 0) {
-        rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
-        rendering.updateAndDraw(client.bufferGUI)
+        rendererBindTexture(rendering, gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+        rendererUpdateAndDraw(rendering, client.bufferGUI)
       }
-    }
-  }
-
-  notify(trigger, params) {
-    switch (trigger) {
-      case 'goto-map':
-        this.events.push([trigger, params])
-        return
-      case 'death-menu':
-        return
     }
   }
 }

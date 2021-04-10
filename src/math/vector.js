@@ -1,13 +1,11 @@
 const FLOAT_PRECISION = 0.00000001
 
-export class Float {
-  static eq(x, y) {
-    return Math.abs(x - y) < FLOAT_PRECISION
-  }
+export function floatEq(x, y) {
+  return Math.abs(x - y) < FLOAT_PRECISION
+}
 
-  static zero(x) {
-    return Math.abs(x) < FLOAT_PRECISION
-  }
+export function floatZero(x) {
+  return Math.abs(x) < FLOAT_PRECISION
 }
 
 export class Vector2 {
@@ -17,7 +15,7 @@ export class Vector2 {
   }
 
   eq(b) {
-    return Float.eq(this.x, b.x) && Float.eq(this.y, b.y)
+    return floatEq(this.x, b.x) && floatEq(this.y, b.y)
   }
 
   normal(b) {
@@ -42,7 +40,7 @@ export class Vector3 {
   }
 
   eq(b) {
-    return Float.eq(this.x, b.x) && Float.eq(this.y, b.y) && Float.eq(this.z, b.z)
+    return floatEq(this.x, b.x) && floatEq(this.y, b.y) && floatEq(this.z, b.z)
   }
 
   normalize() {
@@ -64,15 +62,15 @@ export function lineIntersect(ax, ay, bx, by, cx, cy, dx, dy) {
   const c1 = bx * ay - ax * by
   const r3 = a1 * cx + b1 * cy + c1
   const r4 = a1 * dx + b1 * dy + c1
-  if (!Float.zero(r3) && !Float.zero(r4) && r3 * r4 >= 0.0) return false
+  if (!floatZero(r3) && !floatZero(r4) && r3 * r4 >= 0.0) return false
   const a2 = dy - cy
   const b2 = cx - dx
   const c2 = dx * cy - cx * dy
   const r1 = a2 * ax + b2 * ay + c2
   const r2 = a2 * bx + b2 * by + c2
-  if (!Float.zero(r1) && !Float.zero(r2) && r1 * r2 >= 0.0) return false
+  if (!floatZero(r1) && !floatZero(r2) && r1 * r2 >= 0.0) return false
   const denominator = a1 * b2 - a2 * b1
-  return !Float.zero(denominator)
+  return !floatZero(denominator)
 }
 
 export function lineIntersectAt(out, ax, ay, bx, by, cx, cy, dx, dy) {

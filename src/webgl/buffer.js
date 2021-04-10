@@ -13,10 +13,10 @@ export class Buffer {
     this.vbo = null
     this.ebo = null
   }
+}
 
-  zero() {
-    this.indexOffset = 0
-    this.indexPosition = 0
-    this.vertexPosition = 0
-  }
+export function bufferZero(b) {
+  b.indexOffset = 0
+  b.indexPosition = 0
+  b.vertexPosition = 0
 }

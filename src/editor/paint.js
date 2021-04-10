@@ -296,16 +296,25 @@ export class PaintEdit {
     paletteBox.fromY = toolBox
     this.paletteBox = paletteBox
 
-    const collection = [sheetBox, viewBox, miniBox, toolBox, paletteBox]
-    flexSolve(width, height, ...collection)
+    flexSolve(width, height, sheetBox)
+    flexSolve(width, height, viewBox)
+    flexSolve(width, height, miniBox)
+    flexSolve(width, height, toolBox)
+    flexSolve(width, height, paletteBox)
 
-    const size = flexSize(...collection)
+    const size = flexSize([sheetBox, viewBox, miniBox, toolBox, paletteBox])
+
     const canvas = flexBox(size[2], size[3])
     canvas.funX = 'center'
     flexSolve(width, height, canvas)
 
     sheetBox.argX = canvas.x
-    flexSolve(width, height, ...collection)
+
+    flexSolve(width, height, sheetBox)
+    flexSolve(width, height, viewBox)
+    flexSolve(width, height, miniBox)
+    flexSolve(width, height, toolBox)
+    flexSolve(width, height, paletteBox)
   }
 
   read(content) {

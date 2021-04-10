@@ -6,8 +6,9 @@ import { Line } from '../map/line.js'
 import { Sector } from '../map/sector.js'
 import { Vector2 } from '../math/vector.js'
 import { Hero } from '../thing/hero.js'
+import { Flags } from '../world/flags.js'
 import { Trigger } from '../world/trigger.js'
-import { World, worldClear, worldPushTrigger, worldUpdate } from '../world/world.js'
+import { World, worldBuild, worldClear, worldPushSector, worldPushTrigger, worldSetLines, worldSpawnEntity, worldUpdate } from '../world/world.js'
 
 function texture(name) {
   if (name === 'none') return -1
@@ -61,7 +62,7 @@ export class Game {
             i++
             const start = i
             while (i < line.length && line[i] !== 'end') i++
-            flags = line.slice(start, i)
+            flags = new Flags(line.slice(start, i))
             i++
           } else if (line[i] === 'trigger') {
             i++
@@ -103,7 +104,7 @@ export class Game {
             i++
             const start = i
             while (i < sector.length && sector[i] !== 'end') i++
-            flags = sector.slice(start, i)
+            flags = new Flags(sector.slice(start, i))
             i++
           } else if (sector[i] === 'trigger') {
             i++
@@ -113,13 +114,13 @@ export class Game {
             i++
           } else i++
         }
-        world.pushSector(new Sector(bottom, floor, ceiling, top, floorTexture, ceilingTexture, flags, trigger, sectorVecs, sectorLines))
+        worldPushSector(world, new Sector(bottom, floor, ceiling, top, floorTexture, ceilingTexture, flags, trigger, sectorVecs, sectorLines))
         index++
       }
       index++
 
-      world.setLines(lines)
-      world.build()
+      worldSetLines(world, lines)
+      worldBuild(world)
 
       while (index < end) {
         const top = map[index]
@@ -131,7 +132,25 @@ export class Game {
             const x = parseFloat(thing[0])
             const z = parseFloat(thing[1])
             const name = thing[2]
-            const entity = world.spawnEntity(name, x, z)
+            let flags = null
+            let trigger = null
+            let i = 3
+            while (i < thing.length) {
+              if (thing[i] === 'flags') {
+                i++
+                const start = i
+                while (i < thing.length && thing[i] !== 'end') i++
+                flags = new Flags(thing.slice(start, i))
+                i++
+              } else if (thing[i] === 'trigger') {
+                i++
+                const start = i
+                while (i < thing.length && thing[i] !== 'end') i++
+                trigger = new Trigger(thing.slice(start, i))
+                i++
+              } else i++
+            }
+            const entity = worldSpawnEntity(world, name, x, z, flags, trigger)
             if (entity instanceof Hero) {
               this.hero = entity
               this.camera.target = this.hero
@@ -200,15 +219,15 @@ export class Game {
     else cameraFollowCinema(camera, this.world)
   }
 
-  notify(trigger, params) {
-    switch (trigger) {
-      case 'begin-cinema':
+  notify(type, args) {
+    switch (type) {
+      case 'cinema':
         this.cinema = true
         return
-      case 'end-cinema':
+      case 'no-cinema':
         this.cinema = false
         return
     }
-    this.parent.notify(trigger, params)
+    this.parent.notify(type, args)
   }
 }

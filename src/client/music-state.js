@@ -1,13 +1,15 @@
 import { textureByName } from '../assets/assets.js'
 import { renderDialogBox, renderStatus } from '../client/client-util.js'
 import { calcFontScale, defaultFont } from '../editor/editor-util.js'
-import { MusicEdit, lengthName } from '../editor/music.js'
+import { lengthName, MusicEdit } from '../editor/music.js'
 import { redf, slatef, whitef } from '../editor/palette.js'
 import { flexBox, flexSolve } from '../gui/flex.js'
 import { identity, multiply } from '../math/matrix.js'
 import { spr, sprcol } from '../render/pico.js'
 import { drawRectangle, drawTextFontSpecial } from '../render/render.js'
-import { SEMITONES, semitoneName } from '../sound/synth.js'
+import { semitoneName, SEMITONES } from '../sound/synth.js'
+import { bufferZero } from '../webgl/buffer.js'
+import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
 
 export class MusicState {
   constructor(client) {
@@ -110,7 +112,7 @@ export class MusicState {
     multiply(projection, client.orthographic, view)
 
     const buffer = client.bufferColor
-    buffer.zero()
+    bufferZero(buffer)
 
     const font = defaultFont()
     const fontScale = calcFontScale(scale)
@@ -119,14 +121,14 @@ export class MusicState {
 
     const pad = 2 * scale
 
-    rendering.setProgram('color2d')
-    rendering.setView(0, client.top, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetProgram(rendering, 'color2d')
+    rendererSetView(rendering, 0, client.top, width, height)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
     gl.clearColor(slatef(0), slatef(1), slatef(2), 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    client.bufferGUI.zero()
+    bufferZero(client.bufferGUI)
 
     // top bar
 
@@ -137,15 +139,15 @@ export class MusicState {
 
     drawRectangle(buffer, 0, 0, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
 
-    rendering.updateAndDraw(buffer)
+    rendererUpdateAndDraw(rendering, buffer)
 
     // text
 
-    rendering.setProgram('texture2d-font')
-    rendering.setView(0, client.top, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetProgram(rendering, 'texture2d-font')
+    rendererSetView(rendering, 0, client.top, width, height)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
-    client.bufferGUI.zero()
+    bufferZero(client.bufferGUI)
 
     const track = music.tracks[music.trackIndex]
     const notes = track.notes
@@ -206,16 +208,16 @@ export class MusicState {
 
     renderStatus(client, width, height, font, fontWidth, fontScale, topBarHeight, music)
 
-    rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-    rendering.updateAndDraw(client.bufferGUI)
+    rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+    rendererUpdateAndDraw(rendering, client.bufferGUI)
 
-    client.bufferGUI.zero()
+    bufferZero(client.bufferGUI)
 
     // sprites
 
-    rendering.setProgram('texture2d-rgb')
-    rendering.setView(0, client.top, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetProgram(rendering, 'texture2d-rgb')
+    rendererSetView(rendering, 0, client.top, width, height)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
     const spriteScale = Math.floor(1.5 * scale)
     const spriteSize = 8 * spriteScale
@@ -238,8 +240,8 @@ export class MusicState {
       pos += noteWidth
     }
 
-    rendering.bindTexture(gl.TEXTURE0, textureByName('editor-sprites').texture)
-    rendering.updateAndDraw(client.bufferGUI)
+    rendererBindTexture(rendering, gl.TEXTURE0, textureByName('editor-sprites').texture)
+    rendererUpdateAndDraw(rendering, client.bufferGUI)
 
     // dialog box
 

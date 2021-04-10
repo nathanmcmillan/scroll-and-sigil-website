@@ -1,9 +1,11 @@
+import { newAudioContext } from '../sound/web-audio-context.js'
+
 export const SYNTH_ANIMAL_RATE = 44100
 
 const rate = 1.0 / SYNTH_ANIMAL_RATE
 const pi = Math.PI
 const tau = 2.0 * pi
-const context = new AudioContext()
+const context = newAudioContext()
 const secondsPerChar = 0.075
 const samplesPerChar = Math.floor(secondsPerChar * SYNTH_ANIMAL_RATE)
 

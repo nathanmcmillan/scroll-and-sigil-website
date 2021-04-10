@@ -2,10 +2,21 @@ import { textureByIndex, textureByName, textureIndexForName } from '../assets/as
 import { renderDialogBox } from '../client/client-util.js'
 import { drawFloorCeil, drawWall } from '../client/render-sector.js'
 import { renderTouch } from '../client/render-touch.js'
+import { tableIter, tableIterHasNext, tableIterNext, tableIterStart } from '../collections/table.js'
 import { calcFontScale, defaultFont } from '../editor/editor-util.js'
 import { redf } from '../editor/palette.js'
 import { identity, multiply, rotateX, rotateY, translate } from '../math/matrix.js'
 import { drawSprite, drawTextFontSpecial } from '../render/render.js'
+import { bufferZero } from '../webgl/buffer.js'
+import {
+  rendererBindAndDraw,
+  rendererBindTexture,
+  rendererSetProgram,
+  rendererSetView,
+  rendererUpdateAndDraw,
+  rendererUpdateUniformMatrix,
+  rendererUpdateVAO,
+} from '../webgl/renderer.js'
 
 function lineRender(client, line) {
   let wall = line.top
@@ -39,10 +50,14 @@ export function updateMapEditViewSectorBuffer(state) {
   const client = state.client
   const gl = client.gl
 
-  for (const buffer of client.sectorBuffers.values()) buffer.zero()
+  const sectorIter = tableIter(client.sectorBuffers)
+  while (tableIterHasNext(sectorIter)) bufferZero(tableIterNext(sectorIter).value)
+
   for (const line of maps.lines) lineRender(client, line)
   for (const sector of maps.sectors) floorCeilRender(client, sector)
-  for (const buffer of client.sectorBuffers.values()) client.rendering.updateVAO(buffer, gl.STATIC_DRAW)
+
+  tableIterStart(sectorIter)
+  while (tableIterHasNext(sectorIter)) rendererUpdateVAO(client.rendering, tableIterNext(sectorIter).value, gl.STATIC_DRAW)
 }
 
 export function renderMapEditViewMode(state) {
@@ -61,8 +76,8 @@ export function renderMapEditViewMode(state) {
 
   // render world
 
-  rendering.setProgram('texture3d-rgb')
-  rendering.setView(0, client.top, width, height)
+  rendererSetProgram(rendering, 'texture3d-rgb')
+  rendererSetView(rendering, 0, client.top, width, height)
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -74,11 +89,11 @@ export function renderMapEditViewMode(state) {
   rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
   translate(view, 0.0, 0.0, 0.0)
   multiply(projection, client.perspective, view)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
   const sky = textureByName('sky-box-1')
-  rendering.bindTexture(gl.TEXTURE0, sky.texture)
-  rendering.bindAndDraw(client.bufferSky)
+  rendererBindTexture(rendering, gl.TEXTURE0, sky.texture)
+  rendererBindAndDraw(rendering, client.bufferSky)
 
   gl.enable(gl.CULL_FACE)
   gl.enable(gl.DEPTH_TEST)
@@ -88,17 +103,21 @@ export function renderMapEditViewMode(state) {
   rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
   translate(view, -camera.x, -camera.y, -camera.z)
   multiply(projection, client.perspective, view)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
-  for (const [index, buffer] of client.sectorBuffers) {
-    rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-    rendering.bindAndDraw(buffer)
+  const sectorIter = tableIter(client.sectorBuffers)
+  while (tableIterHasNext(sectorIter)) {
+    const entry = tableIterNext(sectorIter)
+    const index = entry.key
+    const buffer = entry.value
+    rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+    rendererBindAndDraw(rendering, buffer)
   }
 
   const buffers = client.spriteBuffers
-  for (const buffer of buffers.values()) {
-    buffer.zero()
-  }
+
+  const iter = tableIter(buffers)
+  while (tableIterHasNext(iter)) bufferZero(tableIterNext(iter).value)
 
   const sine = Math.sin(-camera.ry)
   const cosine = Math.cos(-camera.ry)
@@ -111,34 +130,38 @@ export function renderMapEditViewMode(state) {
     drawSprite(buffer, thing.x, thing.y, thing.z, thing.stamp.sprite, sine, cosine)
   }
 
-  for (const [index, buffer] of buffers) {
+  tableIterStart(iter)
+  while (tableIterHasNext(iter)) {
+    const entry = tableIterNext(iter)
+    const buffer = entry.value
     if (buffer.indexPosition === 0) continue
-    rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-    rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
+    const index = entry.key
+    rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+    rendererUpdateAndDraw(rendering, buffer, gl.DYNAMIC_DRAW)
   }
 
   // text
 
-  rendering.setProgram('texture2d-font')
-  rendering.setView(0, client.top, width, height)
+  rendererSetProgram(rendering, 'texture2d-font')
+  rendererSetView(rendering, 0, client.top, width, height)
 
   gl.disable(gl.CULL_FACE)
   gl.disable(gl.DEPTH_TEST)
 
   identity(view)
   multiply(projection, client.orthographic, view)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
   const font = defaultFont()
   const fontScale = calcFontScale(scale)
   const fontWidth = fontScale * font.width
   const fontHeight = fontScale * font.base
 
-  client.bufferGUI.zero()
+  bufferZero(client.bufferGUI)
   const text = 'x:' + camera.x.toFixed(2) + ' y:' + camera.y.toFixed(2) + ' z:' + camera.z.toFixed(2)
   drawTextFontSpecial(client.bufferGUI, fontWidth, fontHeight, text, fontScale, redf(0), redf(1), redf(2), font)
-  rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-  rendering.updateAndDraw(client.bufferGUI)
+  rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+  rendererUpdateAndDraw(rendering, client.bufferGUI)
 
   // dialog box
 

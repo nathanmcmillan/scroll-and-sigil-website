@@ -1,10 +1,12 @@
 import { entityByName } from '../assets/assets.js'
 import { playSound } from '../assets/sounds.js'
-import { randomInt } from '../math/random.js'
+import { pRandomOf } from '../math/random.js'
 import { newPlasma } from '../missile/plasma.js'
 import { redBloodExplode, redBloodTowards } from '../thing/thing-util.js'
 import { Thing, thingApproximateDistance, thingIntegrate, thingSetAnimation, thingSetup, thingUpdateAnimation, thingUpdateSprite } from '../thing/thing.js'
-import { ANIMATION_ALMOST_DONE, ANIMATION_DONE, worldEventTrigger, WORLD_CELL_SHIFT } from '../world/world.js'
+import { FLAG_BOSS } from '../world/flags.js'
+import { TRIGGER_ATTACK, TRIGGER_INTERACT } from '../world/trigger.js'
+import { ANIMATION_ALMOST_DONE, ANIMATION_DONE, triggerEvent, worldConditionTrigger, worldEventTrigger, WORLD_CELL_SHIFT } from '../world/world.js'
 
 // TODO
 // If thing interacting with dies / is busy then nullify hero interaction
@@ -21,48 +23,109 @@ const COMBAT_TIMER = 300
 const MELEE_COST = 2
 const MISSILE_COST = 4
 
-function heroDamage(source, health) {
-  if (this.status === STATUS_BUSY) {
+export class Hero extends Thing {
+  constructor(world, entity, x, z, input) {
+    super(world, entity, x, z)
+    this.box = entity.box()
+    this.height = entity.height()
+    this.input = input
+    this.animations = entity.stamps()
+    this.animation = this.animations.get('move')
+    this.stamp = this.animation[0]
+    this.speed = entity.speed()
+    this.maxHealth = entity.health()
+    this.health = this.maxHealth
+    this.maxStamina = entity.stamina()
+    this.stamina = this.maxStamina
+    this.staminaRate = 0
+    this.staminaBound = 32
     this.status = STATUS_IDLE
-    this.menu = null
-    this.interaction = null
-    this.interactionWith = null
-  }
-  this.health -= health
-  if (this.health <= 0) {
-    playSound('baron-death')
-    this.health = 0
-    this.status = STATUS_DEAD
-    thingSetAnimation(this, 'death')
+    this.reaction = 0
+    this.group = 'human'
+    this.level = 1
+    this.experience = 0
+    this.experienceNeeded = 20
+    this.skills = 0
+    this.tree = {}
+    this.outfit = null
+    this.headpiece = null
+    this.weapon = null
+    this.nearby = null
+    this.quests = []
+    this.inventory = []
     this.combat = 0
-    redBloodExplode(this)
-  } else {
-    playSound('baron-pain')
-    this.combat = COMBAT_TIMER
-    redBloodTowards(this, source)
+    this.menu = null
+    this.menuSub = 0
+    this.menuColumn = 0
+    this.menuRow = 0
+    this.interactionWith = null
+    this.boss = null
+    this.damage = heroDamage
+    this.update = heroUpdate
+    this.attack = heroAttack
+    thingSetup(this)
   }
 }
 
-function heroUpdate() {
-  switch (this.status) {
+function heroSetBoss(hero, thing) {
+  if (thing) {
+    if (thing.flags && thing.flags.get(FLAG_BOSS)) {
+      hero.boss = thing
+    } else {
+      const origin = thing.origin
+      if (origin && origin.flags && origin.flags.get(FLAG_BOSS)) hero.boss = origin
+    }
+  }
+}
+
+function heroAttack(hero, target) {
+  heroSetBoss(hero, target)
+  if (target.health <= 0) heroTakeExperience(self, target.experience)
+}
+
+function heroDamage(hero, source, health) {
+  heroSetBoss(hero, source)
+  if (hero.status === STATUS_BUSY) {
+    hero.status = STATUS_IDLE
+    hero.menu = null
+    hero.interaction = null
+    hero.interactionWith = null
+  } else if (hero.status === STATUS_DEAD) return
+  hero.health -= health
+  if (hero.health <= 0) {
+    playSound('baron-death')
+    hero.health = 0
+    hero.status = STATUS_DEAD
+    thingSetAnimation(hero, 'death')
+    hero.combat = 0
+    redBloodExplode(hero)
+  } else {
+    playSound('baron-pain')
+    hero.combat = COMBAT_TIMER
+    redBloodTowards(hero, source)
+  }
+}
+
+function heroUpdate(hero) {
+  switch (hero.status) {
     case STATUS_IDLE:
     case STATUS_MOVE:
-      heroMove(this)
+      heroMove(hero)
       break
     case STATUS_MELEE:
-      heroMelee(this)
+      heroMelee(hero)
       break
     case STATUS_MISSILE:
-      heroMissile(this)
+      heroMissile(hero)
       break
     case STATUS_DEAD:
-      heroDead(this)
+      heroDead(hero)
       break
     case STATUS_BUSY:
-      heroBusy(this)
+      heroBusy(hero)
       break
   }
-  thingIntegrate(this)
+  thingIntegrate(hero)
   return false
 }
 
@@ -71,7 +134,7 @@ function heroDistanceToLine(self, box, line) {
   const vz = line.b.y - line.a.y
   const wx = self.x - line.a.x
   const wz = self.z - line.a.y
-  if (vx * wz - vz * wx < 0.0) return null
+  if (vx * wz - vz * wx >= 0.0) return null
   let t = (wx * vx + wz * vz) / (vx * vx + vz * vz)
   if (t < 0.0) t = 0.0
   else if (t > 1.0) t = 1.0
@@ -136,7 +199,7 @@ function heroInteract(self) {
       self.interaction = thing.interaction
       if (self.interaction.get('type') === 'quest') self.world.notify('begin-cinema')
       const trigger = thing.trigger
-      if (trigger) worldEventTrigger(world, 'interact', trigger, self)
+      if (trigger) worldEventTrigger(world, TRIGGER_INTERACT, trigger, self)
       return true
     }
   }
@@ -164,7 +227,7 @@ function heroInteract(self) {
         const distance = heroDistanceToLine(self, box, line)
         if (distance !== null && distance < 2.0) {
           const trigger = line.trigger
-          if (trigger) worldEventTrigger(world, 'interact', trigger, self)
+          if (trigger) worldEventTrigger(world, TRIGGER_INTERACT, trigger, self)
         }
       }
     }
@@ -245,12 +308,21 @@ function heroMelee(self) {
             target = thing
           }
         }
+        i = cell.lines.length
+        while (i--) {
+          const line = cell.lines[i]
+          const trigger = line.trigger
+          if (trigger && triggerEvent(TRIGGER_ATTACK, trigger.event)) {
+            const distance = heroDistanceToLine(self, box, line)
+            if (distance !== null) worldConditionTrigger(world, trigger, self)
+          }
+        }
       }
     }
 
     if (target) {
-      target.damage(self, 1 + randomInt(3))
-      if (target.health <= 0) heroTakeExperience(self, target.experience)
+      target.damage(target, self, 1 + pRandomOf(3))
+      self.attack(self, target)
     }
   } else if (frame === ANIMATION_DONE) {
     self.status = STATUS_IDLE
@@ -270,7 +342,7 @@ function heroMissile(self) {
     const x = self.x + dx * (self.box + 2.0)
     const z = self.z + dz * (self.box + 2.0)
     const y = self.y + 0.5 * self.height
-    newPlasma(self.world, entityByName('plasma'), x, y, z, dx * speed, 0.0, dz * speed, 1 + randomInt(3))
+    newPlasma(self.world, entityByName('plasma'), self, x, y, z, dx * speed, 0.0, dz * speed, 1 + pRandomOf(3))
   } else if (frame === ANIMATION_DONE) {
     self.status = STATUS_IDLE
     thingSetAnimation(self, 'move')
@@ -371,47 +443,5 @@ function heroMove(self) {
         thingUpdateSprite(self)
       }
     }
-  }
-}
-
-export class Hero extends Thing {
-  constructor(world, entity, x, z, input) {
-    super(world, x, z)
-    this.box = entity.box()
-    this.height = entity.height()
-    this.input = input
-    this.animations = entity.stamps()
-    this.animation = this.animations.get('move')
-    this.stamp = this.animation[0]
-    this.speed = entity.speed()
-    this.maxHealth = entity.health()
-    this.health = this.maxHealth
-    this.maxStamina = entity.stamina()
-    this.stamina = this.maxStamina
-    this.staminaRate = 0
-    this.staminaBound = 32
-    this.status = STATUS_IDLE
-    this.reaction = 0
-    this.group = 'human'
-    this.level = 1
-    this.experience = 0
-    this.experienceNeeded = 20
-    this.skills = 0
-    this.tree = {}
-    this.outfit = null
-    this.headpiece = null
-    this.weapon = null
-    this.nearby = null
-    this.quests = []
-    this.inventory = []
-    this.combat = 0
-    this.menu = null
-    this.menuSub = 0
-    this.menuColumn = 0
-    this.menuRow = 0
-    this.interactionWith = null
-    this.damage = heroDamage
-    this.update = heroUpdate
-    thingSetup(this)
   }
 }

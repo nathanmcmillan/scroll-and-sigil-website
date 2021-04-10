@@ -1,7 +1,10 @@
 import { entityByName, entityList, tileCount, tileList } from '../assets/assets.js'
 import { fetchText } from '../client/net.js'
-import { LineReference, SectorReference, ThingReference, VectorReference } from '../editor/map-edit-references.js'
+import { LineReference } from '../editor/map-edit-line-reference.js'
+import { SectorReference } from '../editor/map-edit-sector-reference.js'
 import { computeSectors } from '../editor/map-edit-sectors.js'
+import { ThingReference } from '../editor/map-edit-thing-reference.js'
+import { VectorReference } from '../editor/map-edit-vec-reference.js'
 import { Camera } from '../game/camera.js'
 import { Dialog } from '../gui/dialog.js'
 import { TextBox } from '../gui/text-box.js'
@@ -9,7 +12,8 @@ import * as In from '../input/input.js'
 import { sectorInsideOutside, sectorLineNeighbors } from '../map/sector.js'
 import { sectorTriangulateForEditor } from '../map/triangulate.js'
 import { Vector2 } from '../math/vector.js'
-import { Trigger } from '../world/trigger.js'
+import { Flags } from '../world/flags.js'
+import { Trigger, triggerExport } from '../world/trigger.js'
 import { WORLD_SCALE } from '../world/world.js'
 
 export const TOP_MODE = 0
@@ -151,7 +155,7 @@ DESCRIBE_OPTIONS[OPTION_SECTOR_MODE_LINE_UNDER_CURSOR] = SECTOR_MODE_LINE_UNDER_
 const INPUT_RATE = 128
 
 function strvec(vec) {
-  return JSON.stringify({x: vec.x, y: vec.y})
+  return JSON.stringify({ x: vec.x, y: vec.y })
 }
 
 function texture(name) {
@@ -377,7 +381,7 @@ export class MapEdit {
       this.dialog = change
       this.forcePaint = true
     } else if (event === 'thing-set as default') {
-      this.defaultEntity = this.selectedThing.entity.get('_wad')
+      this.defaultEntity = this.selectedThing.entity.id()
       this.dialogEnd()
     } else if (event === 'creator-back') {
       this.dialog = this.editThingDialog
@@ -421,28 +425,28 @@ export class MapEdit {
     } else if (event.startsWith('sector-bottom:')) {
       const sector = this.selectedSector
       if (left) {
-        if (sector.bottom > 0) sector.bottom--
+        if (sector.bottom > -100) sector.bottom--
       } else sector.bottom++
       this.doSectorRefresh = true
       this.dialog.options[2] = 'bottom:         ' + sector.bottom
     } else if (event.startsWith('sector-floor:')) {
       const sector = this.selectedSector
       if (left) {
-        if (sector.floor > 0) sector.floor--
+        if (sector.floor > -100) sector.floor--
       } else sector.floor++
       this.doSectorRefresh = true
       this.dialog.options[3] = 'floor:          ' + sector.floor
     } else if (event.startsWith('sector-ceiling:')) {
       const sector = this.selectedSector
       if (left) {
-        if (sector.ceiling > 0) sector.ceiling--
+        if (sector.ceiling > -100) sector.ceiling--
       } else sector.ceiling++
       this.doSectorRefresh = true
       this.dialog.options[4] = 'ceiling:        ' + sector.ceiling
     } else if (event.startsWith('sector-top:')) {
       const sector = this.selectedSector
       if (left) {
-        if (sector.top > 0) sector.top--
+        if (sector.top > -100) sector.top--
       } else sector.top++
       this.doSectorRefresh = true
       this.dialog.options[5] = 'top:            ' + sector.top
@@ -579,7 +583,7 @@ export class MapEdit {
               i++
               const start = i
               while (i < line.length && line[i] !== 'end') i++
-              flags = line.slice(start, i)
+              flags = new Flags(line.slice(start, i))
               i++
             } else if (line[i] === 'trigger') {
               i++
@@ -623,7 +627,7 @@ export class MapEdit {
               i++
               const start = i
               while (i < sector.length && sector[i] !== 'end') i++
-              flags = sector.slice(start, i)
+              flags = new Flags(sector.slice(start, i))
               i++
             } else if (sector[i] === 'trigger') {
               i++
@@ -660,7 +664,25 @@ export class MapEdit {
               const x = parseFloat(thing[0])
               const z = parseFloat(thing[1])
               const entity = entityByName(thing[2])
-              this.things.push(new ThingReference(entity, x, z))
+              let flags = null
+              let trigger = null
+              let i = 3
+              while (i < thing.length) {
+                if (thing[i] === 'flags') {
+                  i++
+                  const start = i
+                  while (i < thing.length && thing[i] !== 'end') i++
+                  flags = new Flags(thing.slice(start, i))
+                  i++
+                } else if (thing[i] === 'trigger') {
+                  i++
+                  const start = i
+                  while (i < thing.length && thing[i] !== 'end') i++
+                  trigger = new Trigger(thing.slice(start, i))
+                  i++
+                } else i++
+              }
+              this.things.push(new ThingReference(entity, x, z, flags, trigger))
               index++
             }
             index++
@@ -1195,7 +1217,7 @@ export class MapEdit {
             } else if (option === DO_DELETE_THING) {
               this.deleteSelectedThing()
             } else if (option === DO_EDIT_THING) {
-              this.editThingDialog.title = this.selectedThing.entity.get('_wad')
+              this.editThingDialog.title = this.selectedThing.entity.id()
               this.dialog = this.editThingDialog
             }
           }
@@ -1569,7 +1591,7 @@ export class MapEdit {
       return 'VEC ' + this.selectedVec.x.toFixed(2) + ', ' + this.selectedVec.y.toFixed(2)
     } else if (this.selectedThing) {
       const thing = this.selectedThing
-      return 'THING ' + thing.entity.get('_wad').toUpperCase() + ' ' + thing.x.toFixed(2) + ', ' + thing.z.toFixed(2)
+      return 'THING ' + thing.entity.id().toUpperCase() + ' ' + thing.x.toFixed(2) + ', ' + thing.z.toFixed(2)
     } else if (this.selectedLine) {
       const line = this.selectedLine
       return 'LINE B' + line.bottom.offset + ' M' + line.middle.offset + ' T' + line.top.offset
@@ -1687,7 +1709,7 @@ export class MapEdit {
     }
     if (this.triggers.length > 0) {
       content += 'triggers\n'
-      for (const trigger of this.triggers) content += trigger.export() + '\n'
+      for (const trigger of this.triggers) content += triggerExport(trigger) + '\n'
       content += 'end triggers\n'
     }
     if (this.meta.length > 0) {

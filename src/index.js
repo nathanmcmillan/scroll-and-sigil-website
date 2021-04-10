@@ -1,7 +1,7 @@
 import { Client } from './client/client.js'
 
 function newCanvas(width, height) {
-  let canvas = document.getElementById('canvas')
+  const canvas = document.getElementById('canvas')
   canvas.style.display = 'block'
   canvas.style.position = 'absolute'
   canvas.style.left = '0'
@@ -23,7 +23,7 @@ let perfStart = 0.0
 
 let active = true
 let client = null
-let ongoingTouches = []
+const ongoingTouches = []
 
 function touchIndexById(identifier) {
   const touches = ongoingTouches
@@ -42,12 +42,12 @@ function tick(timestamp) {
     client.render()
 
     if (PERFORMANCE) {
-      let diff = performance.now() - perf
+      const diff = performance.now() - perf
       if (diff < perfLow) perfLow = diff
       if (diff > perfHigh) perfHigh = diff
       perfTick++
       if (perfTick === 16) {
-        let average = (performance.now() - perfStart) / perfTick
+        const average = (performance.now() - perfStart) / perfTick
         console.info('time (low := ' + perfLow + ') (high := ' + perfHigh + ') average :=', average)
         perfLow = Number.MAX_VALUE
         perfHigh = -Number.MAX_VALUE
@@ -60,8 +60,17 @@ function tick(timestamp) {
 }
 
 async function main() {
-  let canvas = newCanvas(window.innerWidth, window.innerHeight)
+  const canvas = newCanvas(window.innerWidth, window.innerHeight)
+
   let gl = canvas.getContext('webgl2', { antialias: false })
+  if (!gl) {
+    gl = canvas.getContext('webgl', { antialias: false })
+    if (!gl) {
+      throw 'Your browser does not support WebGL'
+    } else {
+      console.warn('WebGL2 is not supported')
+    }
+  }
 
   client = new Client(canvas, gl)
 
@@ -99,8 +108,8 @@ async function main() {
       event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
-        let touch = touches[i]
-        let content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
+        const touch = touches[i]
+        const content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
         ongoingTouches.push(content)
         client.touchStart(content)
       }
@@ -110,8 +119,8 @@ async function main() {
       event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
-        let touch = touches[i]
-        let content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
+        const touch = touches[i]
+        const content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
         client.touchMove(content)
       }
     }
@@ -120,10 +129,10 @@ async function main() {
       event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
-        let touch = touches[i]
-        let index = touchIndexById(touch.identifier)
+        const touch = touches[i]
+        const index = touchIndexById(touch.identifier)
         if (index >= 0) {
-          let start = ongoingTouches.splice(index, 1)[0]
+          const start = ongoingTouches.splice(index, 1)[0]
           client.touchEnd(start)
         }
       }
@@ -133,8 +142,8 @@ async function main() {
       event.preventDefault()
       const touches = event.changedTouches
       for (let i = 0; i < touches.length; i++) {
-        let touch = touches[i]
-        let index = touchIndexById(touch.identifier)
+        const touch = touches[i]
+        const index = touchIndexById(touch.identifier)
         if (index >= 0) ongoingTouches.splice(index, 1)
       }
     }

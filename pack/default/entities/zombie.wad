@@ -6,6 +6,7 @@ group: (monster)(zombie)
 health: 1
 speed: 0.08
 sight: 6.0
+experience: 1
 sound-pain: baron-pain
 sound-death: baron-death
 sound-wake: baron-scream

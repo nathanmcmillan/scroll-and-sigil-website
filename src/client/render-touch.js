@@ -1,7 +1,9 @@
-import { blackf, whitef } from '../editor/palette.js'
+import { black0f, black1f, black2f, white0f, white1f, white2f } from '../editor/palette.js'
 import * as In from '../input/input.js'
 import { identity, multiply, orthographic } from '../math/matrix.js'
 import { drawRectangle } from '../render/render.js'
+import { bufferZero } from '../webgl/buffer.js'
+import { rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
 
 class TouchButton {
   constructor(input) {
@@ -54,7 +56,8 @@ export class TouchRender {
 export function touchRenderEvent(touch, event) {
   const x = event.pageX
   const y = event.pageY
-  for (const button of touch.buttons) if (button.touched(x, y)) return button.input
+  const buttons = touch.buttons
+  for (let b = 0; b < buttons.length; b++) if (buttons[b].touched(x, y)) return buttons[b].input
   return null
 }
 
@@ -107,25 +110,28 @@ export function renderTouch(touch) {
   const width = touch.width
   const height = touch.height
 
-  rendering.setProgram('color2d')
-  rendering.setView(0, 0, width, height)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererSetView(rendering, 0, 0, width, height)
 
-  gl.clearColor(blackf(0), blackf(1), blackf(2), 1.0)
+  gl.clearColor(black0f, black1f, black2f, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   gl.disable(gl.CULL_FACE)
   gl.disable(gl.DEPTH_TEST)
 
+  rendererSetProgram(rendering, 'color2d')
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+
   identity(view)
   multiply(projection, touch.orthographic, view)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
-  client.bufferColor.zero()
+  bufferZero(client.bufferColor)
 
-  for (const button of touch.buttons) {
-    drawRectangle(client.bufferColor, button.x, button.y, button.width, button.height, whitef(0), whitef(1), whitef(2), 1.0)
+  const buttons = touch.buttons
+  for (let b = 0; b < buttons.length; b++) {
+    const button = buttons[b]
+    drawRectangle(client.bufferColor, button.x, button.y, button.width, button.height, white0f, white1f, white2f, 1.0)
   }
 
-  rendering.updateAndDraw(client.bufferColor)
+  rendererUpdateAndDraw(rendering, client.bufferColor)
 }

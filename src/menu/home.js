@@ -109,7 +109,12 @@ export class Home {
     creditsBox.fromY = optionsBox
     this.creditsBox = creditsBox
 
-    flexSolve(width, height, titleBox, continueGameBox, newGameBox, editorBox, optionsBox, creditsBox)
+    flexSolve(width, height, titleBox)
+    flexSolve(width, height, continueGameBox)
+    flexSolve(width, height, newGameBox)
+    flexSolve(width, height, editorBox)
+    flexSolve(width, height, optionsBox)
+    flexSolve(width, height, creditsBox)
   }
 
   immediateInput() {

@@ -66,6 +66,52 @@ export function readPaintFile(text, palette) {
   return { name: name, wrap: 'clamp', width: width, height: height, pixels: pixels, sprites: sprites }
 }
 
+export function readPaintFileAsLookup(text) {
+  const image = text.split('\n')
+
+  const info = image[0].split(' ')
+
+  const name = info[1]
+  const width = parseInt(info[2])
+  const height = parseInt(info[3])
+  const pixels = new Uint8Array(width * height)
+
+  let index = 1
+  let transparency = 0
+
+  if (image[index].startsWith('transparency')) {
+    transparency = parseInt(image[index].split(' ')[1])
+    index++
+  }
+
+  for (let h = 0; h < height; h++) {
+    const row = image[index].split(' ')
+    for (let c = 0; c < width; c++) {
+      const i = c + h * width
+      const p = parseInt(row[c])
+      if (p === transparency) pixels[i] = 255
+      else pixels[i] = p
+    }
+    index++
+  }
+
+  let sprites = null
+  if (index < image.length) {
+    if (image[index] === 'sprites') {
+      index++
+      while (index < image.length) {
+        if (image[index] === 'end sprites') break
+        const sprite = image[index].split(' ')
+        if (sprites === null) sprites = []
+        sprites.push(sprite)
+        index++
+      }
+    }
+  }
+
+  return { name: name, wrap: 'clamp', width: width, height: height, pixels: pixels, sprites: sprites }
+}
+
 export function saveTexture(name, texture) {
   const index = TEXTURES.length
   TEXTURE_NAME_TO_INDEX.set(name, index)
@@ -193,11 +239,15 @@ export function spritesByName(name) {
   return SPRITE_SHEETS.get(name)
 }
 
+const trueColor = false
+
 export function createNewTexturesAndSpriteSheets(palette, closure) {
   for (const sprite of ASYNC_SPRITE_NAMES) {
     if (SPRITE_SHEETS.has(sprite)) continue
     const image = SPRITE_IMAGES.get(sprite)
-    const paint = readPaintFile(image, palette)
+    let paint
+    if (trueColor) paint = readPaintFile(image, palette)
+    else paint = readPaintFileAsLookup(image)
     const texture = closure(paint)
     saveTexture(sprite, texture)
     if (paint.sprites) {

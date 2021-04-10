@@ -1,8 +1,10 @@
+import { newAudioContext } from '../sound/web-audio-context.js'
+
 export const SYNTH_SPEECH_RATE = 44100
 
 const pi = Math.PI
 const tau = 2.0 * pi
-const context = new AudioContext()
+const context = newAudioContext()
 const phonemes = {
   o: { f: [12, 15, 0], w: [10, 10, 0], len: 3, amp: 6, osc: false, plosive: false },
   i: { f: [5, 56, 0], w: [10, 10, 0], len: 3, amp: 3, osc: false, plosive: false },

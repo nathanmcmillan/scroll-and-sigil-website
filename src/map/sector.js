@@ -1,11 +1,22 @@
-const MAX_SECTOR_HEIGHT = 9999
+import { HashSet, setAdd, setClear, setIter, setIterHasNext, setIterNext } from '../collections/set.js'
+import { FLAG_LAVA, FLAG_WATER } from '../world/flags.js'
+
+const SEARCH_DONE = []
+const NEIGHBOR_QUEUE = []
+
+let SECTOR_UID = 0
+
+function sectorHashCode(sector) {
+  return sector.uid
+}
+
+const DEAD_NEST = new HashSet(sectorHashCode)
 
 export class Sector {
   constructor(bottom, floor, ceiling, top, floorTexture, ceilingTexture, flags, trigger, vecs, lines) {
+    this.uid = SECTOR_UID++
     this.bottom = Math.min(bottom, floor)
     this.floor = Math.max(bottom, floor)
-    if (ceiling === 0) ceiling = MAX_SECTOR_HEIGHT
-    if (top === 0) top = MAX_SECTOR_HEIGHT
     this.ceiling = Math.min(ceiling, top)
     this.top = Math.max(ceiling, top)
     this.floorTexture = floorTexture
@@ -18,6 +29,27 @@ export class Sector {
     this.inside = []
     this.outside = null
     this.neighbors = []
+    this.liquid = false
+    this.depth = 0
+    if (this.flags) {
+      const water = this.flags.get(FLAG_WATER)
+      if (water) {
+        this.liquid = true
+        this.depth = water.values[0]
+      } else {
+        const lava = this.flags.get(FLAG_LAVA)
+        if (lava) {
+          this.liquid = true
+          this.depth = lava.values[0]
+        }
+      }
+      if (this.depth !== 0) this.floor -= this.depth
+    }
+  }
+
+  floorRenderHeight() {
+    if (this.liquid) return this.floor + this.depth
+    return this.floor
   }
 
   hasFloor() {
@@ -58,33 +90,33 @@ export class Sector {
     let i = this.inside.length
     while (i--) {
       const inside = this.inside[i]
-      if (inside.contains(x, z)) {
-        return inside.find(x, z)
-      }
+      if (inside.contains(x, z)) return inside.find(x, z)
     }
     return this
   }
 
   searchFor(x, z) {
     if (this.contains(x, z)) return this.find(x, z)
-    const queue = this.neighbors.slice()
-    const done = []
-    while (queue.length > 0) {
-      const current = queue.shift()
+    SEARCH_DONE.length = 0
+    NEIGHBOR_QUEUE.length = 0
+    for (let n = 0; n < this.neighbors.length; n++) NEIGHBOR_QUEUE.push(this.neighbors[n])
+    while (NEIGHBOR_QUEUE.length > 0) {
+      const current = NEIGHBOR_QUEUE.shift()
       if (current.contains(x, z)) return current.find(x, z)
       const neighbors = current.neighbors
       for (let i = 0; i < neighbors.length; i++) {
         const neighbor = neighbors[i]
-        if (neighbor === current || queue.includes(neighbor) || done.includes(neighbor)) continue
-        queue.push(neighbor)
+        if (neighbor === current || NEIGHBOR_QUEUE.includes(neighbor) || SEARCH_DONE.includes(neighbor)) continue
+        NEIGHBOR_QUEUE.push(neighbor)
       }
-      done.push(current)
+      SEARCH_DONE.push(current)
     }
     return null
   }
 
   otherIsInside(other) {
-    for (const inside of this.inside) {
+    for (let i = 0; i < this.inside.length; i++) {
+      const inside = this.inside[i]
       if (inside === other) return true
       if (inside.otherIsInside(other)) return true
     }
@@ -92,21 +124,26 @@ export class Sector {
 }
 
 function deleteNestedInside(set, inner) {
-  for (const nested of inner.inside) {
-    set.add(nested)
+  for (let i = 0; i < inner.inside.length; i++) {
+    const nested = inner.inside[i]
+    setAdd(set, nested)
     deleteNestedInside(set, nested)
   }
 }
 
 export function sectorInsideOutside(sectors) {
-  for (const sector of sectors) {
-    for (const other of sectors) {
-      if (sector === other) continue
+  for (let ts = 0; ts < sectors.length; ts++) {
+    const sector = sectors[ts]
+    for (let os = 0; os < sectors.length; os++) {
+      if (ts === os) continue
+      const other = sectors[os]
       let inside = 0
       let outside = 0
-      for (const o of other.vecs) {
+      for (let ov = 0; ov < other.vecs.length; ov++) {
+        const o = other.vecs[ov]
         let shared = false
-        for (const s of sector.vecs) {
+        for (let sv = 0; sv < sector.vecs.length; sv++) {
+          const s = sector.vecs[sv]
           if (s === o) {
             shared = true
             break
@@ -119,15 +156,18 @@ export function sectorInsideOutside(sectors) {
       if (outside === 0 && inside > 0) sector.inside.push(other)
     }
   }
-  for (const sector of sectors) {
+  for (let ts = 0; ts < sectors.length; ts++) {
+    const sector = sectors[ts]
     const inside = sector.inside
-    const dead = new Set()
-    for (const inner of inside) deleteNestedInside(dead, inner)
-    for (const other of dead) {
+    setClear(DEAD_NEST)
+    for (let i = 0; i < inside.length; i++) deleteNestedInside(DEAD_NEST, inside[i])
+    const iter = setIter(DEAD_NEST)
+    while (setIterHasNext(iter)) {
+      const other = setIterNext(iter)
       const index = inside.indexOf(other)
       if (index >= 0) inside.splice(index, 1)
     }
-    for (const inner of inside) inner.outside = sector
+    for (let i = 0; i < inside.length; i++) inside[i].outside = sector
   }
 }
 
@@ -148,11 +188,12 @@ function sectorLineFacing(sector, line) {
 
 export function sectorLineNeighbors(sectors, lines, scale) {
   const size = sectors.length
-  for (let i = 0; i < size; i++) {
-    const sector = sectors[i]
-    for (const line of sector.lines) sectorLineFacing(sector, line)
+  for (let s = 0; s < size; s++) {
+    const sector = sectors[s]
+    for (let i = 0; i < sector.lines.length; i++) sectorLineFacing(sector, sector.lines[i])
   }
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
     const plus = line.plus
     const minus = line.minus
     if (plus !== null && minus !== null) {
@@ -160,13 +201,14 @@ export function sectorLineNeighbors(sectors, lines, scale) {
       if (!minus.neighbors.includes(plus)) minus.neighbors.push(plus)
     }
   }
-  for (let i = 0; i < size; i++) {
-    const sector = sectors[i]
+  for (let s = 0; s < size; s++) {
+    const sector = sectors[s]
     const outside = sector.outside
     if (outside) {
       if (!sector.neighbors.includes(sector.outside)) sector.neighbors.push(sector.outside)
       if (!sector.outside.neighbors.includes(sector)) sector.outside.neighbors.push(sector)
-      for (const line of sector.lines) {
+      for (let i = 0; i < sector.lines.length; i++) {
+        const line = sector.lines[i]
         if (line.plus !== null) {
           if (line.minus === null) line.minus = outside
         } else {
@@ -175,5 +217,5 @@ export function sectorLineNeighbors(sectors, lines, scale) {
       }
     }
   }
-  for (const line of lines) line.updateSectorsForLine(scale)
+  for (let i = 0; i < lines.length; i++) lines[i].updateSectorsForLine(scale)
 }

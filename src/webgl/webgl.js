@@ -18,14 +18,17 @@ export function createTexture(gl, image, filter, wrap) {
   return new Texture(image.width, image.height, texture)
 }
 
-export function createPixelsToTexture(gl, width, height, pixels, format, filter, wrap) {
+const useMipmap = false
+
+export function createPixelsToTexture(gl, width, height, pixels, internal, format, filter, wrap) {
   const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture)
-  gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, gl.UNSIGNED_BYTE, pixels, 0)
+  gl.texImage2D(gl.TEXTURE_2D, 0, internal, width, height, 0, format, gl.UNSIGNED_BYTE, pixels, 0)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
+  if (useMipmap) gl.generateMipmap(gl.TEXTURE_2D)
   gl.bindTexture(gl.TEXTURE_2D, null)
   return new Texture(width, height, texture)
 }
@@ -35,7 +38,9 @@ function compileShader(gl, code, type) {
   gl.shaderSource(shader, code)
   gl.compileShader(shader)
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    throw code + '\n' + gl.getShaderInfoLog(shader)
+    const lines = code.split('\n')
+    for (let i = 0; i < lines.length; i++) lines[i] = i + 1 + ' ' + lines[i]
+    throw '\n' + lines.join('\n') + '\n' + gl.getShaderInfoLog(shader)
   }
   return shader
 }

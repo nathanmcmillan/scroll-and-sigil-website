@@ -1,10 +1,13 @@
 import { randomInt } from '../math/random.js'
 import { particleSetup, particleUpdateSector } from '../particle/particle.js'
-import { worldNewParticle, WORLD_CELL_SHIFT } from '../world/world.js'
+import { worldNewDecal, worldNewParticle, WORLD_CELL_SHIFT } from '../world/world.js'
 
 function bloodHitFloor(self) {
   const sector = self.sector
-  const decal = self.world.newDecal(self.stamp.texture)
+
+  if (sector.liquid) return
+
+  const decal = worldNewDecal(self.world, self.stamp.texture)
 
   const sprite = self.stamp.sprite
   const width = sprite.halfWidth
@@ -48,7 +51,7 @@ function bloodHitFloor(self) {
 
 function bloodHitCeiling(self) {
   const sector = self.sector
-  const decal = self.world.newDecal(self.stamp.texture)
+  const decal = worldNewDecal(self.world, self.stamp.texture)
 
   const sprite = self.stamp.sprite
   const width = sprite.halfWidth
@@ -109,7 +112,7 @@ function bloodHitLine(self, line) {
   const pz = line.a.y + vz * t - self.z
   if (px * px + pz * pz > box * box) return false
 
-  const decal = self.world.newDecal(self.stamp.texture)
+  const decal = worldNewDecal(self.world, self.stamp.texture)
 
   const x = px + self.x
   const z = pz + self.z
@@ -204,14 +207,14 @@ function bloodCheck(self) {
   return false
 }
 
-function bloodUpdate() {
-  this.deltaX *= 0.97
-  this.deltaY -= 0.015
-  this.deltaZ *= 0.97
-  this.x += this.deltaX
-  this.y += this.deltaY
-  this.z += this.deltaZ
-  return bloodCheck(this)
+function bloodUpdate(blood) {
+  blood.deltaX *= 0.97
+  blood.deltaY -= 0.015
+  blood.deltaZ *= 0.97
+  blood.x += blood.deltaX
+  blood.y += blood.deltaY
+  blood.z += blood.deltaZ
+  return bloodCheck(blood)
 }
 
 function bloodInit(self, entity, dx, dy, dz) {

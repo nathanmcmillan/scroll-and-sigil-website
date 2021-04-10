@@ -1,82 +1,5 @@
 const ITERATIONS = 100000
 
-function testA() {
-  const perf = performance.now()
-  let sum = 0.0
-  const matrix = new Float64Array(16)
-  for (let i = 0; i < ITERATIONS; i++) {
-    identityA(matrix)
-    rotateA(matrix, Math.random(), Math.random())
-    for (let i = 0; i < 16; i++) sum += matrix[i]
-  }
-  console.log(sum)
-  console.log('time (float 64 array)', performance.now() - perf)
-}
-
-function testB() {
-  const perf = performance.now()
-  let sum = 0.0
-  const matrix = new Float32Array(16)
-  for (let i = 0; i < ITERATIONS; i++) {
-    identityB(matrix)
-    rotateB(matrix, Math.random(), Math.random())
-    for (let i = 0; i < 16; i++) sum += matrix[i]
-  }
-  console.log(sum)
-  console.log('time (float 32 array)', performance.now() - perf)
-}
-
-function testC() {
-  const perf = performance.now()
-  let sum = 0.0
-  const matrix = new Array(16)
-  for (let i = 0; i < ITERATIONS; i++) {
-    identityC(matrix)
-    rotateC(matrix, Math.random(), Math.random())
-    for (let i = 0; i < 16; i++) sum += matrix[i]
-  }
-  console.log(sum)
-  console.log('time (untyped array)', performance.now() - perf)
-}
-
-function testD() {
-  const perf = performance.now()
-  let sum = 0.0
-  const matrix = []
-  for (let i = 0; i < ITERATIONS; i++) {
-    identityD(matrix)
-    rotateD(matrix, Math.random(), Math.random())
-    for (let i = 0; i < 16; i++) sum += matrix[i]
-  }
-  console.log(sum)
-  console.log('time (zero array)', performance.now() - perf)
-}
-
-const tempE1 = new Float32Array(16)
-const tempE2 = new Float32Array(16)
-
-function testE() {
-  const perf = performance.now()
-  let sum = 0.0
-  const matrix = new Float32Array(16)
-  for (let i = 0; i < ITERATIONS; i++) {
-    identityE(matrix)
-    rotateE(matrix, Math.random(), Math.random())
-    for (let i = 0; i < 16; i++) sum += matrix[i]
-  }
-  console.log(sum)
-  console.log('time (global float 32 array)', performance.now() - perf)
-}
-
-// conclusion
-// global (pre-allocated) arrays of Float32Array are best
-
-testE() // ~36
-testB() // ~37
-testA() // ~41
-testD() // ~75
-testC() // ~65
-
 function identityA(matrix) {
   matrix[0] = 1.0
   matrix[1] = 0.0
@@ -438,3 +361,79 @@ function multiplyE(matrix, a, b) {
   matrix[14] = a[2] * b[12] + a[6] * b[13] + a[10] * b[14] + a[14] * b[15]
   matrix[15] = a[3] * b[12] + a[7] * b[13] + a[11] * b[14] + a[15] * b[15]
 }
+
+function testA() {
+  const perf = performance.now()
+  let sum = 0.0
+  const matrix = new Float64Array(16)
+  for (let i = 0; i < ITERATIONS; i++) {
+    identityA(matrix)
+    rotateA(matrix, Math.random(), Math.random())
+    for (let i = 0; i < 16; i++) sum += matrix[i]
+  }
+  console.log(sum)
+  console.log('time (float 64 array)', performance.now() - perf)
+}
+
+function testB() {
+  const perf = performance.now()
+  let sum = 0.0
+  const matrix = new Float32Array(16)
+  for (let i = 0; i < ITERATIONS; i++) {
+    identityB(matrix)
+    rotateB(matrix, Math.random(), Math.random())
+    for (let i = 0; i < 16; i++) sum += matrix[i]
+  }
+  console.log(sum)
+  console.log('time (float 32 array)', performance.now() - perf)
+}
+
+function testC() {
+  const perf = performance.now()
+  let sum = 0.0
+  const matrix = new Array(16)
+  for (let i = 0; i < ITERATIONS; i++) {
+    identityC(matrix)
+    rotateC(matrix, Math.random(), Math.random())
+    for (let i = 0; i < 16; i++) sum += matrix[i]
+  }
+  console.log(sum)
+  console.log('time (untyped array)', performance.now() - perf)
+}
+
+function testD() {
+  const perf = performance.now()
+  let sum = 0.0
+  const matrix = []
+  for (let i = 0; i < ITERATIONS; i++) {
+    identityD(matrix)
+    rotateD(matrix, Math.random(), Math.random())
+    for (let i = 0; i < 16; i++) sum += matrix[i]
+  }
+  console.log(sum)
+  console.log('time (zero array)', performance.now() - perf)
+}
+
+const tempE1 = new Float32Array(16)
+const tempE2 = new Float32Array(16)
+
+function testE() {
+  const perf = performance.now()
+  let sum = 0.0
+  const matrix = new Float32Array(16)
+  for (let i = 0; i < ITERATIONS; i++) {
+    identityE(matrix)
+    rotateE(matrix, Math.random(), Math.random())
+    for (let i = 0; i < 16; i++) sum += matrix[i]
+  }
+  console.log(sum)
+  console.log('time (global float 32 array)', performance.now() - perf)
+}
+
+testE() // ~36
+testB() // ~37
+testA() // ~41
+testD() // ~75
+testC() // ~65
+
+// conclusion: global pre-allocated arrays of Float32Array are best

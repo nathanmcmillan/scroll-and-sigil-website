@@ -1,4 +1,4 @@
-import { Float, lineIntersectAt } from '../math/vector.js'
+import { floatEq, lineIntersectAt } from '../math/vector.js'
 import { worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'
 
 const out = [0.0, 0.0]
@@ -98,7 +98,7 @@ export function cameraFollowCinema(self, world) {
 export function cameraTowardsTarget(self) {
   const target = self.target
   if (!target) return
-  if (Float.eq(self.x, target.x) && Float.eq(self.z, target.z)) return
+  if (floatEq(self.x, target.x) && floatEq(self.z, target.z)) return
   const x = target.x - self.x
   const z = target.z - self.z
   const angle = Math.atan2(z, x)

@@ -6,6 +6,8 @@ import { flexBox, flexSolve } from '../gui/flex.js'
 import { identity, multiply } from '../math/matrix.js'
 import { Dashboard, EDIT_NAME, PROGRAM_MENU, TAPE_MENU } from '../menu/dashboard.js'
 import { drawTextFontSpecial } from '../render/render.js'
+import { bufferZero } from '../webgl/buffer.js'
+import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
 import { renderTextBox, textBoxHeight, textBoxWidth } from './client-util.js'
 
 export class DashboardState {
@@ -87,18 +89,20 @@ export class DashboardState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
-    // text
-    rendering.setProgram('texture2d-font')
-    rendering.setView(0, client.top, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetView(rendering, 0, client.top, width, height)
 
     gl.clearColor(slate0f, slate1f, slate2f, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+    // text
+
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
 
-    client.bufferGUI.zero()
+    rendererSetProgram(rendering, 'texture2d-font')
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+
+    bufferZero(client.bufferGUI)
 
     let text = 'Scroll and Sigil Editor'
     const mainMenu = flexBox(fontWidth * text.length, fontHeight)
@@ -213,8 +217,8 @@ export class DashboardState {
       flexSolve(width, height, indicator)
       drawTextFontSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0f, white1f, white2f, font)
 
-      rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-      rendering.updateAndDraw(client.bufferGUI)
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+      rendererUpdateAndDraw(rendering, client.bufferGUI)
     } else if (dashboard.menu === PROGRAM_MENU) {
       text = 'Maps'
       const optionMaps = flexBox(fontWidth * text.length, fontHeight)
@@ -295,13 +299,13 @@ export class DashboardState {
       flexSolve(width, height, indicator)
       drawTextFontSpecial(client.bufferGUI, indicator.x, indicator.y, text, fontScale, white0f, white1f, white2f, font)
 
-      rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-      rendering.updateAndDraw(client.bufferGUI)
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+      rendererUpdateAndDraw(rendering, client.bufferGUI)
     } else if (dashboard.menu === EDIT_NAME) {
       const box = dashboard.textBox
 
-      rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-      rendering.updateAndDraw(client.bufferGUI)
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+      rendererUpdateAndDraw(rendering, client.bufferGUI)
 
       const fontHeightAndPad = fontHeight + 3 * fontPad
 

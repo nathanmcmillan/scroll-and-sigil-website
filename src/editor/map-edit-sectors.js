@@ -1,7 +1,7 @@
-import { SectorReference } from '../editor/map-edit-references.js'
 import { sectorInsideOutside, sectorLineNeighbors } from '../map/sector.js'
 import { clockwiseInterior, clockwiseReflex, sectorTriangulateForEditor } from '../map/triangulate.js'
 import { WORLD_SCALE } from '../world/world.js'
+import { SectorReference } from './map-edit-sector-reference.js'
 
 function resetLineFacing(lines) {
   for (const line of lines) {
@@ -16,17 +16,6 @@ function checkLines(lines) {
       console.warn('Line not linked to sectors:', line)
     }
   }
-}
-
-function copy(src, dest) {
-  dest.bottom = src.bottom
-  dest.floor = src.floor
-  dest.ceiling = src.ceiling
-  dest.top = src.top
-  dest.floorTexture = src.floorTexture
-  dest.ceilingTexture = src.ceilingTexture
-  dest.flags = src.flags
-  dest.trigger = src.trigger
 }
 
 function match(src, dest) {
@@ -45,7 +34,7 @@ function transfer(previous, sectors) {
     while (i--) {
       const old = previous[i]
       if (match(old, sector)) {
-        copy(old, sector)
+        old.copy(sector)
         previous.splice(i, 1)
         break
       }

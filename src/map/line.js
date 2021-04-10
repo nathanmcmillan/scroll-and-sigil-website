@@ -1,4 +1,5 @@
 import { Wall } from '../map/wall.js'
+import { FLAG_NOT_PHYSICAL, FLAG_PHYSICAL } from '../world/flags.js'
 
 export class Line {
   constructor(top, middle, bottom, a, b, flags, trigger) {
@@ -13,6 +14,10 @@ export class Line {
     this.middle = middle >= 0 ? new Wall(middle) : null
     this.bottom = bottom >= 0 ? new Wall(bottom) : null
     this.physical = this.middle !== null
+    if (flags) {
+      if (flags.get(FLAG_PHYSICAL)) this.physical = true
+      else if (flags.get(FLAG_NOT_PHYSICAL)) this.physical = false
+    }
   }
 
   updateSectorsForLine(scale) {
@@ -41,10 +46,10 @@ export class Line {
     if (this.middle) {
       let floor, ceiling
       if (minus) {
-        floor = minus.floor
+        floor = minus.floorRenderHeight()
         ceiling = minus.ceiling
       } else {
-        floor = plus.floor
+        floor = plus.floorRenderHeight()
         ceiling = plus.ceiling
       }
       if (floor >= ceiling) console.error(`Invalid middle wall: floor := ${floor}, ceiling := ${ceiling}`)
@@ -53,12 +58,15 @@ export class Line {
 
     if (this.bottom) {
       let bottom, floor
-      if (minus) {
+      if (plus && minus && plus.floorRenderHeight() < minus.floorRenderHeight()) {
+        bottom = plus.floorRenderHeight()
+        floor = minus.floorRenderHeight()
+      } else if (minus) {
         bottom = minus.bottom
-        floor = minus.floor
+        floor = minus.floorRenderHeight()
       } else {
         bottom = plus.bottom
-        floor = plus.floor
+        floor = plus.floorRenderHeight()
       }
       if (bottom >= floor) console.error(`Invalid bottom wall: bottom := ${bottom}, floor := ${floor}`)
       this.bottom.update(bottom, floor, uv, bottom * scale, st, floor * scale, a, b)

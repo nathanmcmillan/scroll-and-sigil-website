@@ -1,5 +1,7 @@
-import { Float, lineIntersect } from '../math/vector.js'
+import { floatZero, lineIntersect } from '../math/vector.js'
 import { cellPushThing, cellRemoveThing } from '../world/cell.js'
+import { FLAG_LAVA } from '../world/flags.js'
+import { TRIGGER_ENTER, TRIGGER_EXIT } from '../world/trigger.js'
 import {
   ANIMATION_ALMOST_DONE,
   ANIMATION_DONE,
@@ -17,12 +19,13 @@ import {
 
 let THING_UID = 0
 
-const collided = new Set()
-const collisions = new Set()
+const COLLIDED = []
+const COLLISIONS = []
 
 export class Thing {
-  constructor(world, x, z) {
+  constructor(world, entity, x, z) {
     this.world = world
+    this.entity = entity
     this.uid = THING_UID++
     this.sector = null
     this.floor = 0.0
@@ -54,7 +57,7 @@ export class Thing {
     this.name = null
     this.group = null
     this.interaction = null
-    this.experience = 1
+    this.experience = 0
     this.damage = thingDamage
   }
 }
@@ -74,11 +77,20 @@ function thingUpdateY(self) {
 }
 
 export function thingY(self) {
-  if (self.ground === false || !Float.zero(self.deltaY)) {
+  if (self.ground === false || !floatZero(self.deltaY)) {
     self.deltaY -= GRAVITY
     self.y += self.deltaY
   }
   thingUpdateY(self)
+}
+
+export function thingSpecialSector(self) {
+  const flags = self.sector.flags
+  if (flags === null) return
+  if (self.ground && (self.world.tick & 63) === 0) {
+    const lava = flags.get(FLAG_LAVA)
+    if (lava) self.damage(self, null, lava.values[1])
+  }
 }
 
 function thingLineCollision(self, line) {
@@ -159,8 +171,8 @@ function thingLineFloorAndCeiling(self, line) {
   }
   if (sector !== old) {
     self.sector = sector
-    const trigger = sector.trigger
-    if (trigger) worldEventTrigger(self.world, 'enter', trigger, self)
+    if (old && old.trigger) worldEventTrigger(self.world, TRIGGER_EXIT, old.trigger, self)
+    if (sector.trigger) worldEventTrigger(self.world, TRIGGER_ENTER, sector.trigger, self)
   }
   return true
 }
@@ -190,8 +202,8 @@ export function thingFindSector(self) {
   else sector = sector.searchFor(self.x, self.z)
   if (sector !== old) {
     self.sector = sector
-    const trigger = sector.trigger
-    if (trigger) worldEventTrigger(self.world, 'enter', trigger, self)
+    if (old && old.trigger) worldEventTrigger(self.world, TRIGGER_EXIT, old.trigger, self)
+    if (sector.trigger) worldEventTrigger(self.world, TRIGGER_ENTER, sector.trigger, self)
   }
   self.floor = sector.floor
   self.ceiling = sector.ceiling
@@ -233,7 +245,7 @@ export function thingCheckSight(self, thing) {
   let error = 0.0
   let incrementX = 0
   let incrementY = 0
-  if (Float.zero(dx)) {
+  if (floatZero(dx)) {
     incrementX = 0
     error = Number.MAX_VALUE
   } else if (thing.x > self.x) {
@@ -245,7 +257,7 @@ export function thingCheckSight(self, thing) {
     n += x - xb
     error = (xf - x) * dy
   }
-  if (Float.zero(dy)) {
+  if (floatZero(dy)) {
     incrementY = 0
     error = -Number.MAX_VALUE
   } else if (thing.z > self.z) {
@@ -299,18 +311,15 @@ export function thingSetup(self) {
 export function thingSet(self, x, z) {
   self.x = self.previousX = x
   self.z = self.previousZ = z
+  self.deltaX = 0.0
+  self.deltaY = 0.0
+  self.deltaZ = 0.0
   thingPushToCells(self)
-  const old = self.sector
   self.sector = null
   if (!thingFindSectorFromLine(self)) thingFindSector(self)
-  const world = self.world
-  const sector = self.sector
-  if (sector !== old) {
-    const trigger = sector.trigger
-    if (trigger) worldEventTrigger(world, 'enter', trigger, self)
-  }
-  thingUpdateY(self)
-  worldPushThing(world, self)
+  self.ground = true
+  self.y = self.floor
+  worldPushThing(self.world, self)
 }
 
 export function thingTeleport(self, x, z) {
@@ -318,15 +327,7 @@ export function thingTeleport(self, x, z) {
   self.x = self.previousX = x
   self.z = self.previousZ = z
   thingPushToCells(self)
-  const old = self.sector
-  self.sector = null
   if (!thingFindSectorFromLine(self)) thingFindSector(self)
-  const world = self.world
-  const sector = self.sector
-  if (sector !== old) {
-    const trigger = sector.trigger
-    if (trigger) worldEventTrigger(world, 'enter', trigger, self)
-  }
   thingUpdateY(self)
 }
 
@@ -391,7 +392,7 @@ export function thingIntegrate(self) {
     self.deltaZ *= RESISTANCE
   }
 
-  if (!Float.zero(self.deltaX) || !Float.zero(self.deltaZ)) {
+  if (!floatZero(self.deltaX) || !floatZero(self.deltaZ)) {
     self.previousX = self.x
     self.previousZ = self.z
 
@@ -412,8 +413,8 @@ export function thingIntegrate(self) {
     if (maxC >= columns) maxC = columns - 1
     if (maxR >= world.rows) maxR = world.rows - 1
 
-    collided.clear()
-    collisions.clear()
+    COLLIDED.length = 0
+    COLLISIONS.length = 0
 
     for (let r = minR; r <= maxR; r++) {
       for (let c = minC; c <= maxC; c++) {
@@ -421,17 +422,18 @@ export function thingIntegrate(self) {
         let i = cell.thingCount
         while (i--) {
           const thing = cell.things[i]
-          if (!thing.isPhysical || collisions.has(thing)) continue
-          if (thingCollision(self, thing)) collided.add(thing)
-          collisions.add(thing)
+          if (!thing.isPhysical || COLLISIONS.includes(thing)) continue
+          COLLISIONS.push(thing)
+          if (thingCollision(self, thing)) COLLIDED.push(thing)
         }
       }
     }
 
-    while (collided.size > 0) {
+    while (COLLIDED.length > 0) {
       let closest = null
       let manhattan = Number.MAX_VALUE
-      for (const thing of collided) {
+      for (let c = 0; c < COLLIDED.length; c++) {
+        const thing = COLLIDED[c]
         const distance = Math.abs(self.previousX - thing.x) + Math.abs(self.previousZ - thing.z)
         if (distance < manhattan) {
           manhattan = distance
@@ -439,7 +441,7 @@ export function thingIntegrate(self) {
         }
       }
       thingResolveCollision(self, closest)
-      collided.delete(closest)
+      COLLIDED.splice(COLLIDED.indexOf(closest), 1)
     }
 
     let on = false
@@ -460,4 +462,5 @@ export function thingIntegrate(self) {
   }
 
   thingY(self)
+  thingSpecialSector(self)
 }

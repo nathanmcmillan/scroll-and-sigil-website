@@ -6,6 +6,7 @@ group: (monster)(baron)
 health: 4
 speed: 0.05
 sight: 60.0
+experience: 2
 sound-pain: baron-pain
 sound-death: baron-death
 sound-wake: baron-scream

@@ -1,13 +1,24 @@
 import { textureByIndex, textureByName } from '../assets/assets.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
 import { renderTouch } from '../client/render-touch.js'
+import { tableIter, tableIterHasNext, tableIterNext, tableIterStart } from '../collections/table.js'
 import { calcFontScale } from '../editor/editor-util.js'
 import { white0f, white1f, white2f } from '../editor/palette.js'
 import { Game } from '../game/game.js'
 import { flexSolve, flexText } from '../gui/flex.js'
 import { identity, multiply, rotateX, rotateY, translate } from '../math/matrix.js'
 import { Home } from '../menu/home.js'
-import { TIC_FONT_HEIGHT, TIC_FONT_WIDTH, drawSprite, drawTextSpecial } from '../render/render.js'
+import { drawSprite, drawTextSpecial, TIC_FONT_HEIGHT, TIC_FONT_WIDTH } from '../render/render.js'
+import { bufferZero } from '../webgl/buffer.js'
+import {
+  rendererBindAndDraw,
+  rendererBindTexture,
+  rendererSetProgram,
+  rendererSetView,
+  rendererUpdateAndDraw,
+  rendererUpdateUniformMatrix,
+  rendererUpdateVAO,
+} from '../webgl/renderer.js'
 
 export class HomeState {
   constructor(client) {
@@ -54,9 +65,13 @@ export class HomeState {
     const client = this.client
     const gl = client.gl
 
-    for (const buffer of client.sectorBuffers.values()) buffer.zero()
-    for (const sector of world.sectors) client.sectorRender(sector)
-    for (const buffer of client.sectorBuffers.values()) client.rendering.updateVAO(buffer, gl.STATIC_DRAW)
+    const sectorIter = tableIter(client.sectorBuffers)
+    while (tableIterHasNext(sectorIter)) bufferZero(tableIterNext(sectorIter).value)
+
+    for (let s = 0; s < world.sectors.length; s++) client.sectorRender(world.sectors[s])
+
+    tableIterStart(sectorIter)
+    while (tableIterHasNext(sectorIter)) rendererUpdateVAO(client.rendering, tableIterNext(sectorIter).value, gl.STATIC_DRAW)
 
     this.loading = false
     this.game.update()
@@ -102,17 +117,17 @@ export class HomeState {
 
     if (client.touch) renderTouch(client.touchRender)
 
-    // render world
+    rendererSetView(rendering, 0, client.top, width, height)
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     const game = this.game
     const world = game.world
     const camera = game.camera
 
-    rendering.setProgram('texture3d-rgb')
-    rendering.setView(0, client.top, width, height)
+    rendererSetProgram(rendering, 'texture3d-rgb')
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0)
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    // sky box
 
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
@@ -122,29 +137,44 @@ export class HomeState {
     rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
     translate(view, 0.0, 0.0, 0.0)
     multiply(projection, client.perspective, view)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
     const sky = textureByName('sky-box-1')
-    rendering.bindTexture(gl.TEXTURE0, sky.texture)
-    rendering.bindAndDraw(client.bufferSky)
+    rendererBindTexture(rendering, gl.TEXTURE0, sky.texture)
+    rendererBindAndDraw(rendering, client.bufferSky)
+
+    // render world
 
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
+
+    const trueColor = true
+    if (!trueColor) {
+      rendererSetProgram(rendering, 'texture3d-lookup')
+      rendererBindTexture(rendering, gl.TEXTURE1, textureByName('_shading').texture, 'u_lookup', 1)
+    }
 
     identity(view)
     rotateX(view, Math.sin(camera.rx), Math.cos(camera.rx))
     rotateY(view, Math.sin(camera.ry), Math.cos(camera.ry))
     translate(view, -camera.x, -camera.y, -camera.z)
     multiply(projection, client.perspective, view)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+    rendererUpdateUniformMatrix(rendering, 'u_view', view)
 
-    for (const [index, buffer] of client.sectorBuffers) {
-      rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-      rendering.bindAndDraw(buffer)
+    const sectorIter = tableIter(client.sectorBuffers)
+    while (tableIterHasNext(sectorIter)) {
+      const entry = tableIterNext(sectorIter)
+      const index = entry.key
+      const buffer = entry.value
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+      rendererBindAndDraw(rendering, buffer)
     }
 
     const buffers = client.spriteBuffers
-    for (const buffer of buffers.values()) buffer.zero()
+
+    const iter = tableIter(buffers)
+    while (tableIterHasNext(iter)) bufferZero(tableIterNext(iter).value)
 
     const sine = Math.sin(-camera.ry)
     const cosine = Math.cos(-camera.ry)
@@ -157,10 +187,14 @@ export class HomeState {
       drawSprite(buffer, thing.x, thing.y, thing.z, thing.stamp.sprite, sine, cosine)
     }
 
-    for (const [index, buffer] of buffers) {
+    tableIterStart(iter)
+    while (tableIterHasNext(iter)) {
+      const entry = tableIterNext(iter)
+      const buffer = entry.value
       if (buffer.indexPosition === 0) continue
-      rendering.bindTexture(gl.TEXTURE0, textureByIndex(index).texture)
-      rendering.updateAndDraw(buffer, gl.DYNAMIC_DRAW)
+      const index = entry.key
+      rendererBindTexture(rendering, gl.TEXTURE0, textureByIndex(index).texture)
+      rendererUpdateAndDraw(rendering, buffer, gl.DYNAMIC_DRAW)
     }
 
     // end render world
@@ -171,13 +205,13 @@ export class HomeState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
-    client.bufferGUI.zero()
+    bufferZero(client.bufferGUI)
 
     // text
 
-    rendering.setProgram('texture2d-font')
-    rendering.setView(0, client.top, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetProgram(rendering, 'texture2d-font')
+    rendererSetView(rendering, 0, client.top, width, height)
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
     const titleBox = home.titleBox
     drawTextSpecial(client.bufferGUI, titleBox.x, titleBox.y, titleBox.text, 2 * scale, white0f, white1f, white2f)
@@ -221,7 +255,7 @@ export class HomeState {
 
     drawTextSpecial(client.bufferGUI, indicatorBox.x, indicatorBox.y, indicatorBox.text, fontScale, white0f, white1f, white2f)
 
-    rendering.bindTexture(gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
-    rendering.updateAndDraw(client.bufferGUI)
+    rendererBindTexture(rendering, gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
+    rendererUpdateAndDraw(rendering, client.bufferGUI)
   }
 }

@@ -2,6 +2,8 @@ import { textureByName } from '../assets/assets.js'
 import { calcFontPad, calcFontScale, calcLongest, calcThickness } from '../editor/editor-util.js'
 import { orange0f, orange1f, orange2f, peach0f, peach1f, peach2f, slate0f, slate1f, slate2f, white0f, white1f, white2f, wine0f, wine1f, wine2f } from '../editor/palette.js'
 import { drawHollowRectangle, drawRectangle, drawTextFont, drawTextFontSpecial } from '../render/render.js'
+import { bufferZero } from '../webgl/buffer.js'
+import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
 
 export function renderDialogBox(state, scale, font, dialog) {
   const client = state.client
@@ -22,11 +24,12 @@ export function renderDialogBox(state, scale, font, dialog) {
   const fontPad = calcFontPad(fontHeight)
   const fontHeightAndPad = fontHeight + fontPad
 
-  rendering.setProgram('color2d')
-  rendering.setView(0, client.top, width, height)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererSetView(rendering, 0, client.top, width, height)
 
-  client.bufferColor.zero()
+  rendererSetProgram(rendering, 'color2d')
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+
+  bufferZero(client.bufferColor)
 
   const options = dialog.options
   const title = dialog.title
@@ -44,13 +47,12 @@ export function renderDialogBox(state, scale, font, dialog) {
   if (title !== null)
     drawRectangle(client.bufferColor, x + thickness, y + dialogHeight - thickness - fontHeightAndPad - 2 * fontPad, dialogWidth, thickness, peach0f, peach1f, peach2f, 1.0)
 
-  rendering.updateAndDraw(client.bufferColor)
+  rendererUpdateAndDraw(rendering, client.bufferColor)
 
-  rendering.setProgram('texture2d-font')
-  rendering.setView(0, client.top, width, height)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererSetProgram(rendering, 'texture2d-font')
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
-  client.bufferGUI.zero()
+  bufferZero(client.bufferGUI)
 
   let yy = y + dialogHeight - 2 * fontHeightAndPad
   if (title !== null) yy -= fontHeightAndPad
@@ -68,8 +70,8 @@ export function renderDialogBox(state, scale, font, dialog) {
     drawTextFont(client.bufferGUI, x, yy, title, fontScale, white0f, white1f, white2f, 1.0, font)
   }
 
-  rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-  rendering.updateAndDraw(client.bufferGUI)
+  rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+  rendererUpdateAndDraw(rendering, client.bufferGUI)
 }
 
 export function textBoxWidth(fontWidth, box) {
@@ -99,11 +101,12 @@ export function renderTextBox(state, scale, font, box, x, y) {
   const fontPad = calcFontPad(fontHeight)
   const fontHeightAndPad = fontHeight + 3 * fontPad
 
-  rendering.setProgram('color2d')
-  rendering.setView(0, client.top, width, height)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererSetView(rendering, 0, client.top, width, height)
 
-  client.bufferColor.zero()
+  rendererSetProgram(rendering, 'color2d')
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+
+  bufferZero(client.bufferColor)
 
   const boxWidth = textBoxWidth(fontWidth, box)
   const boxHeight = textBoxHeight(fontHeightAndPad, box)
@@ -112,13 +115,12 @@ export function renderTextBox(state, scale, font, box, x, y) {
 
   drawHollowRectangle(client.bufferColor, x + thickness, y + thickness, boxWidth, boxHeight, thickness, peach0f, peach1f, peach2f, 1.0)
 
-  rendering.updateAndDraw(client.bufferColor)
+  rendererUpdateAndDraw(rendering, client.bufferColor)
 
-  rendering.setProgram('texture2d-font')
-  rendering.setView(0, client.top, width, height)
-  rendering.updateUniformMatrix('u_mvp', projection)
+  rendererSetProgram(rendering, 'texture2d-font')
+  rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
-  client.bufferGUI.zero()
+  bufferZero(client.bufferGUI)
 
   let yy = y + (box.cols.length - 1) * fontHeightAndPad + fontHeight
 
@@ -134,8 +136,8 @@ export function renderTextBox(state, scale, font, box, x, y) {
     yy -= fontHeightAndPad
   }
 
-  rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-  rendering.updateAndDraw(client.bufferGUI)
+  rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+  rendererUpdateAndDraw(rendering, client.bufferGUI)
 }
 
 export function renderStatus(client, width, height, font, fontWidth, fontScale, topBarHeight, edit) {

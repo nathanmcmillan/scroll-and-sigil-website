@@ -5,7 +5,9 @@ import { orange0f, orange1f, orange2f, red0f, red1f, red2f, silver0f, silver1f, 
 import { DURATION_INDEX, FREQUENCY_INDEX, SfxEdit, WAVE_INDEX } from '../editor/sfx.js'
 import { identity, multiply } from '../math/matrix.js'
 import { drawRectangle, drawTextFont } from '../render/render.js'
-import { SEMITONES, WAVE_LIST, diatonic, semitoneName } from '../sound/synth.js'
+import { diatonic, semitoneName, SEMITONES, WAVE_LIST } from '../sound/synth.js'
+import { bufferZero } from '../webgl/buffer.js'
+import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
 
 export class SfxState {
   constructor(client) {
@@ -111,9 +113,7 @@ export class SfxState {
     const fontPad = calcFontPad(fontHeight)
     const fontHeightAndPad = fontHeight + fontPad
 
-    rendering.setProgram('color2d')
-    rendering.setView(0, client.top, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetView(rendering, 0, client.top, width, height)
 
     gl.clearColor(slatef(0), slatef(1), slatef(2), 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -121,9 +121,12 @@ export class SfxState {
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
 
+    rendererSetProgram(rendering, 'color2d')
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
+
     // top and bottom bar
 
-    client.bufferColor.zero()
+    bufferZero(client.bufferColor)
 
     const topBarHeight = calcTopBarHeight(scale)
     drawRectangle(client.bufferColor, 0, height - topBarHeight, width, topBarHeight, red0f, red1f, red2f, 1.0)
@@ -131,17 +134,16 @@ export class SfxState {
     const bottomBarHeight = calcBottomBarHeight(scale)
     drawRectangle(client.bufferColor, 0, 0, width, bottomBarHeight, red0f, red1f, red2f, 1.0)
 
-    rendering.updateAndDraw(client.bufferColor)
+    rendererUpdateAndDraw(rendering, client.bufferColor)
 
     // text
 
-    rendering.setProgram('texture2d-font')
-    rendering.setView(0, 0, width, height)
-    rendering.updateUniformMatrix('u_mvp', projection)
+    rendererSetProgram(rendering, 'texture2d-font')
+    rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
     //  status text
 
-    client.bufferGUI.zero()
+    bufferZero(client.bufferGUI)
 
     renderStatus(client, width, height, font, fontWidth, fontScale, topBarHeight, sfx)
 
@@ -161,8 +163,8 @@ export class SfxState {
       y -= fontHeightAndPad
     }
 
-    rendering.bindTexture(gl.TEXTURE0, textureByName(font.name).texture)
-    rendering.updateAndDraw(client.bufferGUI)
+    rendererBindTexture(rendering, gl.TEXTURE0, textureByName(font.name).texture)
+    rendererUpdateAndDraw(rendering, client.bufferGUI)
 
     // dialog box
 

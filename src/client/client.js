@@ -1,4 +1,4 @@
-import { createNewTexturesAndSpriteSheets, readPaintFile, saveEntity, saveTexture, saveTile, waitForResources } from '../assets/assets.js'
+import { createNewTexturesAndSpriteSheets, readPaintFile, readPaintFileAsLookup, saveEntity, saveTexture, saveTile, waitForResources } from '../assets/assets.js'
 import { pauseMusic, resumeMusic, saveMusic, saveSound } from '../assets/sounds.js'
 import { DashboardState } from '../client/dashboard-state.js'
 import { GameState } from '../client/game-state.js'
@@ -10,15 +10,17 @@ import { PaintState } from '../client/paint-state.js'
 import { drawFloorCeil, drawWall } from '../client/render-sector.js'
 import { TouchRender, touchRenderEvent, touchRenderResize } from '../client/render-touch.js'
 import { SfxState } from '../client/sfx-state.js'
+import { intHashCode, Table, tableGet, tablePut } from '../collections/table.js'
+import { TwoWayMap } from '../collections/two-way-map.js'
 import { newPalette } from '../editor/palette.js'
 import { Tape } from '../game/tape.js'
 import * as In from '../input/input.js'
 import { orthographic, perspective } from '../math/matrix.js'
 import { drawSkyBox } from '../render/render.js'
-import { TwoWayMap } from '../util/collections.js'
+import { shadePalette } from '../render/shading.js'
 import * as Wad from '../wad/wad.js'
 import { Buffer } from '../webgl/buffer.js'
-import { Renderer } from '../webgl/renderer.js'
+import { Renderer, rendererInsertProgram, rendererMakeVAO, rendererUpdateVAO } from '../webgl/renderer.js'
 import { compileProgram, createPixelsToTexture, createTexture } from '../webgl/webgl.js'
 
 export class Client {
@@ -35,8 +37,8 @@ export class Client {
     this.bufferGUI = null
     this.bufferColor = null
     this.bufferSky = null
-    this.sectorBuffers = new Map()
-    this.spriteBuffers = new Map()
+    this.sectorBuffers = new Table(intHashCode)
+    this.spriteBuffers = new Table(intHashCode)
     this.pack = null
     this.paint = null
     this.sfx = null
@@ -142,21 +144,21 @@ export class Client {
   }
 
   getSectorBuffer(texture) {
-    let buffer = this.sectorBuffers.get(texture)
-    if (buffer === undefined) {
+    let buffer = tableGet(this.sectorBuffers, texture)
+    if (buffer === null) {
       buffer = new Buffer(3, 0, 2, 3, 4 * 800, 36 * 800)
-      this.rendering.makeVAO(buffer)
-      this.sectorBuffers.set(texture, buffer)
+      rendererMakeVAO(this.rendering, buffer)
+      tablePut(this.sectorBuffers, texture, buffer)
     }
     return buffer
   }
 
   getSpriteBuffer(texture) {
-    let buffer = this.spriteBuffers.get(texture)
-    if (buffer === undefined) {
+    let buffer = tableGet(this.spriteBuffers, texture)
+    if (buffer === null) {
       buffer = new Buffer(3, 0, 2, 3, 4 * 800, 36 * 800)
-      this.rendering.makeVAO(buffer)
-      this.spriteBuffers.set(texture, buffer)
+      rendererMakeVAO(this.rendering, buffer)
+      tablePut(this.spriteBuffers, texture, buffer)
     }
     return buffer
   }
@@ -229,15 +231,21 @@ export class Client {
     let texture2d_rgb = fetchText('./shaders/texture2d-rgb.glsl')
     let texture2d_font = fetchText('./shaders/texture2d-font.glsl')
     let texture3d_rgb = fetchText('./shaders/texture3d-rgb.glsl')
+    let texture3d_palette = fetchText('./shaders/texture3d-palette.glsl')
+    let texture3d_light = fetchText('./shaders/texture3d-light.glsl')
+    let texture3d_lookup = fetchText('./shaders/texture3d-lookup.glsl')
 
     const textures = []
     const palette = newPalette()
+
+    const trueColor = false
 
     for (const texture of contents.get('sprites')) {
       if (texture.endsWith('.txt')) {
         textures.push(
           fetchText(directory + '/sprites/' + texture).then((text) => {
-            return readPaintFile(text, palette)
+            if (trueColor) return readPaintFile(text, palette)
+            else return readPaintFileAsLookup(text)
           })
         )
       } else {
@@ -254,14 +262,22 @@ export class Client {
     await waitForResources()
 
     createNewTexturesAndSpriteSheets(palette, (image) => {
-      return createPixelsToTexture(gl, image.width, image.height, image.pixels, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE)
+      if (trueColor) return createPixelsToTexture(gl, image.width, image.height, image.pixels, gl.RGB, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE)
+      else return createPixelsToTexture(gl, image.width, image.height, image.pixels, gl.R8, gl.RED, gl.NEAREST, gl.CLAMP_TO_EDGE)
     })
+
+    if (!trueColor) {
+      const lights = shadePalette(64, 32, newPalette())
+      const shading = createPixelsToTexture(gl, 64, 32, lights, gl.RGB, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE)
+      saveTexture('_shading', shading)
+    }
 
     for (let texture of textures) {
       texture = await texture
       const wrap = texture.wrap === 'repeat' ? gl.REPEAT : gl.CLAMP_TO_EDGE
       if (texture.pixels) {
-        saveTexture(texture.name, createPixelsToTexture(gl, texture.width, texture.height, texture.pixels, gl.RGB, gl.NEAREST, wrap))
+        if (trueColor) saveTexture(texture.name, createPixelsToTexture(gl, texture.width, texture.height, texture.pixels, gl.RGB, gl.RGB, gl.NEAREST, wrap))
+        else saveTexture(texture.name, createPixelsToTexture(gl, texture.width, texture.height, texture.pixels, gl.R8, gl.RED, gl.NEAREST, wrap))
         if (texture.sprites) {
           for (const sprite of texture.sprites) {
             if (sprite.length < 6 || sprite[5] !== 'tile') continue
@@ -273,18 +289,31 @@ export class Client {
             const height = bottom - top
             const source = texture.pixels
             const srcwid = texture.width
-            const pixels = new Uint8Array(width * height * 3)
-            for (let h = 0; h < height; h++) {
-              const row = top + h
-              for (let c = 0; c < width; c++) {
-                const s = (left + c + row * srcwid) * 3
-                const d = (c + h * width) * 3
-                pixels[d] = source[s]
-                pixels[d + 1] = source[s + 1]
-                pixels[d + 2] = source[s + 2]
+            if (trueColor) {
+              const pixels = new Uint8Array(width * height * 3)
+              for (let h = 0; h < height; h++) {
+                const row = top + h
+                for (let c = 0; c < width; c++) {
+                  const s = (left + c + row * srcwid) * 3
+                  const d = (c + h * width) * 3
+                  pixels[d] = source[s]
+                  pixels[d + 1] = source[s + 1]
+                  pixels[d + 2] = source[s + 2]
+                }
               }
+              saveTile(sprite[0], createPixelsToTexture(gl, width, height, pixels, gl.RGB, gl.RGB, gl.NEAREST, gl.REPEAT))
+            } else {
+              const pixels = new Uint8Array(width * height)
+              for (let h = 0; h < height; h++) {
+                const row = top + h
+                for (let c = 0; c < width; c++) {
+                  const s = left + c + row * srcwid
+                  const d = c + h * width
+                  pixels[d] = source[s]
+                }
+              }
+              saveTile(sprite[0], createPixelsToTexture(gl, width, height, pixels, gl.R8, gl.RED, gl.NEAREST, gl.REPEAT))
             }
-            saveTile(sprite[0], createPixelsToTexture(gl, width, height, pixels, gl.RGB, gl.NEAREST, gl.REPEAT))
           }
         }
       } else {
@@ -307,19 +336,25 @@ export class Client {
     texture2d_rgb = await texture2d_rgb
     texture2d_font = await texture2d_font
     texture3d_rgb = await texture3d_rgb
+    texture3d_palette = await texture3d_palette
+    texture3d_light = await texture3d_light
+    texture3d_lookup = await texture3d_lookup
 
-    rendering.insertProgram('color2d', compileProgram(gl, color2d))
-    rendering.insertProgram('texture2d', compileProgram(gl, texture2d))
-    rendering.insertProgram('texture3d', compileProgram(gl, texture3d))
-    rendering.insertProgram('texture2d-rgb', compileProgram(gl, texture2d_rgb))
-    rendering.insertProgram('texture2d-font', compileProgram(gl, texture2d_font))
-    rendering.insertProgram('texture3d-rgb', compileProgram(gl, texture3d_rgb))
+    rendererInsertProgram(rendering, 'color2d', compileProgram(gl, color2d))
+    rendererInsertProgram(rendering, 'texture2d', compileProgram(gl, texture2d))
+    rendererInsertProgram(rendering, 'texture3d', compileProgram(gl, texture3d))
+    rendererInsertProgram(rendering, 'texture2d-rgb', compileProgram(gl, texture2d_rgb))
+    rendererInsertProgram(rendering, 'texture2d-font', compileProgram(gl, texture2d_font))
+    rendererInsertProgram(rendering, 'texture3d-rgb', compileProgram(gl, texture3d_rgb))
+    rendererInsertProgram(rendering, 'texture3d-palette', compileProgram(gl, texture3d_palette))
+    rendererInsertProgram(rendering, 'texture3d-light', compileProgram(gl, texture3d_light))
+    rendererInsertProgram(rendering, 'texture3d-lookup', compileProgram(gl, texture3d_lookup))
 
-    rendering.makeVAO(this.bufferGUI)
-    rendering.makeVAO(this.bufferColor)
-    rendering.makeVAO(this.bufferSky)
+    rendererMakeVAO(rendering, this.bufferGUI)
+    rendererMakeVAO(rendering, this.bufferColor)
+    rendererMakeVAO(rendering, this.bufferSky)
 
-    rendering.updateVAO(this.bufferSky, gl.STATIC_DRAW)
+    rendererUpdateVAO(rendering, this.bufferSky, gl.STATIC_DRAW)
 
     const keys = new TwoWayMap()
 

@@ -1,5 +1,5 @@
 import { fetchText } from '../client/net.js'
-import { MusicNode, SynthSound, parse } from '../sound/audio.js'
+import { MusicNode, parse, SynthSound } from '../sound/audio.js'
 
 const SOUNDS = new Map()
 const MUSIC_TABLE = new Map()
@@ -28,9 +28,9 @@ export function playSound(name) {
     console.error('Sound not loaded:', name)
     return
   }
-  if (sound.constructor === Audio) {
+  if (sound instanceof Audio) {
     sound.pause()
-    sound.volume = 0.25
+    sound.volume = 0.1
     sound.currentTime = 0
     const promise = sound.play()
     if (promise) promise.then(() => {}).catch(() => {})
@@ -64,7 +64,7 @@ export function playMusic(name) {
     music.play()
   } else {
     music.loop = true
-    music.volume = 0.25
+    music.volume = 0.1
     music.currentTime = 0
     const promise = music.play()
     if (promise) promise.then(() => {}).catch(() => {})

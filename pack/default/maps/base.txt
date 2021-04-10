@@ -2,6 +2,12 @@ map base
 vectors
 0.0000 127.0000
 127.0000 127.0000
+94.1486 110.1847
+88.0184 107.8859
+100.2788 107.1196
+86.4859 103.2882
+97.9800 100.2231
+91.0835 99.4569
 38.0500 82.5000
 46.0500 82.5000
 54.0500 82.5000
@@ -30,47 +36,54 @@ vectors
 127.0000 0.0000
 end vectors
 lines
-0 26 none none none 0 0 0
+0 32 none none none 0 0 0
 1 0 none none none 0 0 0
-2 12 none plank none 0 0 0
-3 2 none plank none 0 0 0
-4 3 none none none 0 0 0
-4 8 none stone-floor none 0 0 0
-5 4 none plank none 0 0 0
-6 7 none stone-floor none 0 0 0
-7 3 none stone-floor none 0 0 0
-8 9 none stone-floor none 0 0 0
-9 11 none stone-floor none 0 0 0
-10 6 none stone-floor none 0 0 0
-11 10 none stone-floor none 0 0 0
-12 13 none plank none 0 0 0
-13 5 none plank none 0 0 0
-14 24 none stone stone-floor 0 0 0
-15 14 none stone stone-floor 0 0 0
-16 15 stone-floor none plank-floor 0 0 0
-16 20 none plank none 0 0 0
-17 16 none stone stone-floor 0 0 0
-18 19 none plank none 0 0 0 flags not-physical end
-19 15 none plank none 0 0 0
-20 21 none plank none 0 0 0 trigger enter cinema end
-21 23 none plank none 0 0 0 trigger attack goto base entrance end
-22 18 none plank none 0 0 0 flags physical end
-23 22 none plank none 0 0 0 trigger interact teleport 100 80 is end
-24 25 none stone stone-floor 0 0 0
-25 17 none stone stone-floor 0 0 0
-26 27 none none none 0 0 0
-27 1 none none none 0 0 0
+2 4 none none stone-floor 0 0 0
+3 2 none none stone-floor 0 0 0
+4 6 none none stone-floor 0 0 0
+5 3 none none stone-floor 0 0 0
+6 7 none none stone-floor 0 0 0
+7 5 none none stone-floor 0 0 0
+8 18 none plank none 0 0 0
+9 8 none plank none 0 0 0
+10 9 none none none 0 0 0
+10 14 none stone-floor none 0 0 0
+11 10 none plank none 0 0 0
+12 13 none stone-floor none 0 0 0
+13 9 none stone-floor none 0 0 0
+14 15 none stone-floor none 0 0 0
+15 17 none stone-floor none 0 0 0
+16 12 none stone-floor none 0 0 0
+17 16 none stone-floor none 0 0 0
+18 19 none plank none 0 0 0
+19 11 none plank none 0 0 0
+20 30 none stone stone-floor 0 0 0
+21 20 none stone stone-floor 0 0 0
+22 21 stone-floor none plank-floor 0 0 0
+22 26 none plank none 0 0 0
+23 22 none stone stone-floor 0 0 0
+24 25 none plank none 0 0 0 flags not-physical blink end
+25 21 none plank none 0 0 0
+26 27 none plank none 0 0 0 trigger interact map base entrance end
+27 29 none plank none 0 0 0 trigger attack cinema end
+28 24 none plank none 0 0 0 flags physical end
+29 28 none plank none 0 0 0 trigger interact teleport 100 80 gte health 2 or eq group human end
+30 31 none stone stone-floor 0 0 0
+31 23 none stone stone-floor 0 0 0
+32 33 none none none 0 0 0
+33 1 none none none 0 0 0
 end lines
 sectors
-0 0 10 10 none none 12 12 2 3 7 6 10 11 9 8 4 5 13 12 2 3 8 7 11 12 10 9 5 6 14 13
-0 1 10 12 none none 12 24 14 15 19 18 22 23 21 20 16 17 25 12 15 16 21 20 24 25 23 22 18 19 27 26
-0 0 10 10 plank-floor plank 8 3 4 8 9 11 10 6 7 8 4 5 9 10 12 11 7 8 flags not-pysical blink end trigger enter teleport 100 80 and spawn baron 10 100 gte health 2 or eq group human end
-0 1 10 12 stone-floor stone 8 15 16 20 21 23 22 18 19 8 17 18 22 23 25 24 20 21 flags lava end trigger enter sound beep end
-0 0 20 22 grass none 4 26 0 1 27 4 0 1 29 28
+0 0 10 10 none none 12 18 8 9 13 12 16 17 15 14 10 11 19 12 8 9 14 13 17 18 16 15 11 12 20 19
+0 1 10 12 none none 12 30 20 21 25 24 28 29 27 26 22 23 31 12 21 22 27 26 30 31 29 28 24 25 33 32
+0 0 10 10 plank-floor plank 8 9 10 14 15 17 16 12 13 8 10 11 15 16 18 17 13 14 trigger exit sound beep is x eq foobar end
+0 1 10 12 stone-floor stone 8 21 22 26 27 29 28 24 25 8 23 24 28 29 31 30 26 27 flags lava 1 1 end trigger enter sound beep missing medkit end
+-2 -2 0 0 water none 6 3 2 4 6 7 5 6 3 2 4 6 7 5 flags water 2 end
+0 0 20 22 grass none 4 32 0 1 33 4 0 1 35 34
 end sectors
 things
-50 70 baron
-20 50 zombie
+50 70 baron flags boss end
+20 50 zombie trigger dead set x foobar end
 14 42 tree
 18 42 medkit
 10 40 hero

@@ -1,3 +1,5 @@
+import { newAudioContext } from '../sound/web-audio-context.js'
+
 export const SYNTH_RATE = 44100
 
 export const SEMITONES = 49
@@ -5,7 +7,7 @@ export const SEMITONES = 49
 const rate = 1.0 / SYNTH_RATE
 const pi = Math.PI
 const tau = 2.0 * pi
-const context = new AudioContext()
+const context = newAudioContext()
 
 // todo: envelope
 // attack

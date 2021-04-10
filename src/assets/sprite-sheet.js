@@ -6,7 +6,8 @@ export function createSpriteSheet(width, height, list) {
   width = 1.0 / width
   height = 1.0 / height
   const sprites = new Map()
-  for (const sprite of list) {
+  for (let s = 0; s < list.length; s++) {
+    const sprite = list[s]
     const name = sprite[0]
     const left = parseInt(sprite[1])
     const top = parseInt(sprite[2])
