@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { createNewTexturesAndSpriteSheets, readPaintFile, readPaintFileAsLookup, saveEntity, saveTexture, saveTile, waitForResources } from '../assets/assets.js'
 import { pauseMusic, resumeMusic, saveMusic, saveSound } from '../assets/sounds.js'
 import { DashboardState } from '../client/dashboard-state.js'
@@ -11,7 +15,6 @@ import { drawFloorCeil, drawWall } from '../client/render-sector.js'
 import { TouchRender, touchRenderEvent, touchRenderResize } from '../client/render-touch.js'
 import { SfxState } from '../client/sfx-state.js'
 import { intHashCode, Table, tableGet, tablePut } from '../collections/table.js'
-import { TwoWayMap } from '../collections/two-way-map.js'
 import { newPalette } from '../editor/palette.js'
 import { Tape } from '../game/tape.js'
 import * as In from '../input/input.js'
@@ -52,6 +55,7 @@ export class Client {
     this.input = null
     this.touch = false
     this.touchRender = null
+    this.controllers = []
   }
 
   keyEvent(code, down) {
@@ -238,7 +242,7 @@ export class Client {
     const textures = []
     const palette = newPalette()
 
-    const trueColor = false
+    const trueColor = true
 
     for (const texture of contents.get('sprites')) {
       if (texture.endsWith('.txt')) {
@@ -356,7 +360,7 @@ export class Client {
 
     rendererUpdateVAO(rendering, this.bufferSky, gl.STATIC_DRAW)
 
-    const keys = new TwoWayMap()
+    const keys = new Map()
 
     keys.set('Enter', In.BUTTON_START)
     keys.set('Space', In.BUTTON_SELECT)
@@ -380,7 +384,9 @@ export class Client {
     keys.set('KeyO', In.RIGHT_TRIGGER)
 
     this.keys = keys
+
     this.input = new In.Input()
+    In.usingKeyboardMouse(this.input)
 
     await this.openState(main.get('open'))
 
@@ -431,6 +437,11 @@ export class Client {
   }
 
   update(timestamp) {
+    this.input.keyboardMouseUpdate()
+    const controllers = this.controllers
+    if (controllers.length !== 0) this.input.controllerUpdate(controllers[0])
+    this.input.updatePressed()
+
     this.state.update(timestamp)
   }
 

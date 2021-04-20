@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { entityByName, entityList, tileCount, tileList } from '../assets/assets.js'
 import { fetchText } from '../client/net.js'
 import { LineReference } from '../editor/map-edit-line-reference.js'
@@ -1625,14 +1629,16 @@ export class MapEdit {
       for (const [button, option] of options) {
         if (one) one = false
         else content += ' '
-        content += `${this.input.name(button).toUpperCase()}/${DESCRIBE_ACTION[option]}`
+        content += `${this.input.name(button)}/${DESCRIBE_ACTION[option]}`
       }
       return content
     }
     return null
   }
 
-  immediateInput() {
+  immediate() {}
+
+  events() {
     const input = this.input
     if (this.activeTextBox) {
       if (input.pressY()) {
@@ -1665,6 +1671,8 @@ export class MapEdit {
   }
 
   update(timestamp) {
+    this.events()
+
     if (this.forcePaint) {
       this.doPaint = true
       this.forcePaint = false

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { playSound } from '../assets/sounds.js'
 import { calcFontPad, calcFontScale } from '../editor/editor-util.js'
 import { flexSolve, flexText } from '../gui/flex.js'
@@ -117,12 +121,20 @@ export class Home {
     flexSolve(width, height, creditsBox)
   }
 
-  immediateInput() {
+  immediate() {}
+
+  events() {
     const input = this.input
-    if (input.pressA() || input.pressStart()) this.parent.eventCall('ok')
+    if (input.pressA() || input.pressStart()) {
+      this.parent.eventCall('ok')
+      return true
+    }
+    return false
   }
 
   update(timestamp) {
+    if (this.events()) return
+
     if (this.forcePaint) {
       this.doPaint = true
       this.forcePaint = false

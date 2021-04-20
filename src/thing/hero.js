@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { entityByName } from '../assets/assets.js'
 import { playSound } from '../assets/sounds.js'
 import { pRandomOf } from '../math/random.js'
@@ -360,85 +364,42 @@ function heroMove(self) {
       self.staminaRate = 0
     }
   }
+  const input = self.input
   heroFindClosestThing(self)
   if (self.reaction > 0) {
     self.reaction--
-  } else if (self.input.x() && self.stamina >= MISSILE_COST) {
+  } else if (input.x() && self.stamina >= MISSILE_COST) {
     playSound('baron-missile')
     self.status = STATUS_MISSILE
     thingSetAnimation(self, 'missile')
     self.combat = COMBAT_TIMER
     self.stamina -= MISSILE_COST
     return
-  } else if (self.input.b() && self.stamina >= MELEE_COST) {
+  } else if (input.b() && self.stamina >= MELEE_COST) {
     playSound('baron-melee')
     self.status = STATUS_MELEE
     thingSetAnimation(self, 'melee')
     self.combat = COMBAT_TIMER
     self.stamina -= MELEE_COST
     return
-  } else if (self.input.pressRightTrigger()) {
+  } else if (input.pressRightTrigger()) {
     if (heroInteract(self)) return
   }
-  if (self.input.pressSelect()) {
+  if (input.pressSelect()) {
     heroOpenMenu(self)
   }
   if (self.ground) {
-    if (self.input.pressLeftTrigger()) {
+    if (input.pressLeftTrigger()) {
       self.ground = false
       self.deltaY += 0.4
     } else {
-      let direction = null
-      let rotation = 0.0
-      if (self.input.stickUp()) {
-        direction = 'w'
-        rotation = self.rotation
-      }
-      if (self.input.stickDown()) {
-        if (direction === null) {
-          direction = 's'
-          rotation = self.rotation + Math.PI
-        } else {
-          direction = null
-          rotation = 0.0
-        }
-      }
-      if (self.input.stickLeft()) {
-        if (direction === null) {
-          direction = 'a'
-          rotation = self.rotation - 0.5 * Math.PI
-        } else if (direction === 'w') {
-          direction = 'wa'
-          rotation -= 0.25 * Math.PI
-        } else if (direction === 's') {
-          direction = 'sa'
-          rotation += 0.25 * Math.PI
-        }
-      }
-      if (self.input.stickRight()) {
-        if (direction === null) {
-          direction = 'd'
-          rotation = self.rotation + 0.5 * Math.PI
-        } else if (direction === 'a') {
-          direction = null
-          rotation = 0.0
-        } else if (direction === 'wa') {
-          direction = 'w'
-          rotation = self.rotation
-        } else if (direction === 'sa') {
-          direction = 's'
-          rotation = self.rotation + Math.PI
-        } else if (direction === 'w') {
-          direction = 'wd'
-          rotation += 0.25 * Math.PI
-        } else if (direction === 's') {
-          direction = 'sd'
-          rotation -= 0.25 * Math.PI
-        }
-      }
-      if (direction !== null) {
-        self.deltaX += Math.cos(rotation) * self.speed
-        self.deltaZ += Math.sin(rotation) * self.speed
+      if (input.leftStickPower !== 0.0) {
+        const power = input.leftStickPower * self.speed
+        const angle = input.leftStickAngle + self.rotation
+        const deltaX = power * Math.cos(angle)
+        const deltaZ = power * Math.sin(angle)
+        self.deltaX += deltaX
+        self.deltaZ += deltaZ
         if (thingUpdateAnimation(self) === ANIMATION_DONE) self.animationFrame = 0
         thingUpdateSprite(self)
       }

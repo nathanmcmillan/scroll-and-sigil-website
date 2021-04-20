@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 export const FLAG_WATER = 1
 export const FLAG_LAVA = 2
 export const FLAG_BOSS = 3
@@ -29,9 +33,10 @@ class Flag {
   }
 }
 
-export function flagsExport(flags) {
+export function flagsExport(self) {
+  const flags = self.flags
   let content = ''
-  for (let f = 0; f < flags.flags.length; f++) {
+  for (let f = 0; f < flags.length; f++) {
     const flag = flags[f]
     if (content !== '') content += ' '
     content += flag.id

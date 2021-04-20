@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 // prettier-ignore
 const numbers = [
   0, 8, 109, 220, 222, 241, 149, 107, 75, 248, 254, 140, 16, 66,

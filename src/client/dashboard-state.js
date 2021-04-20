@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { textureByName } from '../assets/assets.js'
 import { renderTouch } from '../client/render-touch.js'
 import { calcFontPad, calcFontScale, defaultFont } from '../editor/editor-util.js'
@@ -34,7 +38,7 @@ export class DashboardState {
     const dashboard = this.dashboard
     if (this.keys.has(code)) {
       dashboard.input.set(this.keys.get(code), down)
-      dashboard.immediateInput()
+      dashboard.immediate()
     }
   }
 

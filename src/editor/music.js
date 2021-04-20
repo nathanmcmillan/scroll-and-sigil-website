@@ -1,12 +1,21 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Dialog } from '../gui/dialog.js'
-import { SEMITONES, diatonic, synthTime, waveFromName } from '../sound/synth.js'
+import { BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y } from '../input/input.js'
+import { FREQ, LENGTH, newSynthParameters, SUSTAIN, synth, synthTime, VOLUME, WAVE, WAVEFORMS } from '../sound/synth.js'
 
 const INPUT_RATE = 128
 
 class Track {
   constructor(name) {
     this.name = name
-    this.instrument = name.toLowerCase()
+    this.parameters = newSynthParameters()
+    this.parameters[WAVE] = WAVEFORMS.indexOf(name)
+    this.parameters[SUSTAIN] = 1.0
+    this.parameters[SUSTAIN] = 1.0
+    this.parameters[VOLUME] = 1.0
     this.tuning = 0
     this.notes = [[2, 0, 49, 0]]
   }
@@ -51,7 +60,7 @@ export class MusicEdit {
     this.noteR = 2
 
     this.tempo = 120
-    this.transpose = 0 // each instrument should have a base frequency that can be set
+    this.transpose = 0
     this.play = false
     this.noteTimestamp = 0
 
@@ -173,21 +182,24 @@ export class MusicEdit {
     for (const sound of this.sounds) sound.stop()
     this.sounds.length = 0
     const track = this.tracks[this.trackIndex]
-    const waveform = waveFromName(track.instrument)
     const note = track.notes[this.noteC]
-    const seconds = this.noteSeconds(note[0])
+    const length = this.noteSeconds(note[0]) * 1000
     if (row === 0) {
       for (let r = 1; r < this.noteRows; r++) {
         const num = note[r]
         if (num === 0) continue
-        const pitch = diatonic(num - SEMITONES)
-        this.sounds.push(waveform(0.25, pitch, seconds))
+        const parameters = track.parameters.slice()
+        parameters[FREQ] = num
+        parameters[LENGTH] = length
+        this.sounds.push(synth(parameters))
       }
     } else {
       const num = note[row]
       if (num > 0) {
-        const pitch = diatonic(num - SEMITONES)
-        this.sounds.push(waveform(0.25, pitch, seconds))
+        const parameters = track.parameters.slice()
+        parameters[FREQ] = num
+        parameters[LENGTH] = length
+        this.sounds.push(synth(parameters))
       }
     }
   }
@@ -196,16 +208,17 @@ export class MusicEdit {
     const time = synthTime()
     const when = time + (1.0 / 1000.0) * 16.0
     const track = this.tracks[this.trackIndex]
-    const waveform = waveFromName(track.instrument)
     const note = track.notes[this.noteC]
-    const seconds = this.noteSeconds(note[0])
+    const length = this.noteSeconds(note[0]) * 1000
     for (let r = 1; r < this.noteRows; r++) {
       const num = note[r]
       if (num === 0) continue
-      const pitch = diatonic(num - SEMITONES)
-      this.sounds.push(waveform(0.25, pitch, seconds, when))
+      const parameters = track.parameters.slice()
+      parameters[FREQ] = num
+      parameters[LENGTH] = length
+      this.sounds.push(synth(parameters, when))
     }
-    this.noteTimestamp = timestamp + seconds * 1000
+    this.noteTimestamp = timestamp + length
   }
 
   updatePlay(timestamp) {
@@ -245,13 +258,19 @@ export class MusicEdit {
   }
 
   bottomRightStatus() {
-    let content = this.noteR === 0 ? 'A/DURATION UP B/DURATION DOWN ' : 'A/PITCH UP B/PITCH DOWN '
-    content += 'Y/OPTIONS'
-    content += this.play ? 'X/STOP' : 'X/PLAY'
+    const input = this.input
+    let content = null
+    if (this.noteR === 0) content = `${input.name(BUTTON_A)}/DURATION UP ${input.name(BUTTON_B)}/DURATION DOWN `
+    else content = `${input.name(BUTTON_A)}/PITCH UP ${input.name(BUTTON_B)}/PITCH DOWN `
+    content += `${input.name(BUTTON_Y)}/OPTIONS `
+    content += `${input.name(BUTTON_X)}`
+    content += this.play ? '/STOP' : '/PLAY'
     return content
   }
 
-  immediateInput() {
+  immediate() {}
+
+  events() {
     if (this.dialog === null) return
     const input = this.input
     if (input.pressB()) {
@@ -267,6 +286,8 @@ export class MusicEdit {
   }
 
   update(timestamp) {
+    this.events()
+
     if (this.play) {
       this.updatePlay(timestamp)
       return

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 export const black0 = 0
 export const black1 = 0
 export const black2 = 0
@@ -10,9 +14,9 @@ export const wine2 = 83
 export const moss0 = 0
 export const moss1 = 135
 export const moss2 = 81
-export const brown0 = 171
-export const brown1 = 82
-export const brown2 = 54
+export const tan0 = 171
+export const tan1 = 82
+export const tan2 = 54
 export const slate0 = 95
 export const slate1 = 87
 export const slate2 = 79
@@ -22,24 +26,24 @@ export const silver2 = 199
 export const white0 = 255
 export const white1 = 241
 export const white2 = 232
-export const red0 = 255
-export const red1 = 0
-export const red2 = 77
+export const ember0 = 255
+export const ember1 = 0
+export const ember2 = 77
 export const orange0 = 255
 export const orange1 = 163
 export const orange2 = 0
-export const yellow0 = 255
-export const yellow1 = 236
-export const yellow2 = 39
-export const green0 = 0
-export const green1 = 228
-export const green2 = 54
-export const blue0 = 41
-export const blue1 = 173
-export const blue2 = 255
-export const lavender0 = 131
-export const lavender1 = 118
-export const lavender2 = 156
+export const lemon0 = 255
+export const lemon1 = 236
+export const lemon2 = 39
+export const lime0 = 0
+export const lime1 = 228
+export const lime2 = 54
+export const sky0 = 41
+export const sky1 = 173
+export const sky2 = 255
+export const dusk0 = 131
+export const dusk1 = 118
+export const dusk2 = 156
 export const pink0 = 255
 export const pink1 = 119
 export const pink2 = 168
@@ -108,9 +112,9 @@ export const wine2f = wine2 / 255.0
 export const moss0f = moss0 / 255.0
 export const moss1f = moss1 / 255.0
 export const moss2f = moss2 / 255.0
-export const brown0f = brown0 / 255.0
-export const brown1f = brown1 / 255.0
-export const brown2f = brown2 / 255.0
+export const tan0f = tan0 / 255.0
+export const tan1f = tan1 / 255.0
+export const tan2f = tan2 / 255.0
 export const slate0f = slate0 / 255.0
 export const slate1f = slate1 / 255.0
 export const slate2f = slate2 / 255.0
@@ -120,24 +124,24 @@ export const silver2f = silver2 / 255.0
 export const white0f = white0 / 255.0
 export const white1f = white1 / 255.0
 export const white2f = white2 / 255.0
-export const red0f = red0 / 255.0
-export const red1f = red1 / 255.0
-export const red2f = red2 / 255.0
+export const ember0f = ember0 / 255.0
+export const ember1f = ember1 / 255.0
+export const ember2f = ember2 / 255.0
 export const orange0f = orange0 / 255.0
 export const orange1f = orange1 / 255.0
 export const orange2f = orange2 / 255.0
-export const yellow0f = yellow0 / 255.0
-export const yellow1f = yellow1 / 255.0
-export const yellow2f = yellow2 / 255.0
-export const green0f = green0 / 255.0
-export const green1f = green1 / 255.0
-export const green2f = green2 / 255.0
-export const blue0f = blue0 / 255.0
-export const blue1f = blue1 / 255.0
-export const blue2f = blue2 / 255.0
-export const lavender0f = lavender0 / 255.0
-export const lavender1f = lavender1 / 255.0
-export const lavender2f = lavender2 / 255.0
+export const lemon0f = lemon0 / 255.0
+export const lemon1f = lemon1 / 255.0
+export const lemon2f = lemon2 / 255.0
+export const lime0f = lime0 / 255.0
+export const lime1f = lime1 / 255.0
+export const lime2f = lime2 / 255.0
+export const sky0f = sky0 / 255.0
+export const sky1f = sky1 / 255.0
+export const sky2f = sky2 / 255.0
+export const dusk0f = dusk0 / 255.0
+export const dusk1f = dusk1 / 255.0
+export const dusk2f = dusk2 / 255.0
 export const pink0f = pink0 / 255.0
 export const pink1f = pink1 / 255.0
 export const pink2f = pink2 / 255.0
@@ -239,15 +243,15 @@ export function mossf(i) {
 }
 
 export function brown(i) {
-  if (i === 0) return brown0
-  if (i === 1) return brown1
-  return brown2
+  if (i === 0) return tan0
+  if (i === 1) return tan1
+  return tan2
 }
 
 export function brownf(i) {
-  if (i === 0) return brown0f
-  if (i === 1) return brown1f
-  return brown2f
+  if (i === 0) return tan0f
+  if (i === 1) return tan1f
+  return tan2f
 }
 
 export function slate(i) {
@@ -287,15 +291,15 @@ export function whitef(i) {
 }
 
 export function red(i) {
-  if (i === 0) return red0
-  if (i === 1) return red1
-  return red2
+  if (i === 0) return ember0
+  if (i === 1) return ember1
+  return ember2
 }
 
 export function redf(i) {
-  if (i === 0) return red0f
-  if (i === 1) return red1f
-  return red2f
+  if (i === 0) return ember0f
+  if (i === 1) return ember1f
+  return ember2f
 }
 
 export function orange(i) {
@@ -311,51 +315,51 @@ export function orangef(i) {
 }
 
 export function yellow(i) {
-  if (i === 0) return yellow0
-  if (i === 1) return yellow1
-  return yellow2
+  if (i === 0) return lemon0
+  if (i === 1) return lemon1
+  return lemon2
 }
 
 export function yellowf(i) {
-  if (i === 0) return yellow0f
-  if (i === 1) return yellow1f
-  return yellow2f
+  if (i === 0) return lemon0f
+  if (i === 1) return lemon1f
+  return lemon2f
 }
 
 export function green(i) {
-  if (i === 0) return green0
-  if (i === 1) return green1
-  return green2
+  if (i === 0) return lime0
+  if (i === 1) return lime1
+  return lime2
 }
 
 export function greenf(i) {
-  if (i === 0) return green0f
-  if (i === 1) return green1f
-  return green2f
+  if (i === 0) return lime0f
+  if (i === 1) return lime1f
+  return lime2f
 }
 
 export function blue(i) {
-  if (i === 0) return blue0
-  if (i === 1) return blue1
-  return blue2
+  if (i === 0) return sky0
+  if (i === 1) return sky1
+  return sky2
 }
 
 export function bluef(i) {
-  if (i === 0) return blue0f
-  if (i === 1) return blue1f
-  return blue2f
+  if (i === 0) return sky0f
+  if (i === 1) return sky1f
+  return sky2f
 }
 
 export function lavender(i) {
-  if (i === 0) return lavender0
-  if (i === 1) return lavender1
-  return lavender2
+  if (i === 0) return dusk0
+  if (i === 1) return dusk1
+  return dusk2
 }
 
 export function lavenderf(i) {
-  if (i === 0) return lavender0f
-  if (i === 1) return lavender1f
-  return lavender2f
+  if (i === 0) return dusk0f
+  if (i === 1) return dusk1f
+  return dusk2f
 }
 
 export function pink(i) {

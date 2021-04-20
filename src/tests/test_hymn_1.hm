@@ -1,0 +1,95 @@
+import console
+
+global = 123
+
+interface goo {
+  var x
+  var y
+  var z
+  function get()
+  function set()
+}
+
+class zoo implements goo {
+  constructor(x, flag=2) {
+    this.x = x
+    this.y = "%{x}"
+  }
+}
+
+-- new object constructing'
+var x = Thing.new(0, 1)
+
+-- optional type enforcement
+function input(@zoo object, @int num) {
+  zoo.eat(num)
+}
+
+-- constant or variables
+const x = 0
+var z = 0
+
+-- literal and formatted strings
+var x = "formatted %{this.x}"
+var y = 'not formatted'
+
+-- threading
+const t = Thread.new()
+
+-- io
+import io
+import path
+var x = io.read(path.get('c', 'file'))
+
+-- class functions are syntactic sugar for regular functions with `this`
+function zoo.string() {
+  return "(%{this.x}, %{this.y})"
+}
+
+function foo(x, y) {
+  list = []
+  table = {}
+  if x != 0 {
+    print(x)
+  } else {
+    y += 1
+  }
+  list.push(4)
+  table['key'] = list
+  return y
+}
+
+function bar() {
+  for i = 0, i < 10, i += 1 {
+    if i < 0 { continue }
+    z = zoo.new(i)
+    console.log(z)
+  }
+}
+
+foo(2, 3)
+
+-- printing to stdout/stderr
+import console
+console.log(a.near(b))
+console.debug(a.near(b))
+console.warn(a.near(b))
+console.error(a.near(b))
+
+-- async
+async function read(path) {
+  file = try {
+    io.open(path)
+  } catch {
+    goto handle
+  }
+  contents = file.read()
+  return contents
+  label handle
+  return none
+}
+
+foo = read("/home/foo.txt")
+bar = read("/home/bar.txt")
+console.log(await foo)
+console.log(await bar)

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { cellPushMissile, cellRemoveMissile } from '../world/cell.js'
 import { TRIGGER_ATTACK } from '../world/trigger.js'
 import { worldEventTrigger, worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'

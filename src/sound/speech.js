@@ -1,3 +1,16 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+/*
+ * Original code: stan_1901 (Andrey Stephanov)
+ * http://pouet.net/prod.php?which=50530
+ *
+ * JavaScript port: losso/code red (Alexander Grupe)
+ * http://heckmeck.de/demoscene/tiny-speech-synth-js/
+ *
+ */
+
 import { newAudioContext } from '../sound/web-audio-context.js'
 
 export const SYNTH_SPEECH_RATE = 44100

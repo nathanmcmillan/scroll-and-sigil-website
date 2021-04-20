@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 const LOAD_FACTOR = 0.8
 const INITIAL_BINS = 1 << 3
 const MAXIMUM_BINS = 1 << 30

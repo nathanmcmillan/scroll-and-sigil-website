@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { playSound } from '../assets/sounds.js'
 import { TextBox } from '../gui/text-box.js'
 
@@ -42,7 +46,9 @@ export class Dashboard {
 
   async load() {}
 
-  immediateInput() {
+  immediate() {}
+
+  events() {
     const input = this.input
     if (this.menu === EDIT_NAME) {
       if (input.pressY()) {
@@ -81,6 +87,8 @@ export class Dashboard {
   }
 
   update(timestamp) {
+    this.events()
+
     if (this.forcePaint) {
       this.doPaint = true
       this.forcePaint = false

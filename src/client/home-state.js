@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { textureByIndex, textureByName } from '../assets/assets.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
 import { renderTouch } from '../client/render-touch.js'
@@ -46,7 +50,7 @@ export class HomeState {
     const home = this.home
     if (this.keys.has(code)) {
       home.input.set(this.keys.get(code), down)
-      home.immediateInput()
+      home.immediate()
     }
   }
 

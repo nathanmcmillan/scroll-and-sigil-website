@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { createSpriteSheet } from '../assets/sprite-sheet.js'
 import { fetchText } from '../client/net.js'
 import { Entity, spriteName } from '../entity/entity.js'
@@ -239,7 +243,7 @@ export function spritesByName(name) {
   return SPRITE_SHEETS.get(name)
 }
 
-const trueColor = false
+const trueColor = true
 
 export function createNewTexturesAndSpriteSheets(palette, closure) {
   for (const sprite of ASYNC_SPRITE_NAMES) {

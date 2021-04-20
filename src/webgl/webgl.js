@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 export class Texture {
   constructor(width, height, texture) {
     this.width = width
@@ -31,6 +35,13 @@ export function createPixelsToTexture(gl, width, height, pixels, internal, forma
   if (useMipmap) gl.generateMipmap(gl.TEXTURE_2D)
   gl.bindTexture(gl.TEXTURE_2D, null)
   return new Texture(width, height, texture)
+}
+
+export function updatePixelsToTexture(gl, texture, width, height, pixels) {
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGB, gl.UNSIGNED_BYTE, pixels, 0)
+  gl.bindTexture(gl.TEXTURE_2D, null)
+  return texture
 }
 
 function compileShader(gl, code, type) {

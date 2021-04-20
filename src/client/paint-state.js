@@ -1,21 +1,25 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { textureByName } from '../assets/assets.js'
 import { renderDialogBox, renderStatus, renderTextBox } from '../client/client-util.js'
 import { renderTouch } from '../client/render-touch.js'
 import { compress, decompress } from '../compress/huffman.js'
 import { calcBottomBarHeight, calcFontScale, calcThickness, calcTopBarHeight, defaultFont } from '../editor/editor-util.js'
-import { exportPixels, exportToCanvas, PaintEdit, SPRITE_TOOL } from '../editor/paint.js'
+import { PaintEdit, paintExportToCanvas, paintUpdatePixels, SPRITE_TOOL } from '../editor/paint.js'
 import {
   black0f,
   black1f,
   black2f,
   closestInPalette,
-  lavender0f,
-  lavender1f,
-  lavender2f,
+  dusk0f,
+  dusk1f,
+  dusk2f,
   lavenderf,
-  red0f,
-  red1f,
-  red2f,
+  ember0f,
+  ember1f,
+  ember2f,
   redf,
   silverf,
   slatef,
@@ -29,14 +33,7 @@ import { spr, sprcol } from '../render/pico.js'
 import { drawHollowRectangle, drawImage, drawRectangle, drawTextFont, drawTextFontSpecial } from '../render/render.js'
 import { bufferZero } from '../webgl/buffer.js'
 import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
-import { createPixelsToTexture } from '../webgl/webgl.js'
-
-function updatePixelsToTexture(gl, texture, width, height, pixels) {
-  gl.bindTexture(gl.TEXTURE_2D, texture)
-  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGB, gl.UNSIGNED_BYTE, pixels, 0)
-  gl.bindTexture(gl.TEXTURE_2D, null)
-  return texture
-}
+import { createPixelsToTexture, updatePixelsToTexture } from '../webgl/webgl.js'
 
 function convertImageToText(palette, image, name) {
   const width = image.width
@@ -77,7 +74,7 @@ export class PaintState {
 
     const rows = paint.sheetRows
     const columns = paint.sheetColumns
-    const pixels = exportPixels(paint)
+    const pixels = paintUpdatePixels(paint)
 
     const gl = client.gl
     this.texture = createPixelsToTexture(gl, columns, rows, pixels, gl.RGB, gl.RGB, gl.NEAREST, gl.CLAMP_TO_EDGE).texture
@@ -95,7 +92,7 @@ export class PaintState {
     const paint = this.paint
     if (this.keys.has(code)) {
       paint.input.set(this.keys.get(code), down)
-      paint.immediateInput()
+      paint.immediate()
     }
   }
 
@@ -196,7 +193,7 @@ export class PaintState {
     canvas.width = paint.sheetColumns
     canvas.height = paint.sheetRows
     const data = context.createImageData(canvas.width, canvas.height)
-    exportToCanvas(paint, data.data)
+    paintExportToCanvas(paint, data.data)
     context.putImageData(data, 0, 0)
     const blob = canvas.toDataURL('image/png')
     const download = document.createElement('a')
@@ -209,7 +206,7 @@ export class PaintState {
     const paint = this.paint
     const rows = paint.sheetRows
     const columns = paint.sheetColumns
-    const pixels = exportPixels(paint)
+    const pixels = paintUpdatePixels(paint)
     updatePixelsToTexture(this.client.gl, this.texture, columns, rows, pixels)
   }
 
@@ -373,10 +370,10 @@ export class PaintState {
       if (selectX < x + box && selectY < y + box) {
         selectX -= thickness
         selectY -= thickness
-        drawRectangle(client.bufferColor, selectX, selectY, rectWidth, thickness, red0f, red1f, red2f, 1.0)
-        drawRectangle(client.bufferColor, selectX, selectY, thickness, rectHeight, red0f, red1f, red2f, 1.0)
-        drawRectangle(client.bufferColor, selectX + rectWidth - thickness, selectY, thickness, rectHeight, red0f, red1f, red2f, 1.0)
-        drawRectangle(client.bufferColor, selectX, selectY + rectHeight - thickness, rectWidth, thickness, red0f, red1f, red2f, 1.0)
+        drawRectangle(client.bufferColor, selectX, selectY, rectWidth, thickness, ember0f, ember1f, ember2f, 1.0)
+        drawRectangle(client.bufferColor, selectX, selectY, thickness, rectHeight, ember0f, ember1f, ember2f, 1.0)
+        drawRectangle(client.bufferColor, selectX + rectWidth - thickness, selectY, thickness, rectHeight, ember0f, ember1f, ember2f, 1.0)
+        drawRectangle(client.bufferColor, selectX, selectY + rectHeight - thickness, rectWidth, thickness, ember0f, ember1f, ember2f, 1.0)
       }
     }
 
@@ -400,7 +397,7 @@ export class PaintState {
         const h = (sprite.b - sprite.t + 1) * magnify
         x = left + sprite.l * magnify
         y = top + boxHeight - sprite.t * magnify - h
-        drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, w + doubleThick, h + doubleThick, thickness, lavender0f, lavender1f, lavender2f, 1.0)
+        drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, w + doubleThick, h + doubleThick, thickness, dusk0f, dusk1f, dusk2f, 1.0)
       }
     }
 
@@ -440,7 +437,7 @@ export class PaintState {
         x = left + paint.selectL * magnify
         y = top + boxHeight - paint.selectT * magnify - selectionHeight
       }
-      drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, selectionWidth + doubleThick, selectionHeight + doubleThick, thickness, red0f, red1f, red2f, 1.0)
+      drawHollowRectangle(client.bufferColor, x - thickness, y - thickness, selectionWidth + doubleThick, selectionHeight + doubleThick, thickness, ember0f, ember1f, ember2f, 1.0)
     }
 
     // pallete

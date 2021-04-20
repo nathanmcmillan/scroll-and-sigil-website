@@ -1,10 +1,14 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { textureByIndex, textureByName } from '../assets/assets.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
 import { drawDecal } from '../client/render-sector.js'
 import { renderTouch } from '../client/render-touch.js'
 import { tableIter, tableIterHasNext, tableIterNext, tableIterStart } from '../collections/table.js'
 import { calcFontPad, calcFontScale, defaultFont } from '../editor/editor-util.js'
-import { black0f, black1f, black2f, green0f, green1f, green2f, red0f, red1f, red2f, white0f, white1f, white2f } from '../editor/palette.js'
+import { black0f, black1f, black2f, ember0f, ember1f, ember2f, lime0f, lime1f, lime2f, white0f, white1f, white2f } from '../editor/palette.js'
 import { Game } from '../game/game.js'
 import { flexSolve, flexText, returnFlexText } from '../gui/flex.js'
 import { identity, multiply, multiplyVector3, rotateX, rotateY, translate } from '../math/matrix.js'
@@ -117,6 +121,8 @@ export class GameState {
   update() {
     if (this.loading) return
 
+    if (this.client.controllers.length === 0) this.game.input.keyboardMouseAnalog()
+
     this.game.update()
 
     const events = this.events
@@ -182,7 +188,7 @@ export class GameState {
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
 
-    const trueColor = false
+    const trueColor = true
     if (trueColor) {
       rendererSetProgram(rendering, 'texture3d-light')
     } else {
@@ -324,39 +330,39 @@ export class GameState {
       if (page === 'inventory') {
         let x = Math.floor(0.5 * width)
         let text = 'Outfit'
-        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, red0f, red1f, red2f)
+        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, ember0f, ember1f, ember2f)
         if (hero.outfit) {
           text = hero.outfit.name
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, ember0f, ember1f, ember2f)
         } else {
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, ember0f, ember1f, ember2f)
         }
         x += (text.length + 1) * fontWidth
         text = 'Headpiece'
-        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, red0f, red1f, red2f)
+        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, ember0f, ember1f, ember2f)
         if (hero.headpiece) {
           text = hero.headpiece.name
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, ember0f, ember1f, ember2f)
         } else {
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, ember0f, ember1f, ember2f)
         }
         x += (text.length + 1) * fontWidth
         text = 'Weapon'
         if (hero.weapon) {
           text = hero.weapon.name
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, text, scale, ember0f, ember1f, ember2f)
         } else {
-          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, height - pad - 2.0 * fontHeight, 'None', scale, ember0f, ember1f, ember2f)
         }
-        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, red0f, red1f, red2f)
+        drawTextSpecial(client.bufferGUI, x, height - pad - fontHeight, text, scale, ember0f, ember1f, ember2f)
         let y = height - pad - fontHeight
-        drawTextSpecial(client.bufferGUI, pad, y, 'Inventory', scale, red0f, red1f, red2f)
+        drawTextSpecial(client.bufferGUI, pad, y, 'Inventory', scale, ember0f, ember1f, ember2f)
         let index = 0
         for (let i = 0; i < hero.inventory.length; i++) {
           const item = hero.inventory[i]
           y -= fontHeight
           if (index === hero.menuRow) drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, 1.0, 1.0, 0.0)
-          else drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, red0f, red1f, red2f)
+          else drawTextSpecial(client.bufferGUI, pad, y, item.name, scale, ember0f, ember1f, ember2f)
           index++
         }
         rendererBindTexture(rendering, gl.TEXTURE0, textureByName('tic-80-wide-font').texture)
@@ -366,10 +372,10 @@ export class GameState {
       if (hero.interaction) {
         const interaction = hero.interaction
         const interactionWith = hero.interactionWith
-        drawTextSpecial(client.bufferGUI, pad, height - pad - fontHeight, interactionWith.name, scale, red0f, red1f, red2f)
+        drawTextSpecial(client.bufferGUI, pad, height - pad - fontHeight, interactionWith.name, scale, ember0f, ember1f, ember2f)
         let y = Math.floor(0.5 * height)
         for (const option of interaction.keys()) {
-          drawTextSpecial(client.bufferGUI, pad, y, option, scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, pad, y, option, scale, ember0f, ember1f, ember2f)
           y += fontHeight
         }
       } else {
@@ -386,18 +392,18 @@ export class GameState {
           POSITION[1] = 0.5 * ((POSITION[1] + 1.0) * height)
           POSITION[0] = Math.floor(POSITION[0])
           POSITION[1] = Math.floor(POSITION[1])
-          drawTextSpecial(client.bufferGUI, POSITION[0], POSITION[1], text, scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, POSITION[0], POSITION[1], text, scale, ember0f, ember1f, ember2f)
         }
         if (hero.combat) {
           let text = ''
           for (let i = 0; i < hero.health; i++) text += 'x'
           const x = pad
           let y = pad
-          drawTextSpecial(client.bufferGUI, x, y, text, scale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, x, y, text, scale, ember0f, ember1f, ember2f)
           text = ''
           y += fontHeight
           for (let i = 0; i < hero.stamina; i++) text += 'x'
-          drawTextSpecial(client.bufferGUI, x, y, text, scale, green0f, green1f, green2f)
+          drawTextSpecial(client.bufferGUI, x, y, text, scale, lime0f, lime1f, lime2f)
         }
         const boss = hero.boss
         if (boss && boss.health > 0) {
@@ -417,7 +423,7 @@ export class GameState {
           health.funY = 'below'
           health.fromY = name
           flexSolve(width, height, health)
-          drawTextSpecial(client.bufferGUI, health.x, health.y, health.text, fontScale, red0f, red1f, red2f)
+          drawTextSpecial(client.bufferGUI, health.x, health.y, health.text, fontScale, ember0f, ember1f, ember2f)
           returnFlexText(name)
           returnFlexText(health)
         }

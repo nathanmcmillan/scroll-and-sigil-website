@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { floatEq, lineIntersectAt } from '../math/vector.js'
 import { worldFindSector, WORLD_CELL_SHIFT } from '../world/world.js'
 
@@ -43,7 +47,7 @@ function cameraFixView(self, world) {
   if (maxC >= columns) maxC = columns - 1
   if (maxR >= world.rows) maxR = world.rows - 1
 
-  const fudge = 0.05
+  const error = 0.05
 
   for (let r = minR; r <= maxR; r++) {
     for (let c = minC; c <= maxC; c++) {
@@ -55,8 +59,8 @@ function cameraFixView(self, world) {
           const angle = Math.atan2(target.z - self.z, target.x - self.x)
           const dx = Math.cos(angle)
           const dz = Math.sin(angle)
-          self.x = out[0] + fudge * dx
-          self.z = out[1] + fudge * dz
+          self.x = out[0] + error * dx
+          self.z = out[1] + error * dz
         }
       }
     }
@@ -64,8 +68,8 @@ function cameraFixView(self, world) {
 
   const sector = worldFindSector(world, self.x, self.z)
   if (sector === null) return
-  if (sector.hasFloor() && self.y < sector.floor + fudge) self.y = sector.floor + fudge
-  if (sector.hasCeiling() && self.y > sector.ceiling - fudge) self.y = sector.ceiling - fudge
+  if (sector.hasFloor() && self.y < sector.floor + error) self.y = sector.floor + error
+  if (sector.hasCeiling() && self.y > sector.ceiling - error) self.y = sector.ceiling - error
 }
 
 export function cameraFollowOrbit(self) {

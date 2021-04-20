@@ -1,4 +1,9 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Client } from './client/client.js'
+import { usingKeyboardMouse, usingPlayStation } from './input/input.js'
 
 function newCanvas(width, height) {
   const canvas = document.getElementById('canvas')
@@ -23,10 +28,10 @@ let perfStart = 0.0
 
 let active = true
 let client = null
-const ongoingTouches = []
+
+const touches = []
 
 function touchIndexById(identifier) {
-  const touches = ongoingTouches
   for (let i = 0; i < touches.length; i++) {
     if (touches[i].identifier === identifier) return i
   }
@@ -106,20 +111,20 @@ async function main() {
   if ('ontouchstart' in window) {
     document.ontouchstart = (event) => {
       event.preventDefault()
-      const touches = event.changedTouches
-      for (let i = 0; i < touches.length; i++) {
-        const touch = touches[i]
+      const changed = event.changedTouches
+      for (let i = 0; i < changed.length; i++) {
+        const touch = changed[i]
         const content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
-        ongoingTouches.push(content)
+        touches.push(content)
         client.touchStart(content)
       }
     }
 
     document.ontouchmove = (event) => {
       event.preventDefault()
-      const touches = event.changedTouches
-      for (let i = 0; i < touches.length; i++) {
-        const touch = touches[i]
+      const changed = event.changedTouches
+      for (let i = 0; i < changed.length; i++) {
+        const touch = changed[i]
         const content = { identifier: touch.identifier, pageX: touch.pageX, pageY: client.height - touch.pageY }
         client.touchMove(content)
       }
@@ -127,12 +132,12 @@ async function main() {
 
     document.ontouchend = (event) => {
       event.preventDefault()
-      const touches = event.changedTouches
-      for (let i = 0; i < touches.length; i++) {
-        const touch = touches[i]
+      const changed = event.changedTouches
+      for (let i = 0; i < changed.length; i++) {
+        const touch = changed[i]
         const index = touchIndexById(touch.identifier)
         if (index >= 0) {
-          const start = ongoingTouches.splice(index, 1)[0]
+          const start = touches.splice(index, 1)[0]
           client.touchEnd(start)
         }
       }
@@ -140,14 +145,35 @@ async function main() {
 
     document.ontouchcancel = (event) => {
       event.preventDefault()
-      const touches = event.changedTouches
-      for (let i = 0; i < touches.length; i++) {
-        const touch = touches[i]
+      const changed = event.changedTouches
+      for (let i = 0; i < changed.length; i++) {
+        const touch = changed[i]
         const index = touchIndexById(touch.identifier)
-        if (index >= 0) ongoingTouches.splice(index, 1)
+        if (index >= 0) touches.splice(index, 1)
       }
     }
   }
+
+  window.addEventListener('gamepadconnected', (event) => {
+    const controller = event.gamepad
+    console.log('controller connected', controller.buttons.length, 'buttons', controller.axes.length, 'axes')
+    if (controller.buttons.length < 12 || controller.axes.length < 4) {
+      console.warning('controller does not have enough buttons or axes')
+      return
+    }
+    usingPlayStation(client.input)
+    client.controllers.push(controller)
+  })
+
+  window.addEventListener('gamepaddisconnected', (event) => {
+    const controller = event.gamepad
+    console.log('controller disconnected: %d', controller.index)
+    const array = client.controllers
+    for (let c = 0; c < array.length; c++) {
+      if (array[c].index === controller.index) array.splice(c, 1)
+    }
+    if (client.controllers.length === 0) usingKeyboardMouse(client.input)
+  })
 
   window.onresize = () => {
     client.resize(window.innerWidth, window.innerHeight)

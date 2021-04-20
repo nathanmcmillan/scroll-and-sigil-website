@@ -1,8 +1,12 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { textureByName } from '../assets/assets.js'
 import { renderDialogBox, renderStatus } from '../client/client-util.js'
-import { calcFontScale, defaultFont } from '../editor/editor-util.js'
+import { calcBottomBarHeight, calcFontScale, calcTopBarHeight, defaultFont } from '../editor/editor-util.js'
 import { lengthName, MusicEdit } from '../editor/music.js'
-import { redf, slatef, whitef } from '../editor/palette.js'
+import { ember0f, ember1f, ember2f, redf, slatef, whitef } from '../editor/palette.js'
 import { flexBox, flexSolve } from '../gui/flex.js'
 import { identity, multiply } from '../math/matrix.js'
 import { spr, sprcol } from '../render/pico.js'
@@ -33,7 +37,7 @@ export class MusicState {
     const music = this.music
     if (this.keys.has(code)) {
       music.input.set(this.keys.get(code), down)
-      music.immediateInput()
+      music.immediate()
     }
   }
 
@@ -111,15 +115,10 @@ export class MusicState {
     identity(view)
     multiply(projection, client.orthographic, view)
 
-    const buffer = client.bufferColor
-    bufferZero(buffer)
-
     const font = defaultFont()
     const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * font.width
-    const fontHeight = fontScale * font.height
-
-    const pad = 2 * scale
+    const fontHeight = fontScale * font.base
 
     rendererSetProgram(rendering, 'color2d')
     rendererSetView(rendering, 0, client.top, width, height)
@@ -128,18 +127,17 @@ export class MusicState {
     gl.clearColor(slatef(0), slatef(1), slatef(2), 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    bufferZero(client.bufferGUI)
+    // top and bottom bar
 
-    // top bar
+    bufferZero(client.bufferColor)
 
-    const topBarHeight = fontHeight + 2 * pad
-    drawRectangle(buffer, 0, height - topBarHeight, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
+    const topBarHeight = calcTopBarHeight(scale)
+    drawRectangle(client.bufferColor, 0, height - topBarHeight, width, topBarHeight, ember0f, ember1f, ember2f, 1.0)
 
-    // bottom bar
+    const bottomBarHeight = calcBottomBarHeight(scale)
+    drawRectangle(client.bufferColor, 0, 0, width, bottomBarHeight, ember0f, ember1f, ember2f, 1.0)
 
-    drawRectangle(buffer, 0, 0, width, topBarHeight, redf(0), redf(1), redf(2), 1.0)
-
-    rendererUpdateAndDraw(rendering, buffer)
+    rendererUpdateAndDraw(rendering, client.bufferColor)
 
     // text
 
