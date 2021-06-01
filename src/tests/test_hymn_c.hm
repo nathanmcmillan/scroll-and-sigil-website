@@ -1,0 +1,59 @@
+import * from from os
+import read, write from sys
+import get as put, has as contains from lib_file
+
+class Foo {
+  var x
+  var y
+
+  constructor(x, y) {
+    this.x = x
+    this.y = y
+  }
+}
+
+function foo_bar(a, b) {
+  var mutable = true
+  const not_mutable = true
+
+  try {
+    read('dir/file')
+  } except e {
+    print(e)
+  }
+
+  if (a == 0 and b == 2) {
+    print('yes')
+  } else {
+    print('no')
+  }
+
+  if (a == 0 or b == 2) { print('yes') }
+  else { print('no') }
+
+  for (var i = 0; i < 10; i += 1) {
+    print(i)
+  }
+
+  var list = [3, 4, 5]
+  var dict = {}
+
+  var list_2 = new List(12).fill(null)
+  var dict_2 = new Dict(16)
+
+  dict.put('x', 4)
+
+  for (const f in list) { print(f) }
+
+  for (const entry e in dict) {
+    var k = e.key
+    var v = e.value
+    print(k, v)
+  }
+}
+
+foo_bar(1, 2)
+
+const f = new Foo(1, 2)
+stdout(f)
+stderr(f)

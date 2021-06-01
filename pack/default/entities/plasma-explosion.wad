@@ -1,4 +1,4 @@
-sprites [particles|plasma-explosion-0, particles|plasma-explosion-1, particles|plasma-explosion-2]
-function: particle-animation
-box: 0.0
-height: 0.0
+sprites [particles.plasma-explosion-0 particles.plasma-explosion-1 particles.plasma-explosion-2]
+function = particle-animation
+box = 0.0
+height = 0.0

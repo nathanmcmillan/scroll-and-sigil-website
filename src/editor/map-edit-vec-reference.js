@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { floatEq } from '../math/vector.js'
+import { floatEq, prettier } from '../math/vector.js'
 
 export class VectorReference {
   constructor(x, y) {
@@ -29,6 +29,6 @@ export class VectorReference {
   }
 
   export() {
-    return `${this.x.toFixed(4)} ${this.y.toFixed(4)}`
+    return `{x=${prettier(this.x, 4)} z=${prettier(this.y, 4)}}`
   }
 }

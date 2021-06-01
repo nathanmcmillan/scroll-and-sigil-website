@@ -1,6 +1,6 @@
-sprites: [particles|blood-0, particles|blood-1, particles|blood-2]
-function: particle-with-decal-on-collision
-box: 0.2
-height: 0.2
-gravity: 0.01
-wind: 0.95
+sprites = [particles.blood-0 particles.blood-1 particles.blood-2]
+function = particle-with-decal-on-collision
+box = 0.2
+height = 0.2
+gravity = 0.01
+wind = 0.95

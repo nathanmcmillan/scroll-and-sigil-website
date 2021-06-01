@@ -34,7 +34,7 @@ export class IntervalTrigger {
 }
 
 export function triggerExport(trigger) {
-  return trigger.event.join(' ') + ' ' + trigger.action.join(' ') + (trigger.condition ? ' ' + trigger.condition.join(' ') : '')
+  return '[' + trigger.event.join(' ') + ' ' + trigger.action.join(' ') + (trigger.condition ? ' ' + trigger.condition.join(' ') : '') + ']'
 }
 
 export class Trigger {

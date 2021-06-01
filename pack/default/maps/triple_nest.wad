@@ -1,0 +1,50 @@
+map = untitled
+vectors [
+  {x=68.3 z=77.7}
+  {x=102.7 z=72}
+  {x=34.3 z=67.7}
+  {x=43.3 z=63.6}
+  {x=95.3 z=63.6}
+  {x=55.3 z=57.6}
+  {x=82.5 z=57.6}
+  {x=63.3 z=50.4}
+  {x=76.5 z=50.4}
+  {x=50.9 z=48.4}
+  {x=88.1 z=47.2}
+  {x=69.3 z=43.2}
+  {x=60.5 z=26.4}
+  {x=80.5 z=26.4}
+  {x=102.7 z=22}
+  {x=43.3 z=20.8}
+  {x=94.5 z=20.8}
+  {x=36.3 z=20.4}
+  {x=75.1 z=10.4}
+]
+lines [
+  {s=0 e=2 t=none m=none b=none u=0 v=0 w=0}
+  {s=1 e=0 t=none m=none b=none u=0 v=0 w=0}
+  {s=3 e=4 t=none m=none b=none u=0 v=0 w=0}
+  {s=4 e=16 t=none m=none b=none u=0 v=0 w=0}
+  {s=5 e=6 t=none m=none b=none u=0 v=0 w=0}
+  {s=6 e=10 t=none m=none b=none u=0 v=0 w=0}
+  {s=7 e=11 t=none m=none b=none u=0 v=0 w=0}
+  {s=8 e=10 t=none m=none b=none u=0 v=0 w=0}
+  {s=9 e=5 t=none m=none b=none u=0 v=0 w=0}
+  {s=9 e=7 t=none m=none b=none u=0 v=0 w=0}
+  {s=10 e=13 t=none m=none b=none u=0 v=0 w=0}
+  {s=11 e=8 t=none m=none b=none u=0 v=0 w=0}
+  {s=12 e=9 t=none m=none b=none u=0 v=0 w=0}
+  {s=13 e=12 t=none m=none b=none u=0 v=0 w=0}
+  {s=14 e=1 t=none m=none b=none u=0 v=0 w=0}
+  {s=15 e=3 t=none m=none b=none u=0 v=0 w=0}
+  {s=16 e=15 t=none m=none b=none u=0 v=0 w=0}
+  {s=17 e=2 t=none m=none b=none u=0 v=0 w=0}
+  {s=17 e=18 t=none m=none b=none u=0 v=0 w=0}
+  {s=18 e=14 t=none m=none b=none u=0 v=0 w=0}
+]
+sectors [
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[9 7 11 8 10 13 12] lines[9 6 11 7 10 13 12]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[9 5 6 10 8 11 7] lines[8 4 5 7 11 6 9]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[15 3 4 16] lines[15 2 3 16]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[2 0 1 14 18 17] lines[0 1 14 19 18 17]}
+]

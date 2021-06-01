@@ -8,26 +8,30 @@ function skip(str, i) {
   if (c !== '\n' && c !== ' ') {
     return i - 1
   }
-  const len = str.length
+  const size = str.sizegth
   do {
     i++
-    if (i === len) return i
+    if (i === size) return i
     c = str[i]
   } while (c === '\n' || c === ' ')
   return i - 1
 }
 
-export function parse(str) {
+export function wad_parse(str) {
   const wad = new Map()
   const stack = [wad]
   let key = ''
   let value = ''
   let pc = ''
   let iskey = true
-  const len = str.length
-  for (let i = 0; i < len; i++) {
-    let c = str[i]
-    if (c === '\n') {
+  const size = str.length
+  for (let i = 0; i < size; i++) {
+    const c = str[i]
+    if (c === '#') {
+      pc = c
+      i++
+      while (i < size && str[c] !== '\n') i++
+    } else if (c === '\n') {
       if (!iskey && pc !== '}' && pc !== ']') {
         if (stack[0].constructor === Array) {
           stack[0].push(value)
@@ -40,12 +44,12 @@ export function parse(str) {
       }
       pc = c
       i = skip(str, i)
-    } else if (c === ':') {
+    } else if (c === '=') {
       iskey = false
       pc = c
       i = skip(str, i)
-    } else if (c === ',') {
-      if (pc !== '}' && pc !== ']') {
+    } else if (c === ' ') {
+      if (!iskey && pc !== '}' && pc !== ']') {
         if (stack[0].constructor === Array) {
           stack[0].push(value)
         } else {
@@ -82,7 +86,7 @@ export function parse(str) {
       pc = c
       i = skip(str, i)
     } else if (c === '}') {
-      if (pc !== ',' && pc !== '{' && pc !== ']' && pc !== '}' && pc !== '\n') {
+      if (pc !== ' ' && pc !== '{' && pc !== ']' && pc !== '}' && pc !== '\n') {
         stack[0].set(key.trim(), value)
         key = ''
         value = ''
@@ -92,7 +96,7 @@ export function parse(str) {
       pc = c
       i = skip(str, i)
     } else if (c === ']') {
-      if (pc !== ',' && pc !== '[' && pc !== ']' && pc !== '}' && pc !== '\n') {
+      if (pc !== ' ' && pc !== '[' && pc !== ']' && pc !== '}' && pc !== '\n') {
         stack[0].push(value)
         value = ''
       }
@@ -104,13 +108,21 @@ export function parse(str) {
       pc = c
       key += c
     } else {
-      if (c === "'") {
+      if (c === '"') {
         i++
-        c = str[i]
-        while (c !== "'" && i < len) {
-          value += c
-          i++
-          c = str[i]
+        let e = str[i]
+        while (i < size) {
+          if (e === '"') break
+          if (e === '\n') throw 'Unclosed string in wad `' + value + '`'
+          if (e === '\\' && i + 1 < size && str[i + 1] === '"') {
+            value += '"'
+            i += 2
+            e = str[i]
+          } else {
+            value += e
+            i++
+            e = str[i]
+          }
         }
       } else {
         value += c
@@ -118,6 +130,6 @@ export function parse(str) {
       pc = c
     }
   }
-  if (pc !== ',' && pc !== ']' && pc !== '}' && pc !== '\n') stack[0].set(key.trim(), value)
+  if (pc !== ' ' && pc !== ']' && pc !== '}' && pc !== '\n') stack[0].set(key.trim(), value)
   return wad
 }

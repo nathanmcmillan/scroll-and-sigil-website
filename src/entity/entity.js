@@ -5,7 +5,7 @@
 import { spritesByName, textureIndexForName } from '../assets/assets.js'
 
 export function spriteInfo(value) {
-  return value.split('|')
+  return value.split('.')
 }
 
 export function spriteName(value) {

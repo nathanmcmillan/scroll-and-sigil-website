@@ -2,7 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { textureByIndex, textureByName } from '../assets/assets.js'
+import { textureByIndex, textureByName, TRUE_COLOR } from '../assets/assets.js'
+import { fetchText } from '../client/net.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
 import { drawDecal } from '../client/render-sector.js'
 import { renderTouch } from '../client/render-touch.js'
@@ -11,6 +12,7 @@ import { calcFontPad, calcFontScale, defaultFont } from '../editor/editor-util.j
 import { black0f, black1f, black2f, ember0f, ember1f, ember2f, lime0f, lime1f, lime2f, white0f, white1f, white2f } from '../editor/palette.js'
 import { Game } from '../game/game.js'
 import { flexSolve, flexText, returnFlexText } from '../gui/flex.js'
+import { local_storage_set } from '../io/files.js'
 import { identity, multiply, multiplyVector3, rotateX, rotateY, translate } from '../math/matrix.js'
 import { drawRectangle, drawSprite, drawText } from '../render/render.js'
 import { animal } from '../sound/animal.js'
@@ -28,14 +30,15 @@ import {
   rendererUpdateUniformVec3,
   rendererUpdateVAO,
 } from '../webgl/renderer.js'
+import { renderDialogBox } from './client-util.js'
 
 function drawTextSpecial(b, x, y, text, scale, red, green, blue) {
   drawText(b, x + scale, y - scale, text, scale, 0.0, 0.0, 0.0, 1.0)
   drawText(b, x, y, text, scale, red, green, blue, 1.0)
 }
 
-const VEC = new Array(3)
-const POSITION = new Array(3)
+const VEC = [0.0, 0.0, 0.0]
+const POSITION = [0.0, 0.0, 0.0]
 
 export class GameState {
   constructor(client) {
@@ -65,6 +68,14 @@ export class GameState {
     }
   }
 
+  pause() {
+    this.game.pause()
+  }
+
+  resume() {
+    this.game.resume()
+  }
+
   resize() {}
 
   keyEvent(code, down) {
@@ -75,12 +86,9 @@ export class GameState {
 
   mouseMove() {}
 
-  async initialize(file) {
-    await this.load(file)
-  }
-
   async load(file) {
-    await this.game.load(file)
+    const map = await fetchText(file)
+    this.game.load(map)
 
     const world = this.game.world
     const client = this.client
@@ -95,6 +103,42 @@ export class GameState {
     while (tableIterHasNext(sectorIter)) rendererUpdateVAO(client.rendering, tableIterNext(sectorIter).value, gl.STATIC_DRAW)
 
     this.loading = false
+  }
+
+  async initialize(args) {
+    let file = null
+    if (args === '!new-game') file = './pack/' + this.client.pack + '/maps/base.wad'
+    else {
+      //
+    }
+    await this.load(file)
+  }
+
+  eventCall(event) {
+    if (event === 'Pause-Save') this.save()
+    else if (event === 'Pause-Export') this.export()
+    else if (event === 'Pause-Exit') this.returnToHome()
+  }
+
+  returnToHome() {
+    this.client.openState('home')
+  }
+
+  save() {
+    const name = this.game.name
+    const blob = this.game.export()
+    local_storage_set('game', name)
+    local_storage_set('game:' + name + ':save', blob)
+    console.info(blob)
+    console.info('saved to local storage!')
+  }
+
+  export() {
+    const blob = this.game.export()
+    const download = document.createElement('a')
+    download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
+    download.download = this.game.name + '.wad'
+    download.click()
   }
 
   notify(type, args) {
@@ -113,17 +157,17 @@ export class GameState {
     switch (type) {
       case 'map':
         this.loading = true
-        this.load('./pack/' + this.client.pack + '/maps/' + args + '.txt')
+        this.load('./pack/' + this.client.pack + '/maps/' + args + '.wad')
         return
     }
   }
 
-  update() {
+  update(timestamp) {
     if (this.loading) return
 
     if (this.client.controllers.length === 0) this.game.input.keyboardMouseAnalog()
 
-    this.game.update()
+    this.game.update(timestamp)
 
     const events = this.events
     let e = events.length
@@ -188,8 +232,7 @@ export class GameState {
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
 
-    const trueColor = true
-    if (trueColor) {
+    if (TRUE_COLOR) {
       rendererSetProgram(rendering, 'texture3d-light')
     } else {
       rendererSetProgram(rendering, 'texture3d-lookup')
@@ -433,5 +476,9 @@ export class GameState {
         rendererUpdateAndDraw(rendering, client.bufferGUI)
       }
     }
+
+    // dialog box
+
+    if (game.dialog !== null) renderDialogBox(this, scale, font, game.dialog)
   }
 }

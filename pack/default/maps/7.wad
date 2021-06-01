@@ -1,0 +1,20 @@
+map = untitled
+vectors [
+  {x=41.3 z=51.4}
+  {x=65.3 z=49.9}
+  {x=41.3 z=43.4}
+  {x=56.3 z=43.4}
+  {x=56.3 z=16.9}
+  {x=65.3 z=16.9}
+]
+lines [
+  {s=0 e=1 t=none m=grass b=none u=0 v=0 w=0}
+  {s=0 e=2 t=none m=grass b=none u=0 v=0 w=0}
+  {s=2 e=3 t=none m=grass b=none u=0 v=0 w=0}
+  {s=3 e=4 t=none m=grass b=none u=0 v=0 w=0}
+  {s=4 e=5 t=none m=grass b=none u=0 v=0 w=0}
+  {s=5 e=1 t=none m=grass b=none u=0 v=0 w=0}
+]
+sectors [
+  {b=0 f=0 c=5 t=6 u=none v=none vecs[2 0 1 5 4 3] lines[1 0 5 4 3 2]}
+]

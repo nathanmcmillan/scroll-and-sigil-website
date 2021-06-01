@@ -3,15 +3,33 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { textureByName } from '../assets/assets.js'
-import { renderDialogBox, renderStatus } from '../client/client-util.js'
+import { renderDialogBox, renderStatus, renderTextBox } from '../client/client-util.js'
 import { calcBottomBarHeight, calcFontScale, calcTopBarHeight, defaultFont } from '../editor/editor-util.js'
-import { lengthName, MusicEdit } from '../editor/music.js'
-import { ember0f, ember1f, ember2f, redf, slatef, whitef } from '../editor/palette.js'
-import { flexBox, flexSolve } from '../gui/flex.js'
+import { lengthName, MusicEdit } from '../editor/music-edit.js'
+import {
+  ember0f,
+  ember1f,
+  ember2f,
+  lemon0f,
+  lemon1f,
+  lemon2f,
+  salmon0f,
+  salmon1f,
+  salmon2f,
+  silver0f,
+  silver1f,
+  silver2f,
+  slatef,
+  white0f,
+  white1f,
+  white2f,
+} from '../editor/palette.js'
+import { local_storage_get, local_storage_set } from '../io/files.js'
 import { identity, multiply } from '../math/matrix.js'
-import { spr, sprcol } from '../render/pico.js'
-import { drawRectangle, drawTextFontSpecial } from '../render/render.js'
-import { semitoneName, SEMITONES } from '../sound/synth.js'
+import { sprcol } from '../render/pico.js'
+import { drawRectangle, drawText, drawTextFontSpecial } from '../render/render.js'
+import { NOTE_ROWS } from '../sound/sound.js'
+import { semitoneName, semitoneNoOctave, SEMITONES } from '../sound/synth.js'
 import { bufferZero } from '../webgl/buffer.js'
 import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
 
@@ -28,6 +46,14 @@ export class MusicState {
   }
 
   reset() {}
+
+  pause() {
+    this.music.pause()
+  }
+
+  resume() {
+    this.music.resume()
+  }
 
   resize(width, height, scale) {
     this.music.resize(width, height, scale)
@@ -46,15 +72,18 @@ export class MusicState {
   mouseMove() {}
 
   async initialize() {
-    await this.music.load()
+    let music = null
+    const tape = this.client.tape.name
+    const name = local_storage_get('tape:' + tape + ':music')
+    if (name) music = local_storage_get('tape:' + tape + ':music:' + name)
+    this.music.load(music)
   }
 
   eventCall(event) {
-    if (event === 'start-export') this.export()
-    else if (event === 'save-save') this.save()
-    else if (event === 'start-open') this.import()
-    else if (event === 'start-save') this.save()
-    else if (event === 'start-exit') this.returnToDashboard()
+    if (event === 'Save-Save') this.save()
+    else if (event === 'Start-Export') this.export()
+    else if (event === 'Start-Open') this.import()
+    else if (event === 'Start-Exit') this.returnToDashboard()
   }
 
   returnToDashboard() {
@@ -78,8 +107,11 @@ export class MusicState {
   }
 
   save() {
+    const tape = this.client.tape.name
+    const name = this.music.name
     const blob = this.music.export()
-    localStorage.setItem('music.txt', blob)
+    local_storage_set('tape:' + tape + ':music', name)
+    local_storage_set('tape:' + tape + ':music:' + name, blob)
     console.info(blob)
     console.info('saved to local storage!')
   }
@@ -88,7 +120,7 @@ export class MusicState {
     const blob = this.music.export()
     const download = document.createElement('a')
     download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
-    download.download = 'music.txt'
+    download.download = this.music.name + '.wad'
     download.click()
   }
 
@@ -118,7 +150,7 @@ export class MusicState {
     const font = defaultFont()
     const fontScale = calcFontScale(scale)
     const fontWidth = fontScale * font.width
-    const fontHeight = fontScale * font.base
+    // const fontHeight = fontScale * font.base
 
     rendererSetProgram(rendering, 'color2d')
     rendererSetView(rendering, 0, client.top, width, height)
@@ -147,23 +179,16 @@ export class MusicState {
 
     bufferZero(client.bufferGUI)
 
-    const track = music.tracks[music.trackIndex]
+    const play = music.play
+    const track = music.track
     const notes = track.notes
-
-    const text = track.name
-    const posBox = flexBox(fontWidth * text.length, fontHeight)
-    posBox.argX = 20
-    posBox.argY = 40
-    flexSolve(width, height, posBox)
-    drawTextFontSpecial(client.bufferGUI, posBox.x, posBox.y, text, fontScale, whitef(0), whitef(1), whitef(2), font)
+    const noteC = track.c
+    const noteR = track.r
 
     const smallFontScale = Math.floor(1.5 * scale)
     const smallFontWidth = smallFontScale * font.width
     const smallFontHeight = smallFontScale * font.height
     const smallFontHalfWidth = Math.floor(0.5 * smallFontWidth)
-    const noteRows = music.noteRows
-    const noteC = music.noteC
-    const noteR = music.noteR
 
     const noteSides = 20
 
@@ -179,28 +204,50 @@ export class MusicState {
         pos = x
         y -= 6 * noteHeight
       }
-      for (let r = 1; r < noteRows; r++) {
+      for (let r = 1; r < NOTE_ROWS; r++) {
         const num = note[r]
         const pitch = num === 0 ? '-' : '' + num
         let xx = pos
         if (pitch >= 10) xx -= smallFontHalfWidth
-        if (c === noteC && r === noteR) drawTextFontSpecial(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, redf(0), redf(1), redf(2), font)
-        else drawTextFontSpecial(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, whitef(0), whitef(1), whitef(2), font)
+        if (c === noteC && (play || r === noteR)) {
+          if (num === 0 || music.scaleNotes.includes(semitoneNoOctave(num + track.tuning - SEMITONES))) {
+            drawText(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, ember0f, ember1f, ember2f, 1.0, font)
+          } else {
+            drawText(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, salmon0f, salmon1f, salmon2f, 1.0, font)
+          }
+        } else {
+          if (num === 0 || music.scaleNotes.includes(semitoneNoOctave(num + track.tuning - SEMITONES))) {
+            drawText(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, silver0f, silver1f, silver2f, 1.0, font)
+          } else {
+            drawText(client.bufferGUI, xx, y - r * noteHeight, pitch, smallFontScale, lemon0f, lemon1f, lemon2f, 1.0, font)
+          }
+        }
       }
       pos += noteWidth
     }
 
-    const tempoText = 'Tempo:' + music.tempo
-    drawTextFontSpecial(client.bufferGUI, 20, height - fontHeight * 3, tempoText, fontScale, whitef(0), whitef(1), whitef(2), font)
-
-    drawTextFontSpecial(client.bufferGUI, 20, 200, lengthName(notes[noteC][0]), smallFontScale, whitef(0), whitef(1), whitef(2), font)
-    for (let r = 1; r < noteRows; r++) {
+    const noteX = noteSides
+    const noteY = 4 * noteHeight + noteSides
+    drawText(client.bufferGUI, noteX, noteY, lengthName(notes[noteC][0]), smallFontScale, silver0f, silver1f, silver2f, 1.0, font)
+    for (let r = 1; r < NOTE_ROWS; r++) {
       const note = notes[noteC][r]
-      let noteText
-      if (note === 0) noteText = '-'
-      else noteText = semitoneName(note - SEMITONES)
-      drawTextFontSpecial(client.bufferGUI, 20, 200 - r * noteHeight, noteText, smallFontScale, whitef(0), whitef(1), whitef(2), font)
+      if (note === 0) {
+        drawText(client.bufferGUI, noteX, noteY - r * noteHeight, '-', smallFontScale, silver0f, silver1f, silver2f, 1.0, font)
+      } else {
+        const semitone = note + track.tuning - SEMITONES
+        const noteText = semitoneName(semitone)
+        if (music.scaleNotes.includes(semitoneNoOctave(semitone))) {
+          drawText(client.bufferGUI, noteX, noteY - r * noteHeight, noteText, smallFontScale, silver0f, silver1f, silver2f, 1.0, font)
+        } else {
+          drawText(client.bufferGUI, noteX, noteY - r * noteHeight, noteText, smallFontScale, lemon0f, lemon1f, lemon2f, 1.0, font)
+        }
+      }
     }
+
+    const interval = music.scaleRoot + ' ' + music.scaleMode + ': ' + music.scaleNotes.join(',')
+    const scaleX = width - noteSides - interval.length * fontWidth
+    const scaleY = noteHeight + noteSides
+    drawText(client.bufferGUI, scaleX, scaleY, interval, smallFontScale, silver0f, silver1f, silver2f, 1.0, font)
 
     //  status text
 
@@ -213,7 +260,7 @@ export class MusicState {
 
     // sprites
 
-    rendererSetProgram(rendering, 'texture2d-rgb')
+    rendererSetProgram(rendering, 'texture2d-ignore')
     rendererSetView(rendering, 0, client.top, width, height)
     rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
@@ -232,17 +279,24 @@ export class MusicState {
         pos = x
         y -= 6 * noteHeight
       }
-      sprcol(client.bufferGUI, duration, 1.0, 1.0, pos, y - spriteScale, spriteSize, spriteSize, 0.0, 0.0, 0.0, 1.0)
-      if (c === noteC && r === noteR) sprcol(client.bufferGUI, duration, 1.0, 1.0, pos, y, spriteSize, spriteSize, redf(0), redf(1), redf(2), 1.0)
-      else spr(client.bufferGUI, duration, 1.0, 1.0, pos, y, spriteSize, spriteSize)
+      if (c === noteC && (play || r === noteR)) sprcol(client.bufferGUI, duration, 1.0, 1.0, pos, y, spriteSize, spriteSize, ember0f, ember1f, ember2f, 1.0)
+      else sprcol(client.bufferGUI, duration, 1.0, 1.0, pos, y, spriteSize, spriteSize, silver0f, silver1f, silver2f, 1.0)
       pos += noteWidth
     }
 
     rendererBindTexture(rendering, gl.TEXTURE0, textureByName('editor-sprites').texture)
     rendererUpdateAndDraw(rendering, client.bufferGUI)
 
-    // dialog box
+    // dialog box or text box
 
     if (music.dialog !== null) renderDialogBox(this, scale, font, music.dialog)
+    else if (music.activeTextBox) {
+      const box = music.textBox
+      renderTextBox(this, scale, font, box, 200, 200)
+
+      bufferZero(client.bufferGUI)
+      drawTextFontSpecial(client.bufferGUI, 200, 500, box.text, fontScale, white0f, white1f, white2f, font)
+      rendererUpdateAndDraw(rendering, client.bufferGUI)
+    }
   }
 }

@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { triggerExport } from '../world/trigger.js'
 import { flagsExport } from '../world/flags.js'
+import { triggerExport } from '../world/trigger.js'
 
 export class ThingReference {
   constructor(entity, x, z, flags, trigger) {
@@ -29,9 +29,10 @@ export class ThingReference {
   }
 
   export() {
-    let content = `${this.x} ${this.z} ${this.entity.id()}`
-    if (this.flags) content += ` flags ${flagsExport(this.flags)} end`
-    if (this.trigger) content += ` trigger ${triggerExport(this.trigger)} end`
+    let content = `{x=${this.x} z=${this.z} id=${this.entity.id()}`
+    if (this.flags) content += ` flags${flagsExport(this.flags)}`
+    if (this.trigger) content += ` trigger${triggerExport(this.trigger)}`
+    content += '}'
     return content
   }
 }

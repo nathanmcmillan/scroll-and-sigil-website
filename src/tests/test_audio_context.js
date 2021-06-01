@@ -191,3 +191,34 @@ function filter() {
     oscillator.stop()
   }, 600)
 }
+
+// eslint-disable-next-line no-unused-vars
+function vibrato() {
+  console.log('vibrato')
+  const context = new AudioContext()
+
+  const oscillator = context.createOscillator()
+
+  const oscillatorGain = context.createGain()
+  oscillatorGain.gain.value = 1.0
+
+  const vibrato = context.createOscillator()
+  vibrato.frequency = 20
+
+  const vibratoGain = context.createGain()
+  vibratoGain.gain.value = 100
+
+  vibrato.connect(vibratoGain)
+  vibratoGain.connect(oscillator.detune)
+
+  oscillator.connect(oscillatorGain)
+  oscillatorGain.connect(context.destination)
+
+  vibrato.start(0)
+  oscillator.start(0)
+
+  setTimeout(() => {
+    vibrato.stop()
+    oscillator.stop()
+  }, 600)
+}

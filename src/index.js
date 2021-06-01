@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { Client } from './client/client.js'
-import { usingKeyboardMouse, usingPlayStation } from './input/input.js'
+import { usingKeyboardMouse, usingPlayStation } from './io/input.js'
 
 function newCanvas(width, height) {
   const canvas = document.getElementById('canvas')
@@ -21,10 +21,10 @@ function newCanvas(width, height) {
 }
 
 const PERFORMANCE = false
-let perfLow = Number.MAX_VALUE
-let perfHigh = -Number.MAX_VALUE
-let perfTick = 0
-let perfStart = 0.0
+let perf_low = Number.MAX_VALUE
+let perf_high = -Number.MAX_VALUE
+let perf_tick = 0
+let perf_start = 0.0
 
 let active = true
 let client = null
@@ -38,8 +38,12 @@ function touchIndexById(identifier) {
   return -1
 }
 
+let previous = 0
+
 function tick(timestamp) {
-  if (active) {
+  if (active && timestamp - previous >= 15.999) {
+    previous = timestamp
+
     let perf
     if (PERFORMANCE) perf = performance.now()
 
@@ -48,16 +52,16 @@ function tick(timestamp) {
 
     if (PERFORMANCE) {
       const diff = performance.now() - perf
-      if (diff < perfLow) perfLow = diff
-      if (diff > perfHigh) perfHigh = diff
-      perfTick++
-      if (perfTick === 16) {
-        const average = (performance.now() - perfStart) / perfTick
-        console.info('time (low := ' + perfLow + ') (high := ' + perfHigh + ') average :=', average)
-        perfLow = Number.MAX_VALUE
-        perfHigh = -Number.MAX_VALUE
-        perfTick = 0
-        perfStart = performance.now()
+      if (diff < perf_low) perf_low = diff
+      if (diff > perf_high) perf_high = diff
+      perf_tick++
+      if (perf_tick === 16) {
+        const average = (performance.now() - perf_start) / perf_tick
+        console.info('time (low := ' + perf_low + ') (high := ' + perf_high + ') average :=', average)
+        perf_low = Number.MAX_VALUE
+        perf_high = -Number.MAX_VALUE
+        perf_tick = 0
+        perf_start = performance.now()
       }
     }
   }

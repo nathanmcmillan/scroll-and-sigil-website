@@ -1,0 +1,37 @@
+map = untitled
+vectors [
+  {x=43.3 z=63.6}
+  {x=95.3 z=63.6}
+  {x=55.3 z=57.6}
+  {x=82.5 z=57.6}
+  {x=63.3 z=50.4}
+  {x=76.5 z=50.4}
+  {x=50.9 z=48.4}
+  {x=88.1 z=47.2}
+  {x=69.3 z=43.2}
+  {x=60.5 z=26.4}
+  {x=80.5 z=26.4}
+  {x=43.3 z=20.8}
+  {x=94.5 z=20.8}
+]
+lines [
+  {s=0 e=1 t=none m=none b=none u=0 v=0 w=0}
+  {s=1 e=12 t=none m=none b=none u=0 v=0 w=0}
+  {s=2 e=3 t=none m=none b=none u=0 v=0 w=0}
+  {s=3 e=7 t=none m=none b=none u=0 v=0 w=0}
+  {s=4 e=8 t=none m=none b=none u=0 v=0 w=0}
+  {s=5 e=7 t=none m=none b=none u=0 v=0 w=0}
+  {s=6 e=2 t=none m=none b=none u=0 v=0 w=0}
+  {s=6 e=4 t=none m=none b=none u=0 v=0 w=0}
+  {s=7 e=10 t=none m=none b=none u=0 v=0 w=0}
+  {s=8 e=5 t=none m=none b=none u=0 v=0 w=0}
+  {s=9 e=6 t=none m=none b=none u=0 v=0 w=0}
+  {s=10 e=9 t=none m=none b=none u=0 v=0 w=0}
+  {s=11 e=0 t=none m=none b=none u=0 v=0 w=0}
+  {s=12 e=11 t=none m=none b=none u=0 v=0 w=0}
+]
+sectors [
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[6 4 8 5 7 10 9] lines[7 4 9 5 8 11 10]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[6 2 3 7 5 8 4] lines[6 2 3 5 9 4 7]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[11 0 1 12] lines[12 0 1 13]}
+]

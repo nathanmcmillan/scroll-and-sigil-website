@@ -2,14 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { playSound } from '../assets/sounds.js'
+import { playSound } from '../assets/sound-manager.js'
 import { TextBox } from '../gui/text-box.js'
+import { INPUT_RATE } from '../io/input.js'
 
 export const TAPE_MENU = 0
 export const PROGRAM_MENU = 1
 export const EDIT_NAME = 2
-
-const INPUT_RATE = 128
 
 export class Dashboard {
   constructor(parent, width, height, scale, input) {
@@ -35,6 +34,10 @@ export class Dashboard {
     this.programRow = 0
     this.forcePaint = true
   }
+
+  pause() {}
+
+  resume() {}
 
   resize(width, height, scale) {
     this.width = width
@@ -71,17 +74,23 @@ export class Dashboard {
     } else if (input.pressA() || input.pressStart()) {
       if (this.menu === TAPE_MENU) {
         if (this.tapeRow === 0) this.menu = PROGRAM_MENU
-        else if (this.tapeRow === 1) this.parent.eventCall('export')
+        else if (this.tapeRow === 1) this.parent.eventCall('Export')
         else if (this.tapeRow === 2) {
           this.textBox.reset(this.tape.name)
           this.menu = EDIT_NAME
-        } else if (this.tapeRow === 5) this.parent.eventCall('back')
+        } else if (this.tapeRow === 5) this.parent.eventCall('Back')
         this.forcePaint = true
       } else if (this.menu === PROGRAM_MENU) {
         if (this.programRow === 4) {
           this.menu = TAPE_MENU
           this.forcePaint = true
-        } else this.parent.eventCall('open')
+        } else this.parent.eventCall('Open')
+      }
+    } else if (input.pressB()) {
+      if (this.menu === TAPE_MENU) this.parent.eventCall('Back')
+      else if (this.menu === PROGRAM_MENU) {
+        this.menu = TAPE_MENU
+        this.forcePaint = true
       }
     }
   }

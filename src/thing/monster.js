@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { entityByName } from '../assets/assets.js'
-import { playSound } from '../assets/sounds.js'
+import { playSound } from '../assets/sound-manager.js'
 import { atan2, cos, sin } from '../math/approximate.js'
 import { pRandom, pRandomOf, randomFloat } from '../math/random.js'
 import { newPlasma } from '../missile/plasma.js'
@@ -22,8 +22,8 @@ import {
   thingY,
 } from '../thing/thing.js'
 import { FLAG_BOSS } from '../world/flags.js'
-import { ANIMATION_DONE, worldEventTrigger } from '../world/world.js'
 import { TRIGGER_DEAD } from '../world/trigger.js'
+import { ANIMATION_DONE, worldEventTrigger } from '../world/world.js'
 
 const STATUS_LOOK = 0
 const STATUS_CHASE = 1

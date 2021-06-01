@@ -108,15 +108,18 @@ export class LineReference {
   }
 
   export() {
-    let content = `${this.a.index} ${this.b.index}`
-    content += ` ${this.topTextureName()}`
-    content += ` ${this.middleTextureName()}`
-    content += ` ${this.bottomTextureName()}`
-    content += ` ${this.topOffset()}`
-    content += ` ${this.middleOffset()}`
-    content += ` ${this.bottomOffset()}`
-    if (this.flags) content += ` flags ${flagsExport(this.flags)} end`
-    if (this.trigger) content += ` trigger ${triggerExport(this.trigger)} end`
+    let content = '{'
+    content += 's=' + this.a.index
+    content += ' e=' + this.b.index
+    content += ' t=' + this.topTextureName()
+    content += ' m=' + this.middleTextureName()
+    content += ' b=' + this.bottomTextureName()
+    content += ' u=' + this.topOffset()
+    content += ' v=' + this.middleOffset()
+    content += ' w=' + this.bottomOffset()
+    if (this.flags) content += ' flags' + flagsExport(this.flags)
+    if (this.trigger) content += ' trigger' + triggerExport(this.trigger)
+    content += '}'
     return content
   }
 

@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { playSound } from '../assets/sounds.js'
+import { playSound } from '../assets/sound-manager.js'
 import { cos, sin } from '../math/approximate.js'
 import { redBloodExplode, redBloodTowards } from '../thing/thing-util.js'
 import { Thing, thingFindSector, thingIntegrate, thingPushToCells, thingRemoveFromCells, thingSetup, thingUpdateAnimation, thingUpdateSprite } from '../thing/thing.js'

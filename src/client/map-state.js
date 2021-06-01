@@ -5,7 +5,8 @@
 import { renderMapEditTopMode } from '../client/map-edit-top-mode.js'
 import { renderMapEditViewMode, updateMapEditViewSectorBuffer } from '../client/map-edit-view-mode.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
-import { MapEdit, SWITCH_MODE_CALLBACK, TOP_MODE, VIEW_MODE } from '../editor/maps.js'
+import { MapEdit, SWITCH_MODE_CALLBACK, TOP_MODE, VIEW_MODE } from '../editor/map-edit.js'
+import { local_storage_get, local_storage_set } from '../io/files.js'
 
 export class MapState {
   constructor(client) {
@@ -29,6 +30,14 @@ export class MapState {
     this.maps.reset()
   }
 
+  pause() {
+    this.maps.pause()
+  }
+
+  resume() {
+    this.maps.resume()
+  }
+
   resize(width, height, scale) {
     this.maps.resize(width, height, scale)
   }
@@ -45,16 +54,20 @@ export class MapState {
 
   mouseMove() {}
 
-  async initialize(file) {
-    await this.maps.load(file)
+  async initialize() {
+    let map = null
+    const tape = this.client.tape.name
+    const name = local_storage_get('tape:' + tape + ':map')
+    if (name) map = local_storage_get('tape:' + tape + ':map:' + name)
+    this.maps.load(map)
     this.loading = false
   }
 
   eventCall(event) {
-    if (event === 'start-save') this.save()
-    else if (event === 'start-open') this.import()
-    else if (event === 'start-export') this.export()
-    else if (event === 'start-exit') this.returnToDashboard()
+    if (event === 'Start-Save') this.save()
+    else if (event === 'Start-Open') this.import()
+    else if (event === 'Start-Export') this.export()
+    else if (event === 'Start-Exit') this.returnToDashboard()
   }
 
   returnToDashboard() {
@@ -78,8 +91,11 @@ export class MapState {
   }
 
   save() {
+    const tape = this.client.tape.name
+    const name = this.maps.name
     const blob = this.maps.export()
-    localStorage.setItem('map.txt', blob)
+    local_storage_set('tape:' + tape + ':map', name)
+    local_storage_set('tape:' + tape + ':map:' + name, blob)
     console.info(blob)
     console.info('saved to local storage!')
   }
@@ -88,7 +104,7 @@ export class MapState {
     const blob = this.maps.export()
     const download = document.createElement('a')
     download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
-    download.download = 'map.txt'
+    download.download = this.maps.name + '.wad'
     download.click()
   }
 

@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { entityByName } from '../assets/assets.js'
-import { playSound } from '../assets/sounds.js'
+import { playSound } from '../assets/sound-manager.js'
 import { missileHit, missileIntegrate, missileSetup } from '../missile/missile.js'
 import { newPlasmaExplosion } from '../particle/plasma-explosion.js'
 import { worldNewMissile } from '../world/world.js'

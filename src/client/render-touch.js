@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { black0f, black1f, black2f, white0f, white1f, white2f } from '../editor/palette.js'
-import * as In from '../input/input.js'
+import * as In from '../io/input.js'
 import { identity, multiply, orthographic } from '../math/matrix.js'
 import { drawRectangle } from '../render/render.js'
 import { bufferZero } from '../webgl/buffer.js'

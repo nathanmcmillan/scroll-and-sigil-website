@@ -1,0 +1,25 @@
+map = untitled
+vectors [
+  {x=22.4 z=67.9}
+  {x=104.2 z=63.6}
+  {x=79.3 z=51.1}
+  {x=52 z=49}
+  {x=52 z=31.6}
+  {x=79.3 z=31.6}
+  {x=26.8 z=13.8}
+  {x=104.8 z=13.8}
+]
+lines [
+  {s=0 e=1 t=none m=grass b=none u=0 v=0 w=0}
+  {s=0 e=6 t=none m=plank b=none u=0 v=0 w=0}
+  {s=2 e=5 t=none m=grass b=none u=0 v=0 w=0}
+  {s=3 e=2 t=none m=grass b=none u=0 v=0 w=0}
+  {s=4 e=3 t=none m=grass b=none u=0 v=0 w=0}
+  {s=5 e=4 t=none m=grass b=none u=0 v=0 w=0}
+  {s=6 e=7 t=none m=grass b=none u=0 v=0 w=0}
+  {s=7 e=1 t=none m=grass b=none u=0 v=0 w=0}
+]
+sectors [
+  {b=0 f=0 c=5 t=6 u=plank-floor v=plank vecs[3 2 5 4] lines[3 2 5 4]}
+  {b=0 f=0 c=5 t=6 u=stone-floor v=stone vecs[6 0 1 7] lines[1 0 7 6]}
+]

@@ -141,15 +141,23 @@ export class SectorReference {
   }
 
   export() {
-    let content = `${this.bottom} ${this.floor} ${this.ceiling} ${this.top}`
-    content += ` ${this.floorTextureName()}`
-    content += ` ${this.ceilingTextureName()}`
-    content += ` ${this.vecs.length}`
-    for (const vec of this.vecs) content += ` ${vec.index}`
-    content += ` ${this.lines.length}`
-    for (const line of this.lines) content += ` ${line.index}`
-    if (this.flags) content += ` flags ${flagsExport(this.flags)} end`
-    if (this.trigger) content += ` trigger ${triggerExport(this.trigger)} end`
+    let content = '{b=' + this.bottom + ' f=' + this.floor + ' c=' + this.ceiling + ' t=' + this.top
+    content += ' u=' + this.floorTextureName()
+    content += ' v=' + this.ceilingTextureName()
+    content += ' vecs['
+    for (let i = 0; i < this.vecs.length; i++) {
+      if (i !== 0) content += ' '
+      content += this.vecs[i].index
+    }
+    content += '] lines['
+    for (let i = 0; i < this.lines.length; i++) {
+      if (i !== 0) content += ' '
+      content += this.lines[i].index
+    }
+    content += ']'
+    if (this.flags) content += ' flags' + flagsExport(this.flags)
+    if (this.trigger) content += ' trigger' + triggerExport(this.trigger)
+    content += '}'
     return content
   }
 }

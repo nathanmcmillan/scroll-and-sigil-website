@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { newAudioContext } from '../sound/web-audio-context.js'
+import { NOTES } from './music-theory.js'
 
 export const SYNTH_RATE = 44100
 
@@ -38,7 +39,18 @@ export const LOW_PASS = 21
 export const HIGH_PASS = 22
 export const REPEAT = 23
 
-export const PARAMETER_COUNT = 24
+export const HARMONIC_MULT_A = 24
+export const HARMONIC_GAIN_A = 25
+
+export const HARMONIC_MULT_B = 26
+export const HARMONIC_GAIN_B = 27
+
+export const HARMONIC_MULT_C = 28
+export const HARMONIC_GAIN_C = 29
+
+export const PARAMETER_COUNT = 30
+
+export const WAVEFORMS = ['None', 'Sine', 'Square', 'Pulse', 'Triangle', 'Sawtooth', 'Noise', 'Static']
 
 export const WAVE_GROUP = ['Wave', 'Cycle']
 export const FREQ_GROUP = ['Frequency', 'Speed', 'Accel', 'Jerk']
@@ -46,97 +58,41 @@ export const VOLUME_GROUP = ['Attack', 'Decay', 'Sustain', 'Length', 'Release', 
 export const VIBRATO_GROUP = ['Vibrato Wave', 'Vibrato Freq', 'Vibrato %']
 export const TREMOLO_GROUP = ['Tremolo Wave', 'Tremolo Freq', 'Tremolo %']
 export const OTHER_GROUP = ['Bit Crush', 'Noise', 'Distortion', 'Low Pass', 'High Pass', 'Repeat']
+export const HARMONIC_GROUP = ['Harmonic Mult A', 'Harmonic Gain A', 'Harmonic Mult B', 'Harmonic Gain B', 'Harmonic Mult C', 'Harmonic Gain C']
 
-export const SYNTH_ARGUMENTS = [].concat(WAVE_GROUP).concat(FREQ_GROUP).concat(VOLUME_GROUP).concat(VIBRATO_GROUP).concat(TREMOLO_GROUP).concat(OTHER_GROUP)
+export const SYNTH_ARGUMENTS = [].concat(WAVE_GROUP).concat(FREQ_GROUP).concat(VOLUME_GROUP).concat(VIBRATO_GROUP).concat(TREMOLO_GROUP).concat(OTHER_GROUP).concat(HARMONIC_GROUP)
+
+export const SYNTH_IO = SYNTH_ARGUMENTS.map((x) => x.toLowerCase().replaceAll(' ', '-'))
 
 const _INTERVAL = 0
+const _INCREMENT = 1
 
 const _COUNT = 1
 
 const rate = 1.0 / SYNTH_RATE
 const pi = Math.PI
 const tau = 2.0 * pi
-const deg = pi / 180
 
 const context = newAudioContext()
 
-export function synthTime() {
+export function synth_time() {
   return context.currentTime
 }
 
-export function newSynthParameters() {
+export function new_synth_parameters() {
   return new Array(PARAMETER_COUNT).fill(0)
 }
 
-// function noise(data, amplitude, frequency) {
-//   const len = data.length
-//   const increment = tau * frequency * rate
-//   let phase = 0
-//   for (let i = 0; i < len; i++) {
-//     phase += increment
-//     if (phase > tau) {
-//       data[i] = amplitude * (2.0 * Math.random() - 1.0)
-//       phase -= tau
-//     }
-//   }
-// }
-
-// function process(data, algo, parameters) {
-//   let attack = parameters[ATTACK]
-//   let decay = parameters[DECAY]
-//   let length = parameters[LENGTH]
-//   let release = parameters[RELEASE]
-
-//   if (attack === 0) attack = 4
-//   if (decay === 0) decay = 4
-//   if (release === 0) release = 4
-
-//   attack = Math.floor((attack / 1000) * SYNTH_RATE)
-//   decay = Math.floor((decay / 1000) * SYNTH_RATE)
-//   length = Math.floor((length / 1000) * SYNTH_RATE)
-//   release = Math.floor((release / 1000) * SYNTH_RATE)
-
-//   const volume = parameters[VOLUME]
-//   const sustain = parameters[SUSTAIN]
-//   const hold = volume * sustain
-
-//   const attackRate = volume / attack
-//   const decayRate = (volume - hold) / decay
-//   const releaseRate = hold / release
-
-//   const decayEnd = attack + decay
-//   const lengthEnd = decayEnd + length
-
-//   let amplitude = 0
-
-//   let frequency = diatonic(parameters[FREQ] - SEMITONES)
-//   let speed = parameters[SPEED]
-//   let acceleration = parameters[ACCEL] / SYNTH_RATE
-//   const jerk = parameters[JERK] / SYNTH_RATE / SYNTH_RATE
-
-//   const extra = new Array(_COUNT)
-//   extra[_INTERVAL] = tau * parameters[CYCLE]
-
-//   const size = data.length
-//   let phase = 0
-
-//   for (let i = 0; i < size; i++) {
-//     if (i < attack) amplitude += attackRate
-//     else if (i < decayEnd) amplitude -= decayRate
-//     else if (i > lengthEnd) amplitude -= releaseRate
-//     else amplitude = hold
-
-//     data[i] = algo(amplitude, phase, extra)
-
-//     const increment = tau * frequency * rate
-//     phase += increment
-//     if (phase > tau) phase -= tau
-
-//     frequency += speed
-//     speed += acceleration
-//     acceleration += jerk
-//   }
-// }
+export function export_synth_parameters(parameters) {
+  let content = 'parameters {\n'
+  for (let i = 0; i < parameters.length; i++) {
+    content += '  ' + SYNTH_IO[i] + ' = '
+    if (i === WAVE) content += WAVEFORMS[parameters[i]] + '\n'
+    else content += parameters[i] + '\n'
+  }
+  content += '}'
+  return content
+}
 
 function normalize(min, max, value) {
   return ((value + 1.0) * (max - min)) / 2.0 + min
@@ -192,8 +148,8 @@ function processSawtooth(amplitude, phase) {
   return amplitude - (amplitude / pi) * phase
 }
 
-function processNoise(amplitude, phase) {
-  return phase > tau ? amplitude * (2.0 * Math.random() - 1.0) : 0.0
+function processNoise(amplitude, phase, extra) {
+  return phase + extra[_INCREMENT] > tau ? amplitude * (2.0 * Math.random() - 1.0) : 0.0
 }
 
 function processStatic(amplitude) {
@@ -228,7 +184,7 @@ function process(data, parameters) {
   const decayEnd = attack + decay
   const lengthEnd = decayEnd + length
 
-  let amplitude = 0
+  let amplitude = 0.0
 
   const startFrequency = diatonic(parameters[FREQ] - SEMITONES)
   const startSpeed = parameters[SPEED]
@@ -243,13 +199,13 @@ function process(data, parameters) {
   const vibratoFreq = parameters[VIBRATO_FREQ]
   const vibratoPerc = parameters[VIBRATO_PERC]
 
-  let vibratoPhase = 0
+  let vibratoPhase = 0.0
 
   const tremoloWave = parameters[TREMOLO_WAVE]
   const tremoloFreq = parameters[TREMOLO_FREQ]
   const tremoloPerc = parameters[TREMOLO_PERC]
 
-  let tremoloPhase = 0
+  let tremoloPhase = 0.0
 
   const crush = parameters[BIT_CRUSH]
   const noise = parameters[NOISE]
@@ -257,6 +213,11 @@ function process(data, parameters) {
   const low = parameters[LOW_PASS]
   const high = parameters[HIGH_PASS]
   const repeat = Math.floor(parameters[REPEAT] * SYNTH_RATE)
+
+  let distort = null
+  if (distortion !== 0.0) {
+    distort = distortionCurve(Math.ceil(distortion * 100.0))
+  }
 
   let lpfid1 = 0.0
   let lpfid2 = 0.0
@@ -330,16 +291,23 @@ function process(data, parameters) {
     hpfca2 = a2 * inverse
   }
 
-  let distort = null
-  if (distortion !== 0.0) {
-    distort = distortionCurve(Math.ceil(distortion * 100.0))
-  }
+  const harmonicA = parameters[HARMONIC_MULT_A]
+  const harmonicB = parameters[HARMONIC_MULT_B]
+  const harmonicC = parameters[HARMONIC_MULT_C]
+
+  const harmonicGainA = parameters[HARMONIC_GAIN_A]
+  const harmonicGainB = parameters[HARMONIC_GAIN_B]
+  const harmonicGainC = parameters[HARMONIC_GAIN_C]
+
+  let harmonicPhaseA = 0.0
+  let harmonicPhaseB = 0.0
+  let harmonicPhaseC = 0.0
 
   const extra = new Array(_COUNT)
   extra[_INTERVAL] = tau * parameters[CYCLE]
 
   const size = data.length
-  let phase = 0
+  let phase = 0.0
 
   let out = 0.0
 
@@ -355,30 +323,53 @@ function process(data, parameters) {
       if (i % Math.floor(crush * 100) !== 0) calculate = false
     }
 
+    let freq = frequency
+
+    if (vibratoWave !== 0) {
+      const proc = processFromIndex(vibratoWave)
+      const vibrato = proc(1.0, vibratoPhase, extra)
+
+      freq += vibrato * vibratoPerc * 100
+      // freq *= Math.pow(2, (vibrato * vibratoPerc * 100) / 1200)
+
+      const increment = tau * vibratoFreq * rate
+      vibratoPhase += increment
+      if (vibratoPhase > tau) vibratoPhase -= tau
+    }
+
+    const increment = tau * freq * rate
+
     if (calculate) {
-      let sound = 1.0 // amplitude
-
-      if (vibratoWave !== 0) {
-        const proc = processFromIndex(vibratoWave)
-        const vibrato = proc(vibratoPerc, vibratoPhase, extra)
-        // ???
-
-        const increment = tau * vibratoFreq * rate
-        vibratoPhase += increment
-        if (vibratoPhase > tau) vibratoPhase -= tau
-      }
+      let amp = 1.0
 
       if (tremoloWave !== 0) {
         const proc = processFromIndex(tremoloWave)
         const tremolo = proc(1.0, tremoloPhase, extra)
-        sound *= 1.0 - normalize(0.0, tremoloPerc, tremolo)
+        amp *= 1.0 - normalize(0.0, tremoloPerc, tremolo)
 
         const increment = tau * tremoloFreq * rate
         tremoloPhase += increment
         if (tremoloPhase > tau) tremoloPhase -= tau
       }
 
-      out = proc(sound, phase, extra)
+      extra[_INCREMENT] = increment
+
+      out = proc(amp, phase, extra)
+
+      if (harmonicA !== 1.0) {
+        const overtone = proc(harmonicGainA, harmonicPhaseA, extra)
+        out += overtone
+      }
+
+      if (harmonicB !== 1.0) {
+        const overtone = proc(harmonicGainB, harmonicPhaseB, extra)
+        out += overtone
+      }
+
+      if (harmonicC !== 1.0) {
+        const overtone = proc(harmonicGainC, harmonicPhaseC, extra)
+        out += overtone
+      }
 
       if (noise !== 0.0) {
         out = out - out * noise * (1.0 - (((Math.sin(i) + 1.0) * 1e9) % 2))
@@ -409,9 +400,8 @@ function process(data, parameters) {
       }
     }
 
-    data[i] = out * amplitude // out
+    data[i] = out * amplitude
 
-    const increment = tau * frequency * rate
     phase += increment
     if (phase > tau) phase -= tau
 
@@ -425,6 +415,24 @@ function process(data, parameters) {
         speed = startSpeed
         acceleration = startAcceleration
       }
+    }
+
+    if (harmonicA !== 1.0) {
+      const increment = tau * frequency * harmonicA * rate
+      harmonicPhaseA += increment
+      if (harmonicPhaseA > tau) harmonicPhaseA -= tau
+    }
+
+    if (harmonicB !== 1.0) {
+      const increment = tau * frequency * harmonicB * rate
+      harmonicPhaseB += increment
+      if (harmonicPhaseB > tau) harmonicPhaseB -= tau
+    }
+
+    if (harmonicC !== 1.0) {
+      const increment = tau * frequency * harmonicC * rate
+      harmonicPhaseC += increment
+      if (harmonicPhaseC > tau) harmonicPhaseC -= tau
     }
   }
 }
@@ -440,8 +448,6 @@ export function synth(parameters, when = 0) {
   source.start(when)
   return source
 }
-
-export const WAVEFORMS = ['None', 'Sine', 'Square', 'Pulse', 'Triangle', 'Sawtooth', 'Noise', 'Static']
 
 function processFromIndex(index) {
   switch (index) {
@@ -466,14 +472,16 @@ function processFromIndex(index) {
   return null
 }
 
-const notes = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']
-
-export function semitoneName(semitone) {
+export function semitoneNoOctave(semitone) {
   semitone += 9
   let note = semitone % 12
   while (note < 0) note += 12
-  const octave = 4 + Math.floor(semitone / 12)
-  return notes[note] + octave
+  return NOTES[note]
+}
+
+export function semitoneName(semitone) {
+  const octave = 4 + Math.floor((semitone + 9) / 12)
+  return semitoneNoOctave(semitone) + octave
 }
 
 export function diatonic(semitone) {

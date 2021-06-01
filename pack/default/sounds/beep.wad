@@ -1,0 +1,27 @@
+sound = beep
+parameters {
+  wave = Sine
+  cycle = 0.5
+  frequency = 43
+  speed = 0
+  accel = 0
+  jerk = 0
+  attack = 0
+  decay = 0
+  sustain = 1
+  length = 280
+  release = 10
+  volume = 1
+  vibrato-wave = 0
+  vibrato-freq = 5
+  vibrato-% = 0.5
+  tremolo-wave = 0
+  tremolo-freq = 9
+  tremolo-% = 0.5
+  bit-crush = 0
+  noise = 0
+  distortion = 0
+  low-pass = 0
+  high-pass = 0
+  repeat = 0
+}

@@ -1,0 +1,41 @@
+map = untitled
+vectors [
+  {x=30 z=67}
+  {x=109 z=67}
+  {x=52 z=49}
+  {x=64 z=49}
+  {x=69 z=49}
+  {x=84 z=49}
+  {x=58 z=46}
+  {x=64 z=46}
+  {x=69 z=46}
+  {x=77 z=46}
+  {x=58 z=38}
+  {x=77 z=38}
+  {x=52 z=26}
+  {x=84 z=26}
+  {x=30 z=11}
+  {x=109 z=11}
+]
+lines [
+  {s=0 e=1 t=none m=grass b=none u=0 v=0 w=0}
+  {s=1 e=15 t=none m=grass b=none u=0 v=0 w=0}
+  {s=2 e=3 t=none m=grass b=none u=0 v=0 w=0}
+  {s=2 e=12 t=none m=grass b=none u=0 v=0 w=0}
+  {s=3 e=7 t=none m=grass b=none u=0 v=0 w=0}
+  {s=4 e=5 t=none m=grass b=none u=0 v=0 w=0}
+  {s=4 e=8 t=none m=grass b=none u=0 v=0 w=0}
+  {s=7 e=6 t=none m=grass b=none u=0 v=0 w=0}
+  {s=8 e=9 t=none m=grass b=none u=0 v=0 w=0}
+  {s=9 e=11 t=none m=grass b=none u=0 v=0 w=0}
+  {s=10 e=6 t=none m=grass b=none u=0 v=0 w=0}
+  {s=10 e=11 t=none m=grass b=none u=0 v=0 w=0}
+  {s=12 e=13 t=none m=grass b=none u=0 v=0 w=0}
+  {s=13 e=5 t=none m=grass b=none u=0 v=0 w=0}
+  {s=14 e=0 t=none m=grass b=none u=0 v=0 w=0}
+  {s=15 e=14 t=none m=grass b=none u=0 v=0 w=0}
+]
+sectors [
+  {b=0 f=0 c=5 t=6 u=none v=none vecs[12 2 3 7 6 10 11 9 8 4 5 13] lines[3 2 4 7 10 11 9 8 6 5 13 12]}
+  {b=0 f=0 c=5 t=6 u=none v=none vecs[14 0 1 15] lines[14 0 1 15]}
+]

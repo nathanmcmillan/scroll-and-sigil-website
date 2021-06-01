@@ -35,14 +35,14 @@ class Flag {
 
 export function flagsExport(self) {
   const flags = self.flags
-  let content = ''
+  let content = '['
   for (let f = 0; f < flags.length; f++) {
     const flag = flags[f]
-    if (content !== '') content += ' '
+    if (f !== 0) content += ' '
     content += flag.id
     if (flag.values) content += flag.values.join(' ')
   }
-  return content
+  return content + ']'
 }
 
 export class Flags {

@@ -1,46 +1,46 @@
-box: 0.75
-height: 3.0
-health: 10
-speed: 0.025
-think: baron-update
-sight: 5.0
-stamina: 10
-energy: 0
+box = 0.75
+height = 3.0
+health = 10
+speed = 0.025
+think = baron-update
+sight = 5.0
+stamina = 10
+energy = 0
 attributes {
-  strength: 0
-  dexterity: 0
-  vitality: 0
-  intelligence: 0
+  strength = 0
+  dexterity = 0
+  vitality = 0
+  intelligence = 0
 }
 resist {
-  slash: 0
-  crush: 0
-  pierce: 0
-  bleed: 0
-  poison: 0
-  fire: 0
-  frost: 0
-  lightning: 0
+  slash = 0
+  crush = 0
+  pierce = 0
+  bleed = 0
+  poison = 0
+  fire = 0
+  frost = 0
+  lightning = 0
 }
 attack {
   melee {
-    range: 0.8
-    animation: melee
-    sound: baron-melee
-    damage [1, 10]
+    range = 0.8
+    animation = melee
+    sound = baron-melee
+    damage [1 10]
   }
   missile {
-    range: 5.0
-    animation: missile
-    sound: baron-missile
-    projectile: plasma
-    damage [2, 6]
+    range = 5.0
+    animation = missile
+    sound = baron-missile
+    projectile = plasma
+    damage [2 6]
   }
 }
 sprites {
-    idle [baron|walk-1]
-    move [baron|walk-2, baron|walk-3, baron|walk-0, baron|walk-1]
-    melee [baron|melee-0, baron|melee-1]
-    missile [baron|missile-0, baron|missile-1]
-    death [baron|death-0, baron|death-1]
+    idle [baron.walk-1]
+    move [baron.walk-2 baron.walk-3 baron.walk-0 baron.walk-1]
+    melee [baron.melee-0 baron.melee-1]
+    missile [baron.missile-0 baron.missile-1]
+    death [baron.death-0 baron.death-1]
 }

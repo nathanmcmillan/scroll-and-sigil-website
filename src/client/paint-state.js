@@ -7,7 +7,7 @@ import { renderDialogBox, renderStatus, renderTextBox } from '../client/client-u
 import { renderTouch } from '../client/render-touch.js'
 import { compress, decompress } from '../compress/huffman.js'
 import { calcBottomBarHeight, calcFontScale, calcThickness, calcTopBarHeight, defaultFont } from '../editor/editor-util.js'
-import { PaintEdit, paintExportToCanvas, paintUpdatePixels, SPRITE_TOOL } from '../editor/paint.js'
+import { PaintEdit, paintExportToCanvas, paintUpdatePixels, SPRITE_TOOL } from '../editor/paint-edit.js'
 import {
   black0f,
   black1f,
@@ -16,7 +16,6 @@ import {
   dusk0f,
   dusk1f,
   dusk2f,
-  lavenderf,
   ember0f,
   ember1f,
   ember2f,
@@ -28,8 +27,9 @@ import {
   white2f,
 } from '../editor/palette.js'
 import { flexBox, flexSolve } from '../gui/flex.js'
+import { local_storage_get, local_storage_set } from '../io/files.js'
 import { identity, multiply } from '../math/matrix.js'
-import { spr, sprcol } from '../render/pico.js'
+import { sprcol } from '../render/pico.js'
 import { drawHollowRectangle, drawImage, drawRectangle, drawTextFont, drawTextFontSpecial } from '../render/render.js'
 import { bufferZero } from '../webgl/buffer.js'
 import { rendererBindTexture, rendererSetProgram, rendererSetView, rendererUpdateAndDraw, rendererUpdateUniformMatrix } from '../webgl/renderer.js'
@@ -84,6 +84,14 @@ export class PaintState {
     this.paint.reset()
   }
 
+  pause() {
+    this.paint.pause()
+  }
+
+  resume() {
+    this.paint.resume()
+  }
+
   resize(width, height, scale) {
     this.paint.resize(width, height, scale)
   }
@@ -104,19 +112,23 @@ export class PaintState {
     this.paint.input.mouseMove(x, y)
   }
 
-  async initialize(file) {
-    await this.paint.load(file)
+  async initialize() {
+    let paint = null
+    const tape = this.client.tape.name
+    const name = local_storage_get('tape:' + tape + ':paint')
+    if (name) paint = local_storage_get('tape:' + tape + ':paint:' + name)
+    this.paint.load(paint)
     this.updateTexture()
   }
 
   eventCall(event) {
-    if (event === 'export-plain text') this.exportPlain()
-    else if (event === 'export-png') this.exportPng()
-    else if (event === 'export-huffman') this.exportHuffman()
-    else if (event === 'save-save') this.saveSheet()
-    else if (event === 'start-open') this.importSheet()
-    else if (event === 'start-save') this.saveSheet()
-    else if (event === 'start-exit') this.returnToDashboard()
+    if (event === 'Export-Plain Text') this.exportPlain()
+    else if (event === 'Export-PNG') this.exportPng()
+    else if (event === 'Export-Huffman') this.exportHuffman()
+    else if (event === 'Save-Save') this.saveSheet()
+    else if (event === 'Start-Open') this.importSheet()
+    else if (event === 'Start-Save') this.saveSheet()
+    else if (event === 'Start-Exit') this.returnToDashboard()
   }
 
   returnToDashboard() {
@@ -164,8 +176,11 @@ export class PaintState {
   }
 
   saveSheet() {
+    const tape = this.client.tape.name
+    const name = this.paint.name
     const blob = this.paint.export()
-    localStorage.setItem('paint.txt', blob)
+    local_storage_set('tape:' + tape + ':paint', name)
+    local_storage_set('tape:' + tape + ':paint:' + name, blob)
     console.info(blob)
     console.info('saved to local storage!')
   }
@@ -174,7 +189,7 @@ export class PaintState {
     const blob = this.paint.export()
     const download = document.createElement('a')
     download.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(blob)
-    download.download = this.paint.name + '.txt'
+    download.download = this.paint.name + '.wad'
     download.click()
   }
 
@@ -198,7 +213,7 @@ export class PaintState {
     const blob = canvas.toDataURL('image/png')
     const download = document.createElement('a')
     download.href = blob
-    download.download = this.paint.name + '.png'
+    download.download = paint.name + '.png'
     download.click()
   }
 
@@ -482,7 +497,7 @@ export class PaintState {
 
     // special textures
 
-    rendererSetProgram(rendering, 'texture2d-rgb')
+    rendererSetProgram(rendering, 'texture2d-ignore')
     rendererSetView(rendering, 0, client.top, width, height)
     rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
 
@@ -497,9 +512,9 @@ export class PaintState {
     for (let c = 0; c < toolColumns; c++) {
       const x = toolLeft + c * toolMagnify
       if (c === paint.tool) {
-        spr(client.bufferGUI, c, 1.0, 1.0, x, y - 2 * scale, toolMagnify, toolMagnify)
+        sprcol(client.bufferGUI, c, 1.0, 1.0, x, y - 2 * scale, toolMagnify, toolMagnify, white0f, white1f, white2f, 1.0)
       } else {
-        sprcol(client.bufferGUI, c, 1.0, 1.0, x, y - 2 * scale, toolMagnify, toolMagnify, lavenderf(0), lavenderf(1), lavenderf(2), 1.0)
+        sprcol(client.bufferGUI, c, 1.0, 1.0, x, y - 2 * scale, toolMagnify, toolMagnify, dusk0f, dusk1f, dusk2f, 1.0)
       }
     }
 

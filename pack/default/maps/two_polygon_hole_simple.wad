@@ -1,0 +1,29 @@
+map = untitled
+vectors [
+  {x=23.3 z=64.8}
+  {x=86.9 z=61.6}
+  {x=59.3 z=52.4}
+  {x=38.9 z=44.8}
+  {x=76.1 z=44.8}
+  {x=47.3 z=26.8}
+  {x=66.9 z=26.8}
+  {x=28.9 z=15.2}
+  {x=86.9 z=15.2}
+]
+lines [
+  {s=0 e=7 t=none m=none b=none u=0 v=0 w=0}
+  {s=1 e=0 t=none m=none b=none u=0 v=0 w=0}
+  {s=2 e=4 t=none m=none b=none u=0 v=0 w=0}
+  {s=3 e=2 t=none m=none b=none u=0 v=0 w=0}
+  {s=3 e=5 t=none m=none b=none u=0 v=0 w=0}
+  {s=4 e=3 t=none m=none b=none u=0 v=0 w=0}
+  {s=5 e=6 t=none m=none b=none u=0 v=0 w=0}
+  {s=6 e=4 t=none m=none b=none u=0 v=0 w=0}
+  {s=7 e=8 t=none m=none b=none u=0 v=0 w=0}
+  {s=8 e=1 t=none m=none b=none u=0 v=0 w=0}
+]
+sectors [
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[5 3 4 6] lines[4 5 7 6]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[3 2 4] lines[3 2 5]}
+  {b=0 f=0 c=0 t=0 u=none v=none vecs[7 0 1 8] lines[0 1 9 8]}
+]

@@ -1,5 +1,5 @@
-class: item
-sprite: items|medkit
-box: 0.25
-height: 0.2
-name: Armor
+class = item
+sprite = items.medkit
+box = 0.25
+height = 0.2
+name = Armor

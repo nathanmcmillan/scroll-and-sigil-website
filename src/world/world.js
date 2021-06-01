@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { entityByName } from '../assets/assets.js'
-import { playMusic, playSound } from '../assets/sounds.js'
+import { playMusic, playSound } from '../assets/sound-manager.js'
 import { sectorInsideOutside, sectorLineNeighbors } from '../map/sector.js'
 import { sectorTriangulate } from '../map/triangulate.js'
 import { clearRandom } from '../math/random.js'

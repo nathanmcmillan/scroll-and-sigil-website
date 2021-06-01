@@ -3,13 +3,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { textureIndexForName } from '../assets/assets.js'
-import { playMusic } from '../assets/sounds.js'
-import { fetchText } from '../client/net.js'
+import { musicVolume, playMusic, setMusicVolume, setSoundVolume, soundVolume } from '../assets/sound-manager.js'
 import { Camera, cameraFollowCinema, cameraTowardsTarget } from '../game/camera.js'
+import { Dialog } from '../gui/dialog.js'
+import { INPUT_RATE } from '../io/input.js'
 import { Line } from '../map/line.js'
 import { Sector } from '../map/sector.js'
 import { Vector2 } from '../math/vector.js'
 import { Hero } from '../thing/hero.js'
+import { wad_parse } from '../wad/wad.js'
 import { Flags } from '../world/flags.js'
 import { Trigger } from '../world/trigger.js'
 import { World, worldBuild, worldClear, worldPushSector, worldPushTrigger, worldSetLines, worldSpawnEntity, worldUpdate } from '../world/world.js'
@@ -27,7 +29,112 @@ export class Game {
     this.hero = null
     this.camera = new Camera(0.0, 0.0, 0.0, 0.0, 0.0, 12.0)
     this.cinema = false
+
+    this.name = 'untitled'
+
+    this.dialog = null
+    this.dialogStack = []
+
+    this.pauseMenuDialog = new Dialog('Pause', 'Pause Menu', ['Resume', 'Save', 'Options', 'Export', 'Exit'])
+    this.optionsDialog = new Dialog('Options', 'Options', ['Music Volume', 'Sound Volume'])
+    this.askToSaveDialog = new Dialog('Ask', 'Save Game?', ['Save', 'Export', 'No'])
+    this.saveOkDialog = new Dialog('Ok', 'Game Saved', ['Ok'])
   }
+
+  gotoDialog(dialog, from = null) {
+    this.dialog = dialog
+    this.forcePaint = true
+    if (from === null) this.dialogStack.length = 0
+    else this.dialogStack.push(from)
+  }
+
+  handleBackDialog() {
+    const dialog = this.dialog
+    if (dialog === this.optionsDialog) this.gotoDialog(this.pauseMenuDialog)
+    else this.gotoDialog(null)
+  }
+
+  handleDialog() {
+    const dialog = this.dialog
+    const option = dialog.options[dialog.pos]
+    const event = dialog.id + '-' + option
+    if (dialog === this.askToSaveDialog) {
+      if (option === 'No') {
+        const poll = this.dialogStack[0]
+        this.parent.eventCall(poll)
+        this.dialogEnd()
+      } else if (option === 'Save') {
+        const poll = this.dialogStack[0]
+        if (poll === 'Pause-Exit') {
+          this.parent.eventCall('Pause-Save')
+          this.gotoDialog(this.saveOkDialog, event)
+        } else this.dialogEnd()
+      } else if (option === 'Export') {
+        const poll = this.dialogStack[0]
+        if (poll === 'Pause-Exit') {
+          this.parent.eventCall('Pause-Export')
+          this.parent.eventCall('Pause-Exit')
+        }
+        this.dialogEnd()
+      }
+    } else if (dialog === this.pauseMenuDialog) {
+      if (option === 'Settings') {
+        this.optionsDialog.options[0] = 'Music Volume: ' + musicVolume()
+        this.optionsDialog.options[1] = 'Sound Volume: ' + soundVolume()
+        this.gotoDialog(this.optionsDialog)
+      } else if (option === 'Save') {
+        this.parent.eventCall(event)
+      } else if (option === 'Exit') {
+        this.gotoDialog(this.askToSaveDialog, event)
+      } else if (option === 'Export') {
+        this.parent.eventCall(event)
+        this.dialogEnd()
+      }
+    } else if (dialog === this.saveOkDialog && option === 'Ok') {
+      const poll = this.dialogStack[0]
+      if (poll === 'Pause-Exit') this.parent.eventCall(poll)
+      this.dialogEnd()
+    } else this.dialogEnd()
+  }
+
+  handleDialogSpecial(left) {
+    const dialog = this.dialog
+    if (dialog === this.optionsDialog) {
+      if (dialog.pos === 0) {
+        let volume = musicVolume()
+        if (left) {
+          if (volume > 0) volume--
+        } else if (volume < 10) volume++
+        this.dialog.options[0] = 'Music Volume: ' + volume
+        setMusicVolume(volume)
+      } else if (dialog.pos === 1) {
+        let volume = soundVolume()
+        if (left) {
+          if (volume > 0) volume--
+        } else if (volume < 10) volume++
+        this.dialog.options[0] = 'Sound Volume: ' + volume
+        setSoundVolume(volume)
+      }
+    }
+  }
+
+  dialogResetAll() {
+    this.pauseMenuDialog.reset()
+    this.optionsDialog.reset()
+    this.askToSaveDialog.reset()
+    this.saveOkDialog.reset()
+  }
+
+  dialogEnd() {
+    this.dialogResetAll()
+    this.dialog = null
+    this.dialogStack.length = 0
+    this.forcePaint = true
+  }
+
+  pause() {}
+
+  resume() {}
 
   read(content) {
     const world = this.world
@@ -37,164 +144,94 @@ export class Game {
     const lines = []
 
     try {
-      const map = content.split('\n')
-      const end = map.length - 1
+      const wad = wad_parse(content)
 
-      let index = 2
-      while (index < end) {
-        if (map[index] === 'end vectors') break
-        const vec = map[index].split(' ')
-        vecs.push(new Vector2(parseFloat(vec[0]), parseFloat(vec[1])))
-        index++
+      for (const vec of wad.get('vectors')) {
+        vecs.push(new Vector2(parseFloat(vec.get('x')), parseFloat(vec.get('z'))))
       }
-      index++
 
-      index++
-      while (index < end) {
-        if (map[index] === 'end lines') break
-        const line = map[index].split(' ')
-        const a = vecs[parseInt(line[0])]
-        const b = vecs[parseInt(line[1])]
-        const top = texture(line[2])
-        const middle = texture(line[3])
-        const bottom = texture(line[4])
-        let flags = null
-        let trigger = null
-        let i = 5
-        while (i < line.length) {
-          if (line[i] === 'flags') {
-            i++
-            const start = i
-            while (i < line.length && line[i] !== 'end') i++
-            flags = new Flags(line.slice(start, i))
-            i++
-          } else if (line[i] === 'trigger') {
-            i++
-            const start = i
-            while (i < line.length && line[i] !== 'end') i++
-            trigger = new Trigger(line.slice(start, i))
-            i++
-          } else i++
-        }
+      for (const line of wad.get('lines')) {
+        const a = vecs[parseInt(line.get('s'))]
+        const b = vecs[parseInt(line.get('e'))]
+        const top = texture(line.get('t'))
+        const middle = texture(line.get('m'))
+        const bottom = texture(line.get('b'))
+        const flags = line.has('flags') ? new Flags(line.get('flags')) : null
+        const trigger = line.has('trigger') ? new Trigger(line.get('trigger')) : null
         lines.push(new Line(top, middle, bottom, a, b, flags, trigger))
-        index++
       }
-      index++
 
-      index++
-      while (index < end) {
-        if (map[index] === 'end sectors') break
-        const sector = map[index].split(' ')
-        const bottom = parseFloat(sector[0])
-        const floor = parseFloat(sector[1])
-        const ceiling = parseFloat(sector[2])
-        const top = parseFloat(sector[3])
-        const floorTexture = texture(sector[4])
-        const ceilingTexture = texture(sector[5])
-        let count = parseInt(sector[6])
-        let i = 7
-        let end = i + count
-        const sectorVecs = []
-        for (; i < end; i++) sectorVecs.push(vecs[parseInt(sector[i])])
-        count = parseInt(sector[i])
-        i++
-        end = i + count
-        const sectorLines = []
-        for (; i < end; i++) sectorLines.push(lines[parseInt(sector[i])])
-        let flags = null
-        let trigger = null
-        while (i < sector.length) {
-          if (sector[i] === 'flags') {
-            i++
-            const start = i
-            while (i < sector.length && sector[i] !== 'end') i++
-            flags = new Flags(sector.slice(start, i))
-            i++
-          } else if (sector[i] === 'trigger') {
-            i++
-            const start = i
-            while (i < sector.length && sector[i] !== 'end') i++
-            trigger = new Trigger(sector.slice(start, i))
-            i++
-          } else i++
-        }
+      for (const sector of wad.get('sectors')) {
+        const bottom = parseFloat(sector.get('b'))
+        const floor = parseFloat(sector.get('f'))
+        const ceiling = parseFloat(sector.get('c'))
+        const top = parseFloat(sector.get('t'))
+        const floorTexture = texture(sector.get('u'))
+        const ceilingTexture = texture(sector.get('v'))
+        const sectorVecs = sector.get('vecs').map((x) => vecs[parseInt(x)])
+        const sectorLines = sector.get('lines').map((x) => lines[parseInt(x)])
+        const flags = sector.has('flags') ? new Flags(sector.get('flags')) : null
+        const trigger = sector.has('trigger') ? new Trigger(sector.get('trigger')) : null
         worldPushSector(world, new Sector(bottom, floor, ceiling, top, floorTexture, ceilingTexture, flags, trigger, sectorVecs, sectorLines))
-        index++
       }
-      index++
 
       worldSetLines(world, lines)
       worldBuild(world)
 
-      while (index < end) {
-        const top = map[index]
-        index++
-        if (top === 'things') {
-          while (index < end) {
-            if (map[index] === 'end things') break
-            const thing = map[index].split(' ')
-            const x = parseFloat(thing[0])
-            const z = parseFloat(thing[1])
-            const name = thing[2]
-            let flags = null
-            let trigger = null
-            let i = 3
-            while (i < thing.length) {
-              if (thing[i] === 'flags') {
-                i++
-                const start = i
-                while (i < thing.length && thing[i] !== 'end') i++
-                flags = new Flags(thing.slice(start, i))
-                i++
-              } else if (thing[i] === 'trigger') {
-                i++
-                const start = i
-                while (i < thing.length && thing[i] !== 'end') i++
-                trigger = new Trigger(thing.slice(start, i))
-                i++
-              } else i++
-            }
-            const entity = worldSpawnEntity(world, name, x, z, flags, trigger)
-            if (entity instanceof Hero) {
-              this.hero = entity
-              this.camera.target = this.hero
-            }
-            index++
+      if (wad.has('things')) {
+        for (const thing of wad.get('things')) {
+          const x = parseFloat(thing.get('x'))
+          const z = parseFloat(thing.get('z'))
+          const name = thing.get('id')
+          const flags = thing.has('flags') ? new Flags(thing.get('flags')) : null
+          const trigger = thing.has('trigger') ? new Trigger(thing.get('trigger')) : null
+          const entity = worldSpawnEntity(world, name, x, z, flags, trigger)
+          if (entity instanceof Hero) {
+            this.hero = entity
+            this.camera.target = this.hero
           }
-          index++
-          if (this.camera.target === null) throw 'map is missing hero entity'
-        } else if (top === 'triggers') {
-          while (index < end) {
-            if (map[index] === 'end triggers') break
-            const trigger = new Trigger(map[index].split(' '))
-            worldPushTrigger(world, trigger)
-            index++
-          }
-          index++
-        } else if (top === 'meta') {
-          while (index < end) {
-            if (map[index] === 'end meta') break
-            const content = map[index].split(' ')
-            if (content[0] === 'music') playMusic(content[1])
-            index++
-          }
-          index++
-        } else if (top === 'end map') {
-          break
-        } else throw `unknown map data: '${top}'`
+        }
+      }
+
+      if (wad.has('triggers')) {
+        for (const trigger of wad.get('triggers')) worldPushTrigger(world, new Trigger(trigger))
+      }
+
+      if (wad.has('meta')) {
+        for (const meta of wad.get('meta')) {
+          if (meta[0] === 'music') playMusic(meta[1])
+        }
       }
     } catch (e) {
       console.error(e)
     }
   }
 
-  async load(file) {
-    const map = await fetchText(file)
+  load(map) {
     this.read(map)
   }
 
-  update() {
+  update(timestamp) {
     const input = this.input
+
+    if (this.dialog !== null) {
+      if (input.pressB()) this.handleBackDialog()
+      else if (input.pressA() || input.pressStart() || input.pressSelect()) this.handleDialog()
+
+      if (input.timerStickUp(timestamp, INPUT_RATE)) {
+        if (this.dialog.pos > 0) this.dialog.pos--
+      } else if (input.timerStickDown(timestamp, INPUT_RATE)) {
+        if (this.dialog.pos < this.dialog.options.length - 1) this.dialog.pos++
+      } else if (input.timerStickLeft(timestamp, INPUT_RATE)) this.handleDialogSpecial(true)
+      else if (input.timerStickRight(timestamp, INPUT_RATE)) this.handleDialogSpecial(false)
+      return
+    }
+
+    if (input.pressStart()) {
+      this.dialog = this.pauseMenuDialog
+      return
+    }
+
     const camera = this.camera
 
     if (!this.cinema) {
@@ -248,5 +285,12 @@ export class Game {
         return
     }
     this.parent.notify(type, args)
+  }
+
+  export() {
+    let content = 'game = ' + this.name
+    content += '\npack = ' + this.pack
+    content += '\nworld {\n' + this.world.export + '}'
+    return content
   }
 }

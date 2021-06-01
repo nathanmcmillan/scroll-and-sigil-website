@@ -12,6 +12,10 @@ export function floatZero(x) {
   return Math.abs(x) < FLOAT_PRECISION
 }
 
+export function prettier(str, dec) {
+  return str.toFixed(dec).replace(/\.?0*$/, '')
+}
+
 export class Vector2 {
   constructor(x, y) {
     this.x = x

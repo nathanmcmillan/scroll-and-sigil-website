@@ -2,7 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { textureByIndex, textureByName } from '../assets/assets.js'
+import { textureByIndex, textureByName, TRUE_COLOR } from '../assets/assets.js'
+import { fetchText } from '../client/net.js'
 import { renderLoadingInProgress } from '../client/render-loading.js'
 import { renderTouch } from '../client/render-touch.js'
 import { tableIter, tableIterHasNext, tableIterNext, tableIterStart } from '../collections/table.js'
@@ -42,6 +43,14 @@ export class HomeState {
     this.home.reset()
   }
 
+  pause() {
+    this.home.pause()
+  }
+
+  resume() {
+    this.home.resume()
+  }
+
   resize(width, height, scale) {
     this.home.resize(width, height, scale)
   }
@@ -58,12 +67,9 @@ export class HomeState {
 
   mouseMove() {}
 
-  async initialize() {
-    await this.load('./pack/' + this.client.pack + '/maps/home.txt')
-  }
-
   async load(file) {
-    await this.game.load(file)
+    const map = await fetchText(file)
+    this.game.load(map)
 
     const world = this.game.world
     const client = this.client
@@ -81,14 +87,28 @@ export class HomeState {
     this.game.update()
   }
 
+  async initialize() {
+    await this.load('./pack/' + this.client.pack + '/maps/home.wad')
+  }
+
   eventCall(event) {
-    if (event === 'ok') {
+    if (event === 'Ok') {
       const home = this.home
       const client = this.client
-      if (home.row === 0) client.openState('game')
-      else if (home.row === 1) client.openState('game')
+      if (home.row === 0) this.continueGame()
+      else if (home.row === 1) this.newGame()
       else if (home.row === 2) client.openState('dashboard')
     }
+  }
+
+  continueGame() {
+    const client = this.client
+    client.openState('game', 'continue')
+  }
+
+  newGame() {
+    const client = this.client
+    client.openState('game', '!new-game')
   }
 
   update(timestamp) {
@@ -152,8 +172,7 @@ export class HomeState {
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
 
-    const trueColor = true
-    if (!trueColor) {
+    if (!TRUE_COLOR) {
       rendererSetProgram(rendering, 'texture3d-lookup')
       rendererBindTexture(rendering, gl.TEXTURE1, textureByName('_shading').texture, 'u_lookup', 1)
     }

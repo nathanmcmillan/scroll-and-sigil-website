@@ -6,18 +6,28 @@ import { Sprite } from '../render/sprite.js'
 
 const SPRITE_SCALE = 1.0 / 10.0
 
+export class SpriteBox {
+  constructor(name, left, top, right, bottom, tile) {
+    this.name = name
+    this.left = left
+    this.top = top
+    this.right = right
+    this.bottom = bottom
+    this.tile = tile
+  }
+
+  select(c, r) {
+    return c >= this.left && c <= this.right && r >= this.top && r <= this.bottom
+  }
+}
+
 export function createSpriteSheet(width, height, list) {
   width = 1.0 / width
   height = 1.0 / height
   const sprites = new Map()
   for (let s = 0; s < list.length; s++) {
     const sprite = list[s]
-    const name = sprite[0]
-    const left = parseInt(sprite[1])
-    const top = parseInt(sprite[2])
-    const right = parseInt(sprite[3])
-    const bottom = parseInt(sprite[4])
-    sprites.set(name, new Sprite(left, top, right - left, bottom - top, 0.0, 0.0, width, height, SPRITE_SCALE))
+    sprites.set(sprite.name, new Sprite(sprite.left, sprite.top, sprite.right - sprite.left, sprite.bottom - sprite.top, 0.0, 0.0, width, height, SPRITE_SCALE))
   }
   return sprites
 }

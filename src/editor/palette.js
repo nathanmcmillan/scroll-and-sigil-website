@@ -350,13 +350,13 @@ export function bluef(i) {
   return sky2f
 }
 
-export function lavender(i) {
+export function dusk(i) {
   if (i === 0) return dusk0
   if (i === 1) return dusk1
   return dusk2
 }
 
-export function lavenderf(i) {
+export function duskf(i) {
   if (i === 0) return dusk0f
   if (i === 1) return dusk1f
   return dusk2f
@@ -716,7 +716,7 @@ export function color(c, i) {
     case 12:
       return blue(i)
     case 13:
-      return lavender(i)
+      return dusk(i)
     case 14:
       return pink(i)
     case 15:

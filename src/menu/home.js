@@ -2,12 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { playSound } from '../assets/sounds.js'
-import { calcFontPad, calcFontScale } from '../editor/editor-util.js'
+import { playSound } from '../assets/sound-manager.js'
+import { calcFontPad, calcFontScale, defaultFont } from '../editor/editor-util.js'
 import { flexSolve, flexText } from '../gui/flex.js'
-import { TIC_FONT_HEIGHT, TIC_FONT_WIDTH } from '../render/render.js'
-
-const INPUT_RATE = 128
+import { INPUT_RATE } from '../io/input.js'
 
 export class Home {
   constructor(parent, width, height, scale, input) {
@@ -39,6 +37,10 @@ export class Home {
     this.forcePaint = true
   }
 
+  pause() {}
+
+  resume() {}
+
   resize(width, height, scale) {
     this.width = width
     this.height = height
@@ -55,9 +57,10 @@ export class Home {
     const width = this.width
     const height = this.height
 
+    const font = defaultFont()
     const fontScale = calcFontScale(this.scale)
-    const fontWidth = fontScale * TIC_FONT_WIDTH
-    const fontHeight = fontScale * TIC_FONT_HEIGHT
+    const fontWidth = fontScale * font.width
+    const fontHeight = fontScale * font.height
     const fontPad = calcFontPad(fontHeight)
 
     let text = 'Scroll and Sigil'
@@ -68,7 +71,7 @@ export class Home {
     titleBox.argY = 90
     this.titleBox = titleBox
 
-    text = 'continue'
+    text = 'Continue'
     const continueGameBox = flexText(text, fontWidth * text.length, fontHeight)
     continueGameBox.bottomSpace = fontPad
     continueGameBox.funX = '%'
@@ -77,7 +80,7 @@ export class Home {
     continueGameBox.argY = 25
     this.continueGameBox = continueGameBox
 
-    text = 'new game'
+    text = 'New Game'
     const newGameBox = flexText(text, fontWidth * text.length, fontHeight)
     newGameBox.bottomSpace = fontPad
     newGameBox.funX = 'align-left'
@@ -86,7 +89,7 @@ export class Home {
     newGameBox.fromY = continueGameBox
     this.newGameBox = newGameBox
 
-    text = 'editor'
+    text = 'Editor'
     const editorBox = flexText(text, fontWidth * text.length, fontHeight)
     editorBox.bottomSpace = fontPad
     editorBox.funX = 'align-left'
@@ -95,7 +98,7 @@ export class Home {
     editorBox.fromY = newGameBox
     this.editorBox = editorBox
 
-    text = 'options'
+    text = 'Options'
     const optionsBox = flexText(text, fontWidth * text.length, fontHeight)
     optionsBox.bottomSpace = fontPad
     optionsBox.funX = 'align-left'
@@ -104,7 +107,7 @@ export class Home {
     optionsBox.fromY = editorBox
     this.optionsBox = optionsBox
 
-    text = 'credits'
+    text = 'Credits'
     const creditsBox = flexText(text, fontWidth * text.length, fontHeight)
     creditsBox.bottomSpace = fontPad
     creditsBox.funX = 'align-left'
@@ -126,7 +129,7 @@ export class Home {
   events() {
     const input = this.input
     if (input.pressA() || input.pressStart()) {
-      this.parent.eventCall('ok')
+      this.parent.eventCall('Ok')
       return true
     }
     return false

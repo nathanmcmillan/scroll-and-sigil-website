@@ -1,0 +1,5 @@
+function main() {
+  var foo = 2
+  foo += 2
+  print(foo)
+}

@@ -1,25 +1,25 @@
-class: npc
-box: 0.6
-height: 4.0
-health: 1
-name: Peasant
-group: (human)(peasant)
-think: baron-update
+class = npc
+box = 0.6
+height = 4.0
+health = 1
+name = Peasant
+group = (human)(peasant)
+think = baron-update
 sprites {
-  idle [baron|walk-1]
-  move [baron|walk-2, baron|walk-3, baron|walk-0, baron|walk-1]
-  melee [baron|melee-0, baron|melee-1]
-  missile [baron|missile-0, baron|missile-1]
-  death [baron|death-0, baron|death-1]
+  idle [baron.walk-1]
+  move [baron.walk-2 baron.walk-3 baron.walk-0 baron.walk-1]
+  melee [baron.melee-0 baron.melee-1]
+  missile [baron.missile-0 baron.missile-1]
+  death [baron.death-0 baron.death-1]
 }
 interaction {
-  type: quest
-  title: Speak
+  type = quest
+  title = Speak
   dialogue [
-    'I heard a rumor of people disappearing in the forest.'
-    'Will you investigate?'
+    "I heard a rumor of people disappearing in the forest."
+    "Will you investigate?"
   ]
   events [
-    ['begin-quest', 'quest-name']
+    ["begin-quest" "quest-name"]
   ]
 }

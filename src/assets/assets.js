@@ -2,38 +2,40 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { createSpriteSheet } from '../assets/sprite-sheet.js'
+import { createSpriteSheet, SpriteBox } from '../assets/sprite-sheet.js'
 import { fetchText } from '../client/net.js'
 import { Entity, spriteName } from '../entity/entity.js'
-import * as Wad from '../wad/wad.js'
+import { wad_parse } from '../wad/wad.js'
 
 const PROMISES = []
 
 const TEXTURE_NAME_TO_INDEX = new Map()
 const TEXTURES = []
 
-export function readPaintFile(text, palette) {
-  const image = text.split('\n')
+export const TRUE_COLOR = true
 
-  const info = image[0].split(' ')
+export function readPaintFile(content, palette) {
+  const wad = wad_parse(content)
 
-  const name = info[1]
-  const width = parseInt(info[2])
-  const height = parseInt(info[3])
-  const pixels = new Uint8Array(width * height * 3)
+  const name = wad.get('paint')
+  const width = parseInt(wad.get('columns'))
+  const height = parseInt(wad.get('rows'))
 
-  let index = 1
   let transparency = 0
 
-  if (image[index].startsWith('transparency')) {
-    transparency = parseInt(image[index].split(' ')[1])
-    index++
+  if (wad.has('transparency')) {
+    transparency = parseInt(wad.get('transparency'))
   }
 
+  const pixels = wad.get('pixels')
+
+  const out = new Uint8Array(width * height * 3)
+
   for (let h = 0; h < height; h++) {
-    const row = image[index].split(' ')
+    const row = h * width
     for (let c = 0; c < width; c++) {
-      let p = parseInt(row[c])
+      const i = c + row
+      let p = parseInt(pixels[i])
       let red, green, blue
       if (p === transparency) {
         red = 255
@@ -45,75 +47,78 @@ export function readPaintFile(text, palette) {
         green = palette[p + 1]
         blue = palette[p + 2]
       }
-      const i = (c + h * width) * 3
-      pixels[i] = red
-      pixels[i + 1] = green
-      pixels[i + 2] = blue
+      const o = i * 3
+      out[o] = red
+      out[o + 1] = green
+      out[o + 2] = blue
     }
-    index++
   }
 
   let sprites = null
-  if (index < image.length) {
-    if (image[index] === 'sprites') {
-      index++
-      while (index < image.length) {
-        if (image[index] === 'end sprites') break
-        const sprite = image[index].split(' ')
-        if (sprites === null) sprites = []
-        sprites.push(sprite)
-        index++
-      }
+
+  if (wad.has('sprites')) {
+    const array = wad.get('sprites')
+    for (const sprite of array) {
+      const name = sprite.get('id')
+      const left = parseInt(sprite.get('left'))
+      const top = parseInt(sprite.get('top'))
+      const right = parseInt(sprite.get('right'))
+      const bottom = parseInt(sprite.get('bottom'))
+      const tile = sprite.has('tile')
+
+      if (sprites === null) sprites = []
+      sprites.push(new SpriteBox(name, left, top, right, bottom, tile))
     }
   }
 
-  return { name: name, wrap: 'clamp', width: width, height: height, pixels: pixels, sprites: sprites }
+  return { name: name, wrap: 'clamp', width: width, height: height, pixels: out, sprites: sprites }
 }
 
-export function readPaintFileAsLookup(text) {
-  const image = text.split('\n')
+export function readPaintFileAsLookup(content) {
+  const wad = wad_parse(content)
 
-  const info = image[0].split(' ')
+  const name = wad.get('paint')
+  const width = parseInt(wad.get('columns'))
+  const height = parseInt(wad.get('rows'))
 
-  const name = info[1]
-  const width = parseInt(info[2])
-  const height = parseInt(info[3])
-  const pixels = new Uint8Array(width * height)
-
-  let index = 1
   let transparency = 0
 
-  if (image[index].startsWith('transparency')) {
-    transparency = parseInt(image[index].split(' ')[1])
-    index++
+  if (wad.has('transparency')) {
+    transparency = parseInt(wad.get('transparency'))
   }
 
+  const pixels = wad.get('pixels')
+
+  const out = new Uint8Array(width * height)
+
   for (let h = 0; h < height; h++) {
-    const row = image[index].split(' ')
+    const row = h * width
     for (let c = 0; c < width; c++) {
-      const i = c + h * width
-      const p = parseInt(row[c])
-      if (p === transparency) pixels[i] = 255
-      else pixels[i] = p
+      const i = c + row
+      const p = parseInt(pixels[c])
+      if (p === transparency) out[i] = 255
+      else out[i] = p
     }
-    index++
   }
 
   let sprites = null
-  if (index < image.length) {
-    if (image[index] === 'sprites') {
-      index++
-      while (index < image.length) {
-        if (image[index] === 'end sprites') break
-        const sprite = image[index].split(' ')
-        if (sprites === null) sprites = []
-        sprites.push(sprite)
-        index++
-      }
+
+  if (wad.has('sprites')) {
+    const array = wad.get('sprites')
+    for (const sprite of array) {
+      const name = sprite.get('id')
+      const left = parseInt(sprite.get('left'))
+      const top = parseInt(sprite.get('top'))
+      const right = parseInt(sprite.get('right'))
+      const bottom = parseInt(sprite.get('bottom'))
+      const tile = sprite.has('tile')
+
+      if (sprites === null) sprites = []
+      sprites.push(new SpriteBox(name, left, top, right, bottom, tile))
     }
   }
 
-  return { name: name, wrap: 'clamp', width: width, height: height, pixels: pixels, sprites: sprites }
+  return { name: name, wrap: 'clamp', width: width, height: height, pixels: out, sprites: sprites }
 }
 
 export function saveTexture(name, texture) {
@@ -170,7 +175,7 @@ const SPRITE_IMAGES = new Map()
 
 async function promiseImage(sprite, directory) {
   if (SPRITE_IMAGES.has(sprite)) return
-  const image = await fetchText(directory + '/' + sprite + '.txt')
+  const image = await fetchText(directory + '/' + sprite + '.wad')
   SPRITE_IMAGES.set(sprite, image)
 }
 
@@ -184,7 +189,7 @@ async function promiseEntity(name, directory, path) {
 
   const text = await fetchText(directory + path)
 
-  const wad = Wad.parse(text)
+  const wad = wad_parse(text)
   wad.set('_wad', name)
 
   ENTITIES.set(name, new Entity(wad))
@@ -243,14 +248,12 @@ export function spritesByName(name) {
   return SPRITE_SHEETS.get(name)
 }
 
-const trueColor = true
-
 export function createNewTexturesAndSpriteSheets(palette, closure) {
   for (const sprite of ASYNC_SPRITE_NAMES) {
     if (SPRITE_SHEETS.has(sprite)) continue
     const image = SPRITE_IMAGES.get(sprite)
     let paint
-    if (trueColor) paint = readPaintFile(image, palette)
+    if (TRUE_COLOR) paint = readPaintFile(image, palette)
     else paint = readPaintFileAsLookup(image)
     const texture = closure(paint)
     saveTexture(sprite, texture)
