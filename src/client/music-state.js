@@ -152,6 +152,36 @@ export class MusicState {
     const fontWidth = fontScale * font.width
     // const fontHeight = fontScale * font.base
 
+    const topBarHeight = calcTopBarHeight(scale)
+    const bottomBarHeight = calcBottomBarHeight(scale)
+
+    const play = music.play
+    const track = music.track
+    const notes = track.notes
+    const noteC = track.c
+    const noteR = track.r
+
+    const notesLen = notes.length
+
+    const smallFontScale = Math.floor(1.5 * scale)
+    const smallFontWidth = smallFontScale * font.width
+    const smallFontHeight = smallFontScale * font.height
+    const smallFontHalfWidth = Math.floor(0.5 * smallFontWidth)
+
+    const noteWidth = Math.floor(2.5 * smallFontWidth)
+    const noteHeight = Math.floor(1.2 * smallFontHeight)
+
+    const noteSides = 20
+
+    const noteViewWidth = width - noteSides * 2
+    // const noteViewHeight = height - noteSides * 2 - topBarHeight - bottomBarHeight
+
+    const noteViewColumns = Math.floor(noteViewWidth / noteWidth)
+
+    // const noteViewRows = Math.floor(notesLen / noteViewColumns)
+
+    // const scrolling = noteViewRows * noteHeight > noteViewHeight
+
     rendererSetProgram(rendering, 'color2d')
     rendererSetView(rendering, 0, client.top, width, height)
     rendererUpdateUniformMatrix(rendering, 'u_mvp', projection)
@@ -162,12 +192,19 @@ export class MusicState {
     // top and bottom bar
 
     bufferZero(client.bufferColor)
-
-    const topBarHeight = calcTopBarHeight(scale)
     drawRectangle(client.bufferColor, 0, height - topBarHeight, width, topBarHeight, ember0f, ember1f, ember2f, 1.0)
-
-    const bottomBarHeight = calcBottomBarHeight(scale)
     drawRectangle(client.bufferColor, 0, 0, width, bottomBarHeight, ember0f, ember1f, ember2f, 1.0)
+
+    // scroll bar
+
+    // if (scrolling) {
+    //   const scrollBarWidth = 20
+    //   const scrollBarHeight = height - topBarHeight - bottomBarHeight
+    //   const scrollBarItemHeight = scrollBarWidth * 2
+
+    //   drawRectangle(client.bufferColor, width - scrollBarWidth, bottomBarHeight, scrollBarWidth, scrollBarHeight, wine0f, wine1f, wine2f, 1.0)
+    //   drawRectangle(client.bufferColor, width - scrollBarWidth, bottomBarHeight + 100, scrollBarWidth, scrollBarItemHeight, ember0f, ember1f, ember2f, 1.0)
+    // }
 
     rendererUpdateAndDraw(rendering, client.bufferColor)
 
@@ -179,28 +216,13 @@ export class MusicState {
 
     bufferZero(client.bufferGUI)
 
-    const play = music.play
-    const track = music.track
-    const notes = track.notes
-    const noteC = track.c
-    const noteR = track.r
-
-    const smallFontScale = Math.floor(1.5 * scale)
-    const smallFontWidth = smallFontScale * font.width
-    const smallFontHeight = smallFontScale * font.height
-    const smallFontHalfWidth = Math.floor(0.5 * smallFontWidth)
-
-    const noteSides = 20
-
-    let x = noteSides
+    let x = noteSides // noteViewColumns * noteWidth - (width - noteViewWidth) * 0.5
     let pos = x
     let y = height - 150
-    const noteWidth = Math.floor(2.5 * smallFontWidth)
-    const noteHeight = Math.floor(1.2 * smallFontHeight)
 
-    for (let c = 0; c < notes.length; c++) {
+    for (let c = 0; c < notesLen; c++) {
       const note = notes[c]
-      if (pos > width - noteSides) {
+      if (c !== 0 && c % noteViewColumns === 0) {
         pos = x
         y -= 6 * noteHeight
       }
@@ -272,7 +294,7 @@ export class MusicState {
     y = height - 150 + Math.floor(0.5 * noteHeight)
 
     const r = 0
-    for (let c = 0; c < notes.length; c++) {
+    for (let c = 0; c < notesLen; c++) {
       const note = notes[c]
       const duration = 33 + note[r]
       if (pos > width - noteSides) {

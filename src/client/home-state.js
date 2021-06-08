@@ -102,13 +102,11 @@ export class HomeState {
   }
 
   continueGame() {
-    const client = this.client
-    client.openState('game', 'continue')
+    this.client.openState('game', 'save-x')
   }
 
   newGame() {
-    const client = this.client
-    client.openState('game', '!new-game')
+    this.client.openState('game', '!new-game')
   }
 
   update(timestamp) {

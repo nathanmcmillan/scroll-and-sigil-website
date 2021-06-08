@@ -418,7 +418,7 @@ export class Client {
         else this.music.reset()
         this.state = this.music
         break
-      case 'map':
+      case 'maps':
         if (this.maps === null) this.maps = new MapState(this)
         else this.maps.reset()
         this.state = this.maps

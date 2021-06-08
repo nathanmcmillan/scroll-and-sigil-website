@@ -109,7 +109,8 @@ export class GameState {
     let file = null
     if (args === '!new-game') file = './pack/' + this.client.pack + '/maps/base.wad'
     else {
-      //
+      if (args === 'save-x') file = './pack/' + this.client.pack + '/maps/base.wad'
+      else throw 'eh'
     }
     await this.load(file)
   }

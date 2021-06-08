@@ -367,19 +367,19 @@ export class MapEdit {
       this.dialogEnd()
     } else if (event === 'Error-Ok') {
       this.dialogEnd()
-    } else if (event === 'Tool-draw mode') {
+    } else if (event === 'Tool-Draw Mode') {
       this.tool = 0
       this.switchTool()
-    } else if (event === 'Tool-thing mode') {
+    } else if (event === 'Tool-Thing Mode') {
       this.tool = 1
       this.switchTool()
-    } else if (event === 'Tool-sector mode') {
+    } else if (event === 'Tool-Sector Mode') {
       this.tool = 2
       this.switchTool()
       this.updateSectors()
-    } else if (event === 'Thing-swap entity') {
+    } else if (event === 'Thing-Swap Entity') {
       const change = this.changeEntityDialog
-      change.options = this.entityList.slice()
+      change.options = this.entityList === null ? [] : this.entityList.slice()
       this.dialog = change
       this.forcePaint = true
     } else if (event === 'Thing-Set As Default') {
@@ -402,7 +402,7 @@ export class MapEdit {
 
   handleDialogSpecial(left) {
     const event = this.dialog.id + '-' + this.dialog.options[this.dialog.pos]
-    if (event.startsWith('sector-floor sprite:')) {
+    if (event.startsWith('Sector-Floor Sprite:')) {
       const sector = this.selectedSector
       let index = textureToTileIndex(sector.floorTexture)
       if (left) {
@@ -412,8 +412,8 @@ export class MapEdit {
       sector.floorTexture = tileIndexToTexture(index)
       if ((was === null && sector.floorTexture !== null) || (was !== null && sector.floorTexture === null)) this.doSectorRefresh = true
       else sector.refreshFloorTexture()
-      this.dialog.options[0] = 'floor sprite:   ' + sector.floorTextureName().padEnd(6).substring(0, 6)
-    } else if (event.startsWith('sector-ceiling sprite:')) {
+      this.dialog.options[0] = 'Floor Sprite:   ' + sector.floorTextureName().padEnd(6).substring(0, 6)
+    } else if (event.startsWith('Sector-Ceiling Sprite:')) {
       const sector = this.selectedSector
       let index = textureToTileIndex(sector.ceilingTexture)
       if (left) {
@@ -423,36 +423,36 @@ export class MapEdit {
       sector.ceilingTexture = tileIndexToTexture(index)
       if ((was === null && sector.ceilingTexture !== null) || (was !== null && sector.ceilingTexture === null)) this.doSectorRefresh = true
       else sector.refreshCeilingTexture()
-      this.dialog.options[1] = 'ceiling sprite: ' + sector.ceilingTextureName().padEnd(6).substring(0, 6)
-    } else if (event.startsWith('sector-bottom:')) {
+      this.dialog.options[1] = 'Ceiling Sprite: ' + sector.ceilingTextureName().padEnd(6).substring(0, 6)
+    } else if (event.startsWith('Sector-Bottom:')) {
       const sector = this.selectedSector
       if (left) {
         if (sector.bottom > -100) sector.bottom--
       } else sector.bottom++
       this.doSectorRefresh = true
-      this.dialog.options[2] = 'bottom:         ' + sector.bottom
-    } else if (event.startsWith('sector-floor:')) {
+      this.dialog.options[2] = 'Bottom:         ' + sector.bottom
+    } else if (event.startsWith('Sector-Floor:')) {
       const sector = this.selectedSector
       if (left) {
         if (sector.floor > -100) sector.floor--
       } else sector.floor++
       this.doSectorRefresh = true
-      this.dialog.options[3] = 'floor:          ' + sector.floor
-    } else if (event.startsWith('sector-ceiling:')) {
+      this.dialog.options[3] = 'Floor:          ' + sector.floor
+    } else if (event.startsWith('Sector-Ceiling:')) {
       const sector = this.selectedSector
       if (left) {
         if (sector.ceiling > -100) sector.ceiling--
       } else sector.ceiling++
       this.doSectorRefresh = true
-      this.dialog.options[4] = 'ceiling:        ' + sector.ceiling
-    } else if (event.startsWith('sector-top:')) {
+      this.dialog.options[4] = 'Ceiling:        ' + sector.ceiling
+    } else if (event.startsWith('Sector-Top:')) {
       const sector = this.selectedSector
       if (left) {
         if (sector.top > -100) sector.top--
       } else sector.top++
       this.doSectorRefresh = true
-      this.dialog.options[5] = 'top:            ' + sector.top
-    } else if (event.startsWith('line-top sprite:')) {
+      this.dialog.options[5] = 'Top:            ' + sector.top
+    } else if (event.startsWith('Line-Top Sprite:')) {
       const wall = this.selectedLine.top
       let index = textureToTileIndex(wall.texture)
       if (left) {
@@ -461,8 +461,8 @@ export class MapEdit {
       const was = wall.texture
       wall.texture = tileIndexToTexture(index)
       if ((was === null && wall.texture !== null) || (was !== null && wall.texture === null)) this.doSectorRefresh = true
-      this.dialog.options[0] = 'top sprite:    ' + wall.textureName().padEnd(6).substring(0, 6)
-    } else if (event.startsWith('line-middle sprite:')) {
+      this.dialog.options[0] = 'Top Sprite:    ' + wall.textureName().padEnd(6).substring(0, 6)
+    } else if (event.startsWith('Line-Middle Sprite:')) {
       const wall = this.selectedLine.middle
       let index = textureToTileIndex(wall.texture)
       if (left) {
@@ -471,8 +471,8 @@ export class MapEdit {
       const was = wall.texture
       wall.texture = tileIndexToTexture(index)
       if ((was === null && wall.texture !== null) || (was !== null && wall.texture === null)) this.doSectorRefresh = true
-      this.dialog.options[1] = 'middle sprite: ' + wall.textureName().padEnd(6).substring(0, 6)
-    } else if (event.startsWith('line-bottom sprite:')) {
+      this.dialog.options[1] = 'Middle Sprite: ' + wall.textureName().padEnd(6).substring(0, 6)
+    } else if (event.startsWith('Line-Bottom Sprite:')) {
       const wall = this.selectedLine.bottom
       let index = textureToTileIndex(wall.texture)
       if (left) {
@@ -481,25 +481,25 @@ export class MapEdit {
       const was = wall.texture
       wall.texture = tileIndexToTexture(index)
       if ((was === null && wall.texture !== null) || (was !== null && wall.texture === null)) this.doSectorRefresh = true
-      this.dialog.options[2] = 'bottom sprite: ' + wall.textureName().padEnd(6).substring(0, 6)
-    } else if (event.startsWith('line-top offset:')) {
+      this.dialog.options[2] = 'Bottom Sprite: ' + wall.textureName().padEnd(6).substring(0, 6)
+    } else if (event.startsWith('Line-Top Offset:')) {
       const wall = this.selectedLine.top
       if (left) {
         if (wall.offset > 0) wall.offset--
       } else wall.offset++
-      this.dialog.options[3] = 'top offset:    ' + wall.offset
-    } else if (event.startsWith('line-middle offset:')) {
+      this.dialog.options[3] = 'Top Offset:    ' + wall.offset
+    } else if (event.startsWith('Line-Middle Offset:')) {
       const wall = this.selectedLine.middle
       if (left) {
         if (wall.offset > 0) wall.offset--
       } else wall.offset++
-      this.dialog.options[4] = 'middle offset: ' + wall.offset
-    } else if (event.startsWith('line-bottom offset:')) {
+      this.dialog.options[4] = 'Middle Offset: ' + wall.offset
+    } else if (event.startsWith('Line-Bottom Offset:')) {
       const wall = this.selectedLine.bottom
       if (left) {
         if (wall.offset > 0) wall.offset--
       } else wall.offset++
-      this.dialog.options[5] = 'bottom offset: ' + wall.offset
+      this.dialog.options[5] = 'Bottom Offset: ' + wall.offset
     }
   }
 
@@ -699,6 +699,7 @@ export class MapEdit {
   }
 
   placeThingAtCursor() {
+    if (this.defaultEntity === null) return null
     const x = this.camera.x + this.cursor.x / this.zoom
     const y = this.camera.z + this.cursor.y / this.zoom
     const thing = new ThingReference(entityByName(this.defaultEntity), x, y)
@@ -869,8 +870,7 @@ export class MapEdit {
 
       if (this.action === OPTION_DRAW_MODE_DEFAULT) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_PLACE_LINE) {
               this.selectedVec = this.placeVectorAtCursor()
               this.action = OPTION_END_LINE
@@ -879,8 +879,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_LINE_UNDER_CURSOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_FLIP_LINE) {
               this.flipSelectedLine()
             } else if (option === DO_DELETE_LINE) {
@@ -892,8 +891,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_VECTOR_UNDER_CURSOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_START_LINE) {
               this.action = OPTION_END_LINE
             } else if (option === DO_MOVE_VECTOR) {
@@ -903,8 +901,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_MOVE_VECTOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_END_MOVING_VECTOR) {
               this.action = OPTION_VECTOR_UNDER_CURSOR
             }
@@ -912,8 +909,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_VECTOR_OVERLAP) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_MERGE_VECTOR) {
               const lines = referenceLinesFromVec(this.selectedVec, this.lines)
               for (const line of lines) {
@@ -928,8 +924,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_END_LINE) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_END_LINE) {
               if (!this.lineIsUnique(this.selectedVec, this.selectedSecondVec)) {
                 this.action = OPTION_VECTOR_UNDER_CURSOR
@@ -977,8 +972,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_END_LINE_NEW_VECTOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_END_LINE_NEW_VECTOR) {
               let top = null
               let middle = null
@@ -1029,8 +1023,7 @@ export class MapEdit {
 
       if (this.action === OPTION_THING_MODE_DEFAULT) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_PLACE_THING) {
               this.selectedThing = this.placeThingAtCursor()
             }
@@ -1038,8 +1031,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_THING_UNDER_CURSOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_MOVE_THING) {
               this.action = OPTION_MOVE_THING
             } else if (option === DO_DELETE_THING) {
@@ -1052,8 +1044,7 @@ export class MapEdit {
         }
       } else if (this.action === OPTION_MOVE_THING) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_END_MOVING_THING) {
               this.action = OPTION_THING_UNDER_CURSOR
             }
@@ -1072,34 +1063,32 @@ export class MapEdit {
 
       if (this.action === OPTION_SECTOR_UNDER_CURSOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_EDIT_SECTOR) {
               const sector = this.selectedSector
               const options = this.editSectorDialog.options
-              options[0] = 'floor sprite:   ' + sector.floorTextureName().padEnd(6).substring(0, 6)
-              options[1] = 'ceiling sprite: ' + sector.ceilingTextureName().padEnd(6).substring(0, 6)
-              options[2] = 'bottom:         ' + sector.bottom
-              options[3] = 'floor:          ' + sector.floor
-              options[4] = 'ceiling:        ' + sector.ceiling
-              options[5] = 'top:            ' + sector.top
+              options[0] = 'Floor Sprite:   ' + sector.floorTextureName().padEnd(6).substring(0, 6)
+              options[1] = 'Ceiling Sprite: ' + sector.ceilingTextureName().padEnd(6).substring(0, 6)
+              options[2] = 'Bottom:         ' + sector.bottom
+              options[3] = 'Floor:          ' + sector.floor
+              options[4] = 'Ceiling:        ' + sector.ceiling
+              options[5] = 'Top:            ' + sector.top
               this.dialog = this.editSectorDialog
             }
           }
         }
       } else if (this.action === OPTION_SECTOR_MODE_LINE_UNDER_CURSOR) {
         for (const [button, option] of options) {
-          if (input.in[button]) {
-            input.in[button] = false
+          if (input.press(button)) {
             if (option === DO_EDIT_LINE) {
               const line = this.selectedLine
               const options = this.editLineDialog.options
-              options[0] = 'top sprite:    ' + line.topTextureName().padEnd(6).substring(0, 6)
-              options[1] = 'middle sprite: ' + line.middleTextureName().padEnd(6).substring(0, 6)
-              options[2] = 'bottom sprite: ' + line.bottomTextureName().padEnd(6).substring(0, 6)
-              options[3] = 'top offset:    ' + line.topOffset()
-              options[4] = 'middle offset: ' + line.middleOffset()
-              options[5] = 'bottom offset: ' + line.bottomOffset()
+              options[0] = 'Top Sprite:    ' + line.topTextureName().padEnd(6).substring(0, 6)
+              options[1] = 'Middle Sprite: ' + line.middleTextureName().padEnd(6).substring(0, 6)
+              options[2] = 'Bottom Sprite: ' + line.bottomTextureName().padEnd(6).substring(0, 6)
+              options[3] = 'Top Offset:    ' + line.topOffset()
+              options[4] = 'Middle Offset: ' + line.middleOffset()
+              options[5] = 'Bottom Offset: ' + line.bottomOffset()
               this.dialog = this.editLineDialog
             }
           }
@@ -1411,7 +1400,7 @@ export class MapEdit {
   }
 
   topLeftStatus() {
-    return 'MAP - ' + this.name.toUpperCase() + ' :: ' + DESCRIBE_TOOL[this.tool]
+    return 'MAP - ' + this.name.toUpperCase() + ' / ' + DESCRIBE_TOOL[this.tool]
   }
 
   topRightStatus() {
